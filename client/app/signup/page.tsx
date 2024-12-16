@@ -1,4 +1,3 @@
-// app/signup/page.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -15,10 +14,10 @@ const SignUpPage = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage('Registering...');
+    setMessage('Реєстрація...');
 
     try {
-      const response = await fetch('/api/register', {
+      const response = await fetch('/api/users/register/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, displayName, password, password2 }),
@@ -27,62 +26,61 @@ const SignUpPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage('Registration successful!');
-        // Note: Use useRouter for navigation in a client component if needed.
+        setMessage('Реєстрація успішна!');
       } else {
-        setMessage(`Error: ${JSON.stringify(data)}`);
+        setMessage(`Помилка: ${JSON.stringify(data)}`);
       }
     } catch (error) {
-      setMessage(`Error: ${(error as Error).message}`);
+      setMessage(`Помилка: ${(error as Error).message}`);
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50">
+<div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-black via-gray-500 to-white">
       <div className="bg-white shadow-lg rounded-lg px-10 py-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-6 text-blue-600">Sign Up</h1>
+        <h1 className="text-3xl font-bold text-center mb-6 text-black">Реєстрація</h1>
         <form onSubmit={handleSignUp} className="space-y-6">
-          {['Email', 'Display Name', 'Password', 'Confirm Password'].map((field) => (
+          {['Email', 'Логін', 'Пароль', 'Підтвердіть пароль'].map((field) => (
             <div key={field} className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={field.toLowerCase().replace(' ', '')}>
+              <label className="block text-sm font-medium text-black mb-2" htmlFor={field.toLowerCase().replace(' ', '')}>
                 {field}
               </label>
               <div className="relative rounded-md shadow-sm">
                 <input
-                  type={field === 'Password' || field === 'Confirm Password' ? (showPassword ? 'text' : 'password') : 'text'}
+                  type={field === 'Пароль' || field === 'Підтвердіть пароль' ? (showPassword ? 'text' : 'password') : 'text'}
                   required
-                  value={field === 'Email' ? email : field === 'Display Name' ? displayName : field === 'Password' ? password : password2}
+                  value={field === 'Email' ? email : field === 'Логін' ? displayName : field === 'Пароль' ? password : password2}
                   onChange={(e) => {
                     if (field === 'Email') setEmail(e.target.value);
-                    else if (field === 'Display Name') setDisplayName(e.target.value);
-                    else if (field === 'Password') setPassword(e.target.value);
+                    else if (field === 'Логін') setDisplayName(e.target.value);
+                    else if (field === 'Пароль') setPassword(e.target.value);
                     else setPassword2(e.target.value);
                   }}
                   placeholder={field}
-                  className="focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md text-gray-700"
+                  className="focus:ring-black focus:border-black block w-full sm:text-sm border-black rounded-md text-black"
                   id={field.toLowerCase().replace(' ', '')}
                 />
-                {(field === 'Password' || field === 'Confirm Password') && (
+                {(field === 'Пароль' || field === 'Підтвердіть пароль') && (
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                     <button type="button" onClick={() => setShowPassword(!showPassword)}>
-                      {showPassword ? <FaEyeSlash className="h-5 w-5 text-gray-400" /> : <FaEye className="h-5 w-5 text-gray-400" />}
+                      {showPassword ? <FaEyeSlash className="h-5 w-5 text-black" /> : <FaEye className="h-5 w-5 text-black" />}
                     </button>
                   </div>
                 )}
               </div>
             </div>
           ))}
-          <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            Sign Up
+          <button type="submit" className="w-full flex justify-center py-2 px-4 border border-black text-black bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300">
+            Зареєструватися
           </button>
         </form>
         {message && (
-          <div className="mt-4 p-4 bg-green-100 text-green-800 rounded text-center">
+          <div className="mt-4 p-4 bg-gray-100 text-black rounded text-center">
             {message}
           </div>
         )}
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Already have an account? <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">Log in</Link>
+        <p className="mt-4 text-center text-sm text-black">
+          Уже маєте обліковий запис? <Link href="/login" className="font-medium text-black hover:text-gray-500">Увійти</Link>
         </p>
       </div>
     </div>

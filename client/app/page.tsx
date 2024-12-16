@@ -3,71 +3,88 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-r from-indigo-100 via-blue-50 to-white">
-      {/* Navbar */}
-      <nav className="bg-blue-600 text-white py-6 shadow-md">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-100">
+      {/* Навігація */}
+      <nav className="bg-gray-900/80 backdrop-blur-md py-4 shadow-md fixed top-0 left-0 w-full z-50">
         <div className="container mx-auto flex justify-between items-center px-6 md:px-12">
-          <Link href="/" className="text-3xl font-extrabold tracking-wide hover:text-blue-200 transition">
+          <Link href="/" className="text-3xl font-extrabold tracking-wide hover:text-gray-400 transition">
             MusicHub
           </Link>
           <div className="space-x-6 text-lg">
-            <Link href="/login" className="hover:underline transition duration-200">Login</Link>
-            <Link href="/signup" className="px-6 py-2 bg-blue-500 rounded-md hover:bg-blue-600 text-white font-semibold transition duration-200">
-              Sign Up
+            <Link href="/login" className="hover:underline transition duration-200">Увійти</Link>
+            <Link href="/signup" className="px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-white font-semibold transition duration-200">
+              Реєстрація
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="flex-grow flex justify-center items-center bg-gradient-to-br from-white to-blue-100 px-4 md:px-12">
-        <div className="bg-white shadow-lg rounded-lg p-10 w-full max-w-xl">
-          <div className="flex justify-center mb-8">
-            <Image
-              src="/next.svg"
-              alt="MusicHub Logo"
-              width={120}
-              height={120}
-            />
-          </div>
-          <h1 className="text-4xl font-bold text-center mb-6 text-blue-700">Welcome to MusicHub</h1>
-          <p className="text-center text-lg mb-6 text-gray-700">
-            Connect with artists, share your music, and discover new beats in our vibrant community.
+      {/* Герой-секція */}
+      <header className="flex-grow flex flex-col justify-center items-center text-center px-6 md:px-12 pt-20">
+        <div className="max-w-2xl">
+          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 text-white leading-tight">
+            Ласкаво просимо до <span className="text-gray-400">MusicHub</span>
+          </h1>
+          <p className="text-lg md:text-xl text-gray-300 mb-8">
+            Відкривайте нову музику, спілкуйтеся з артистами та діліться своїми треками на увесь світ.
           </p>
-          <div className="flex flex-col space-y-6">
-            <Link href="/login">
-              <button
-                type="button"
-                className="w-full py-3 px-4 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold transition duration-200 ease-in-out"
-              >
-                Login
-              </button>
-            </Link>
+          <div className="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-6">
             <Link href="/signup">
-              <button
-                type="button"
-                className="w-full py-3 px-4 rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50 transition duration-200 ease-in-out"
-              >
-                Sign Up
+              <button className="px-8 py-3 rounded-md bg-gray-700 hover:bg-gray-600 text-white text-lg font-semibold transition duration-200">
+                Почати
               </button>
             </Link>
-          </div>
-          <div className="mt-10 text-center">
-            <Link href="https://musichub.com/learn" target="_blank" rel="noopener noreferrer">
-              <span className="text-blue-600 hover:underline">Learn More</span>
-            </Link>
-            {" | "}
-            <Link href="https://musichub.com/examples" target="_blank" rel="noopener noreferrer">
-              <span className="text-blue-600 hover:underline">Examples</span>
+            <Link href="/login">
+              <button className="px-8 py-3 rounded-md border border-gray-600 text-gray-300 hover:bg-gray-800 text-lg font-semibold transition duration-200">
+                Увійти
+              </button>
             </Link>
           </div>
         </div>
-      </main>
+      </header>
 
-      {/* Footer */}
-      <footer className="bg-blue-600 text-white text-center py-6 mt-10 shadow-inner">
+      {/* Features */}
+      <section className="bg-gray-800 text-gray-200 py-16 px-6 md:px-12">
+        <div className="container mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-10">
+            Чому обирають MusicHub?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="flex flex-col items-center text-center">
+              <div className="mb-4">
+                <Image src="" alt="" width={64} height={64} />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Жива спільнота</h3>
+              <p className="text-gray-400">
+                Спілкуйтеся з артистами та меломанами з усього світу.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="mb-4">
+                <Image src="" alt="" width={64} height={64} />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Відкривайте нові треки</h3>
+              <p className="text-gray-400">
+                Досліджуйте найсвіжіші композиції та унікальні звуки.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="mb-4">
+                <Image src="" alt="" width={64} height={64} />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Діліться своєю музикою</h3>
+              <p className="text-gray-400">
+                Завантажуйте свої треки та отримуйте відгуки.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* foooter */}
+      <footer className="bg-gray-900 text-gray-500 text-center py-6">
         <div className="container mx-auto text-sm">
-          &copy; {new Date().getFullYear()} MusicHub. All rights reserved.
+          &copy; {new Date().getFullYear()} MusicHub. Усі права захищено.
         </div>
       </footer>
     </div>
