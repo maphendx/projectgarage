@@ -15,10 +15,10 @@ export default function LoginPage() {
     setMessage('Вхід...');
 
     try {
-      const response = await fetch('/api/users/login/', {
+      const response = await fetch('http://localhost:8000/api/users/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ "email": email, "password": password })
       });
 
       const data = await response.json();

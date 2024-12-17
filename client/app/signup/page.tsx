@@ -17,10 +17,10 @@ const SignUpPage = () => {
     setMessage('Реєстрація...');
 
     try {
-      const response = await fetch('/api/users/register/', {
+      const response = await fetch('http://localhost:8000/api/users/register/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, displayName, password, password2 }),
+        body: JSON.stringify({ "email": email, "display_name": displayName, "password": password, "password2": password2 }),
       });
 
       const data = await response.json();
