@@ -3,12 +3,14 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,19 +24,21 @@ export default function LoginPage() {
       });
 
       const data = await response.json();
-      if (response.ok) {
-        setMessage(`Вітаємо, ${data.display_name}! Токен: ${data.access}`);
-      } else {
-        setMessage(`Помилка: ${JSON.stringify(data)}`);
-      }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setMessage(`Помилка: ${error.message}`);
-      } else {
-        setMessage('Помилка: Невідома помилка');
-      }
+    if (response.ok) {
+      setMessage(`Вітаємо, ${data.display_name}!`);
+      localStorage.setItem('token', data.access); // Store token
+      router.push('/profile'); // Redirect to profile page
+    } else {
+      setMessage(`Помилка: ${JSON.stringify(data)}`);
     }
-  };
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      setMessage(`Помилка: ${error.message}`);
+    } else {
+      setMessage('Помилка: Невідома помилка');
+    }
+  }
+};
 
   return (
 <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-black via-gray-500 to-white">
