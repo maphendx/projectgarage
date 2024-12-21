@@ -101,12 +101,15 @@ class HashtagView(APIView):
         # Перевірка, чи користувач не додає хештег без аутентифікації
         if not user.is_authenticated:
             return JsonResponse({'error': 'Тільки аутентифіковані користувачі можуть додавати хештеги.'}, status=403)
+    
+        try:
+            user.add_hashtag(hashtag)
+            return JsonResponse({'message': 'Хештег додано успішно'}, status=200)
+        except Exception as e:
+            return JsonResponse({'error': f'{e}'}, status=400)
         
-        user.add_hashtag(hashtag)
-        return JsonResponse({'message': 'Хештег додано успішно'}, status=200)
 
     # Обробник для видалення хештега
-    @method_decorator(login_required)
     def delete(self, request):
         user = request.user
         hashtag = request.POST.get('hashtag')
@@ -124,3 +127,5 @@ class HashtagView(APIView):
             return JsonResponse({'message': 'Хештег видалено успішно'}, status=200)
         except PermissionError as e:
             return JsonResponse({'error': str(e)}, status=403)
+        except Exception as e:
+            return JsonResponse({'error': f'{e}'}, status=400)
