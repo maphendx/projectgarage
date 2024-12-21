@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.hashers import make_password, check_password
+from django.apps import apps # для одержання класів моделей
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, display_name, password=None, **extra_fields):
@@ -30,7 +31,7 @@ class CustomUser(models.Model):
     total_likes = models.PositiveIntegerField(default=0)  # Кількість лайків за весь час
     photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)  # Фото
     bio = models.TextField(blank=True, null=True)  # Коротке біо
-    hashtags = models.CharField(max_length=255, blank=True, null=True)  # Хештеги для музикантів через кому
+    hashtags = models.ManyToManyField("posts.Hashtag") # Хештеги
 
     objects = CustomUserManager()  # Використовуємо кастомний менеджер для створення користувачів
 
@@ -61,20 +62,19 @@ class CustomUser(models.Model):
     @property
     def hashtags_list(self):
         """Повертає список хештегів тільки для аутентифікованих користувачів."""
-        if not self.is_authenticated:
+        if not self.is_authenticated or not self.hashtags:
             return []
-        return self.hashtags.split(',') if self.hashtags else []
+        
+        hashSet = self.hashtags.all()
+        from posts.serializers import HashtagSerializer
+        serializer = HashtagSerializer(hashSet, many=True)
+        return serializer.data
 
     def add_hashtag(self, hashtag):
         """Додає новий хештег до користувача, тільки якщо користувач аутентифікований."""
         if not self.is_authenticated:
             raise PermissionError("Тільки аутентифіковані користувачі можуть додавати хештеги.")
-        
-        hashtags = self.hashtags_list
-        if hashtag not in hashtags:
-            hashtags.append(hashtag)
-            self.hashtags = ','.join(hashtags)
-            self.save()
+        self.hashtags.get_or_create(name=hashtag)
 
     def remove_hashtag(self, hashtag):
         """Видаляє хештег з користувача, тільки якщо користувач аутентифікований."""
