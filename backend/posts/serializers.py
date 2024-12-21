@@ -1,6 +1,11 @@
 from rest_framework import serializers
 from users.models import CustomUser
-from .models import Post, Comment
+from .models import Post, Comment, Hashtag
+
+class HashtagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hashtag
+        fields = ['name']
 
 # Сериалізатор для коментарів
 class CommentSerializer(serializers.ModelSerializer): 

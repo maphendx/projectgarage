@@ -82,20 +82,15 @@ class UserDeleteView(APIView):
         return Response({"message": "Ваш акаунт був успішно видалений!"}, status=status.HTTP_204_NO_CONTENT)
 
 
-class HashtagView(View):
-    # Обробник для отримання списку всіх хештегів
-    @method_decorator(login_required)  # Перевірка, чи користувач аутентифікований
-    def get(self, request):
-        try:
-            # Читання існуючих хештегів з JSON файлу
-            with open('hashtags.json', 'r', encoding='utf-8') as file:
-                existing_hashtags = json.load(file)
-            return JsonResponse({'hashtags': existing_hashtags}, status=200)
-        except FileNotFoundError:
-            return JsonResponse({'error': 'Файл з хештегами не знайдений'}, status=404)
+class HashtagView(APIView):
+    permission_classes = [IsAuthenticated]  # Це перевірить, чи користувач авторизований через токен
+
+    # Одержати список хештегів
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        return Response(user.hashtags_list)
 
     # Обробник для додавання нового хештега
-    @method_decorator(login_required)
     def post(self, request):
         user = request.user
         hashtag = request.POST.get('hashtag')
@@ -107,23 +102,7 @@ class HashtagView(View):
         if not user.is_authenticated:
             return JsonResponse({'error': 'Тільки аутентифіковані користувачі можуть додавати хештеги.'}, status=403)
         
-        # Читання існуючих хештегів
-        try:
-            with open('hashtags.json', 'r', encoding='utf-8') as file:
-                existing_hashtags = json.load(file)
-        except FileNotFoundError:
-            existing_hashtags = []
-
-        # Додавання хештега до списку
-        if hashtag not in existing_hashtags:
-            existing_hashtags.append(hashtag)
-            # Оновлення JSON файлу
-            with open('hashtags.json', 'w', encoding='utf-8') as file:
-                json.dump(existing_hashtags, file, ensure_ascii=False, indent=4)
-
-        # Додавання хештега до користувача
         user.add_hashtag(hashtag)
-
         return JsonResponse({'message': 'Хештег додано успішно'}, status=200)
 
     # Обробник для видалення хештега
