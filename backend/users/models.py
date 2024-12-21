@@ -50,6 +50,10 @@ class CustomUser(models.Model):
         return check_password(raw_password, self.password)
 
     @property
+    def hashtagClass(self):
+        return apps.get_model("posts", "Hashtag")
+
+    @property
     def is_authenticated(self):
         """Завжди повертає True для кастомної моделі користувача."""
         return True
@@ -66,7 +70,7 @@ class CustomUser(models.Model):
             return []
         
         hashSet = self.hashtags.all()
-        from posts.serializers import HashtagSerializer
+        from posts.serializers import HashtagSerializer # воно не просто так всередині імпотується, там інакше циклічний імпорт помилка смерть
         serializer = HashtagSerializer(hashSet, many=True)
         return serializer.data
 
@@ -74,18 +78,20 @@ class CustomUser(models.Model):
         """Додає новий хештег до користувача, тільки якщо користувач аутентифікований."""
         if not self.is_authenticated:
             raise PermissionError("Тільки аутентифіковані користувачі можуть додавати хештеги.")
-        self.hashtags.get_or_create(name=hashtag)
+        if self.hashtags.filter(name=hashtag):
+            raise Exception("Даний хештег вже пов'язаний з поточним користувачем.")
+        try:
+            self.hashtags.get_or_create(name=hashtag)
+        except: # Для випадку, якщо тег вже в БД є, але не зв'язаний з цим юзером через проміжну таблицю
+            self.hashtags.add(self.hashtagClass.objects.get(name=hashtag))
 
     def remove_hashtag(self, hashtag):
         """Видаляє хештег з користувача, тільки якщо користувач аутентифікований."""
         if not self.is_authenticated:
             raise PermissionError("Тільки аутентифіковані користувачі можуть видаляти хештеги.")
-        
-        hashtags = self.hashtags_list
-        if hashtag in hashtags:
-            hashtags.remove(hashtag)
-            self.hashtags = ','.join(hashtags)
-            self.save()
+        if not self.hashtags.filter(name=hashtag):
+            raise Exception("Даний хештег не пов'язаний з поточним користувачем.")
+        self.hashtags.remove(self.hashtagClass.objects.get(name=hashtag))
 
     class Meta:
         verbose_name = 'Користувач'
