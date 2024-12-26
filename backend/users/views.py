@@ -34,14 +34,20 @@ class UserLoginView(generics.GenericAPIView):
                 return Response({"message": "Користувача не знайдено!"}, status=status.HTTP_400_BAD_REQUEST)
             
             if user.check_password(serializer.validated_data['password']):
-                # Створюємо або отримуємо токен для користувача
+                # Create or get a token for the user
                 token, created = Token.objects.get_or_create(user=user)
-                # Відправляємо токен в відповіді
-                return Response({"message": "Успішний вхід!", "token": token.key}, status=status.HTTP_200_OK)
+                
+                # Include the `display_name` in the response
+                display_name = user.display_name  # Replace `display_name` with the correct field in your model
+
+                return Response({
+                    "message": "Успішний вхід!",
+                    "token": token.key,
+                    "display_name": display_name
+                }, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "Невірний пароль!"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 # Профіль користувача
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -83,22 +89,19 @@ class UserDeleteView(APIView):
 
 
 class HashtagView(APIView):
-    permission_classes = [IsAuthenticated]  # Це перевірить, чи користувач авторизований через токен
+    permission_classes = [IsAuthenticated]
 
-    # Одержати список хештегів
     def get(self, request, *args, **kwargs):
         user = request.user
         return Response(user.hashtags_list)
 
-    # Обробник для додавання нового хештега
     def post(self, request):
         user = request.user
-        hashtag = request.POST.get('hashtag')
+        hashtag = request.data.get('hashtag')  # Changed from request.POST to request.data
         
         if not hashtag:
             return JsonResponse({'error': 'Хештег не вказаний'}, status=400)
         
-        # Перевірка, чи користувач не додає хештег без аутентифікації
         if not user.is_authenticated:
             return JsonResponse({'error': 'Тільки аутентифіковані користувачі можуть додавати хештеги.'}, status=403)
     
@@ -107,21 +110,18 @@ class HashtagView(APIView):
             return JsonResponse({'message': 'Хештег додано успішно'}, status=200)
         except Exception as e:
             return JsonResponse({'error': f'{e}'}, status=400)
-        
 
-    # Обробник для видалення хештега
     def delete(self, request):
         user = request.user
-        hashtag = request.POST.get('hashtag')
+        hashtag = request.data.get('hashtag')  
+        
         
         if not hashtag:
             return JsonResponse({'error': 'Хештег не вказаний'}, status=400)
 
-        # Перевірка, чи користувач може видаляти хештеги
         if not user.is_authenticated:
             return JsonResponse({'error': 'Тільки аутентифіковані користувачі можуть видаляти хештеги.'}, status=403)
 
-        # Видалення хештега з користувача
         try:
             user.remove_hashtag(hashtag)
             return JsonResponse({'message': 'Хештег видалено успішно'}, status=200)

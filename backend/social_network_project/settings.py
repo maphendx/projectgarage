@@ -150,7 +150,6 @@ CORS_ALLOWED_ORIGINS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ),
 }
@@ -159,3 +158,5 @@ AUTHENTICATION_BACKENDS = [
     'users.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',  # Залиште дефолтний бекенд для інших випадків
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
