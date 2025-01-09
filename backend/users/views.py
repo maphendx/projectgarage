@@ -7,9 +7,10 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from .models import CustomUser
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, SubscribeSerializer
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+
 
 
 # Реєстрація користувача
@@ -62,14 +63,17 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         user = self.get_object()
         if 'password' in self.request.data:
             password = self.request.data['password']
-            user.set_password(password)  # Якщо пароль змінюється
+            user.set_password(password)
+            user.save()  # Зберігаємо оновлений пароль
+            # Видаляємо всі токени, пов'язані з цим користувачем
+            Token.objects.filter(user=user).delete()
         serializer.save()
 
 # Вихід з акаунту (інвалідизація токену)
 class UserLogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs): 
         try:
             # Отримуємо токен, пов'язаний з користувачем
             token = Token.objects.get(user=request.user)
@@ -85,6 +89,8 @@ class UserDeleteView(APIView):
     def delete(self, request, *args, **kwargs):
         user = request.user
         user.delete()  # Видаляємо користувача
+        token = Token.objects.get(user=request.user)
+        token.delete()  # Видаляємо токен для завершення сесії
         return Response({"message": "Ваш акаунт був успішно видалений!"}, status=status.HTTP_204_NO_CONTENT)
 
 
@@ -93,23 +99,23 @@ class HashtagView(APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        return Response(user.hashtags_list)
+        return Response(user.hashtags_list, status=status.HTTP_200_OK)
 
     def post(self, request):
         user = request.user
         hashtag = request.data.get('hashtag')  # Changed from request.POST to request.data
         
         if not hashtag:
-            return JsonResponse({'error': 'Хештег не вказаний'}, status=400)
+            return JsonResponse({'error': 'Хештег не вказаний'}, status=status.HTTP_400_BAD_REQUEST)
         
         if not user.is_authenticated:
-            return JsonResponse({'error': 'Тільки аутентифіковані користувачі можуть додавати хештеги.'}, status=403)
+            return JsonResponse({'error': 'Тільки аутентифіковані користувачі можуть додавати хештеги.'}, status=status.HTTP_403_FORBIDDEN)
     
         try:
             user.add_hashtag(hashtag)
-            return JsonResponse({'message': 'Хештег додано успішно'}, status=200)
+            return JsonResponse({'message': 'Хештег додано успішно'}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            return JsonResponse({'error': f'{e}'}, status=400)
+            return JsonResponse({'error': f'{e}'}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request):
         user = request.user
@@ -117,15 +123,60 @@ class HashtagView(APIView):
         
         
         if not hashtag:
-            return JsonResponse({'error': 'Хештег не вказаний'}, status=400)
+            return JsonResponse({'error': 'Хештег не вказаний'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not user.is_authenticated:
-            return JsonResponse({'error': 'Тільки аутентифіковані користувачі можуть видаляти хештеги.'}, status=403)
+            return JsonResponse({'error': 'Тільки аутентифіковані користувачі можуть видаляти хештеги.'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             user.remove_hashtag(hashtag)
-            return JsonResponse({'message': 'Хештег видалено успішно'}, status=200)
+            return JsonResponse({'message': 'Хештег видалено успішно'}, status=status.HTTP_200_OK)
         except PermissionError as e:
-            return JsonResponse({'error': str(e)}, status=403)
+            return JsonResponse({'error': str(e)}, status=status.HTTP_403_FORBIDDEN)
         except Exception as e:
-            return JsonResponse({'error': f'{e}'}, status=400)
+            return JsonResponse({'error': f'{e}'}, status=status.HTTP_400_BAD_REQUEST)
+
+class SubscriptionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        try:
+            user_to_follow = CustomUser.objects.get(id = user_id)
+            request.user.subscribe(user_to_follow)
+            return Response({"message": f"Ви підписались на {user_to_follow.username}"}, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response({"message": "Користувача не знайдено"}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, user_id):
+        try:
+            user_to_unfollow = CustomUser.objects.get(id=user_id) 
+            request.user.unsubscribe(user_to_unfollow)
+            return Response({"message": f"Ви відписались від {user_to_unfollow.username}"}, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response({"message": "Користувача не знайдено"}, status=status.HTTP_404_NOT_FOUND)
+
+class UserSubscriptionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+
+        try:
+            user = CustomUser.objects.get(id=user_id)
+            subscriptions = user.subscriptions.all()
+            serializer = SubscribeSerializer(subscriptions, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response({"message": "Користувача не знайдено"}, status=status.HTTP_404_NOT_FOUND)
+
+class UserSubscribersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        try:
+            user = CustomUser.objects.get(id=user_id)
+            subscribers = user.subscribers.all()
+            serializer = SubscribeSerializer(subscribers, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response({"message": "Користувача не зндено"}, status=status.HTTP_404_NOT_FOUND)
+
