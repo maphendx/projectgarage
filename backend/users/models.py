@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.hashers import make_password, check_password
 from django.apps import apps # для одержання класів моделей
+from django.core.exceptions import ValidationError
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, display_name, password=None, **extra_fields):
@@ -31,15 +32,31 @@ class CustomUser(models.Model):
     total_likes = models.PositiveIntegerField(default=0)  # Кількість лайків за весь час
     photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)  # Фото
     bio = models.TextField(blank=True, null=True)  # Коротке біо
-    hashtags = models.ManyToManyField("posts.Hashtag") # Хештеги
-
+    hashtags = models.ManyToManyField("posts.Hashtag", blank=False) # Хештеги
     objects = CustomUserManager()  # Використовуємо кастомний менеджер для створення користувачів
+    subscriptions = models.ManyToManyField("self", symmetrical=False, blank=True , related_name="subscribers")
 
     REQUIRED_FIELDS = ['display_name', 'password']  # Вказуємо обов'язкові поля
     USERNAME_FIELD = 'email'  # Використовуємо email для автентифікації користувачів
 
     def __str__(self):
         return self.display_name
+
+    def subscribe(self, user):
+        """Підписка на користувача."""
+        self.subscriptions.add(user)
+        self.subscriptions_count = self.subscriptions.count() # оновлюємо кількість підписок
+        user.subscribers_count = user.subscribers.count() # оновлюємо кількість підписаних
+        self.save()
+        user.save()
+
+    def unsubscribe(self, user):
+        """Відписка з користувача."""
+        self.subscriptions.remove(user)
+        self.subscriptions_count = self.subscriptions.count() # оновлюємо кількість підписок
+        user.subscribers_count = user.subscribers.count() # оновлюємо кількість підписаних
+        self.save()
+        user.save()
 
     def set_password(self, raw_password):
         """Хешуємо пароль."""
@@ -96,3 +113,13 @@ class CustomUser(models.Model):
     class Meta:
         verbose_name = 'Користувач'
         verbose_name_plural = 'Користувачі'
+
+    def clean(self):
+        """Перевірка на кількість хештегів."""
+        if not (5 <= self.hashtags.count() <= 30):
+            raise ValidationError("Кількість хештегів має бути в межах від 5 до 30.")
+
+    def save(self, *args, **kwargs):
+        """Перевіряємо обмеження перед збереженням."""
+        self.full_clean()  # Викликає метод clean()
+        super().save(*args, **kwargs)

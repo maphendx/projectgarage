@@ -34,3 +34,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['email', 'full_name', 'display_name', 'bio', 'photo', 'hashtags', 'subscriptions_count', 'subscribers_count', 'total_likes']
         read_only_fields = ['subscriptions_count', 'subscribers_count', 'total_likes']
+
+class SubscribeSerializer(serializers.Serializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'display_name', 'photo']
