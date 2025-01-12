@@ -10,6 +10,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from datetime import timedelta
 from django.utils.timezone import now
+from users.models import CustomUser
 
 # Пост: список та деталі
 class PostListView(APIView):
@@ -110,7 +111,7 @@ class RecommendedPostsView(APIView):
         Повертає список рекомендованих постів для користувача, складений з репостів від підписок,
         популярних постів, постів з релевантними хештегами та адаптивних рекомендацій на основі текстової схожості.
         """
-        user = request.user
+        user = request.CustomUser
 
         # Отримуємо підписки користувача
         subscriptions = user.subscriptions.all()

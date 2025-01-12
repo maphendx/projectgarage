@@ -88,7 +88,7 @@ WSGI_APPLICATION = 'social_network_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'social_network_db',    # Назва бази даних   (треба створити вручну в постгрес)
+        'NAME': 'social_network_db_2',    # Назва бази даних   (треба створити вручну в постгрес)
         'USER': 'postgres',             # Ім'я користувача   (скоріш за все в вас так і залишиться postgres)
         'PASSWORD': '4839150',          # Пароль користувача (тут все зрозуміло) 
         'HOST': 'localhost',            # Ім'я хоста         (ті дані які ви вказали в постгрес)
