@@ -10,7 +10,7 @@ from .models import CustomUser
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, SubscribeSerializer
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-
+from backends import RecommendationService
 
 
 # Реєстрація користувача
@@ -121,7 +121,6 @@ class HashtagView(APIView):
         user = request.user
         hashtag = request.data.get('hashtag')  
         
-        
         if not hashtag:
             return JsonResponse({'error': 'Хештег не вказаний'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -179,4 +178,19 @@ class UserSubscribersView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except CustomUser.DoesNotExist:
             return Response({"message": "Користувача не зндено"}, status=status.HTTP_404_NOT_FOUND)
+
+class RecommendationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """
+        Повертає список рекомендованих користувачів для поточного користувача на основі схожості їхніх інтересів та інших факторів.
+
+        :param запит: об'єкт запиту
+        :return: Список об'єктів користувача, серіалізованих як JSON, з кодом статусу 200
+        """
+        current_user = request.user
+        recommendations = RecommendationService.recommend_users(current_user, threshold=0.7) #Якщо користувачі мають невелику кількість спільних хештегів, великий поріг може призвести до порожніх рекомендацій.
+        serializer = UserProfileSerializer(recommendations, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
