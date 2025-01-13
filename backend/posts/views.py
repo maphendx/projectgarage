@@ -37,7 +37,7 @@ class PostListView(APIView):
         
         serializer = PostSerializer(data=request.data)    
         if serializer.is_valid():    
-            serializer.save()  # Створюємо новий пост
+            serializer.save(author=request.user)  # Створюємо новий пост
             return Response(serializer.data , status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
