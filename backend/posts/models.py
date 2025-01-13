@@ -2,6 +2,7 @@ from django.db import models
 from users.models import CustomUser
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
+from users.models import display_name
 
 # Модель для хештегів
 class Hashtag(models.Model):
@@ -19,7 +20,7 @@ class Comment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'Comment {self.id} on post {self.post.id} by {self.author.username}'
+        return f'Comment {self.id} on post {self.post.id} by {self.author.display_name}'
 
 # Модель для постів
 class Post(models.Model):
@@ -36,8 +37,8 @@ class Post(models.Model):
 
     def __str__(self):
         if self.original_post:
-            return f'Repost of {self.original_post.id} by {self.author.username}'
-        return f'Post {self.id} by {self.author.username}'
+            return f'Repost of {self.original_post.id} by {self.author.display_name}'
+        return f'Post {self.id} by {self.author.display_name}'
 
     def clean(self):
         """Перевірка на кількість хештегів."""
