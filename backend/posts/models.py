@@ -2,7 +2,7 @@ from django.db import models
 from users.models import CustomUser
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
-from users.models import display_name
+
 
 # Модель для хештегів
 class Hashtag(models.Model):
