@@ -13,6 +13,8 @@ from django.utils.decorators import method_decorator
 from nltk.metrics import jaccard_distance
 from django.db.models import Q
 from users.models import CustomUser
+from posts.models import Post
+from posts.serializers import PostSerializer
 
 
 
@@ -59,6 +61,10 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     queryset = CustomUser.objects.all()
     permission_classes = [IsAuthenticated]  # Перевірка на аутентифікацію
 
+    def get_queryset(self):
+        """Отримання постів аутентифікованого користувача."""
+        return Post.objects.filter(author=self.request.user).order_by('-created_at')
+
     def get_object(self):
         return self.request.user  # Отримуємо профіль аутентифікованого користувача
 
@@ -71,6 +77,17 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
             # Видаляємо всі токени, пов'язані з цим користувачем
             Token.objects.filter(user=user).delete()
         serializer.save()
+
+
+class UserProfileDetailView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Отримання постів для конкретного користувача за його ID."""
+        user_id = self.kwargs['user_id']
+        return Post.objects.filter(author__id=user_id).order_by('-created_at')
+
 
 # Вихід з акаунту (інвалідизація токену)
 class UserLogoutView(APIView):
@@ -238,17 +255,5 @@ class RecommendationView(APIView):
         recommendations = RecommendationService.recommend_users(current_user, threshold=0.7) #Якщо користувачі мають невелику кількість спільних хештегів, великий поріг може призвести до порожніх рекомендацій.
         serializer = UserProfileSerializer(recommendations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-class UserProfileDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, user_id):
-        try:
-            user = CustomUser.objects.get(pk=user_id)
-            serializer = UserProfileSerializer(user)
-            
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except CustomUser.DoesNotExist:
-            return Response({"detail": "Користувача не знайдено."}, status=status.HTTP_404_NOT_FOUND)
 
 

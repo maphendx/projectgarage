@@ -63,37 +63,76 @@ class PostDetailView(APIView):
 
 # Коментарі: список та створення
 class CommentListView(APIView):
-    def get(self, request):
-        comments = Comment.objects.all()  # Отримуємо всі коментарі
-        serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data , status=status.HTTP_200_OK)
+    permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        serializer = CommentSerializer(data=request.data)  # Створюємо новий коментар
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request, post_id):
+        try:
+            comments = Comment.objects.filter(post_id=post_id)
+            serializer = CommentSerializer(comments, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, post_id):
+        try:
+            # Перевіряємо чи існує пост
+            post = Post.objects.get(pk=post_id)
+            
+            # Створюємо дані для коментаря
+            data = request.data.copy()
+            data['post'] = post_id
+            data['author'] = request.user.id
+            
+            serializer = CommentSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Post.DoesNotExist:
+            return Response({"detail": "Пост не знайдено"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # Коментарі: деталі, оновлення, видалення
 class CommentDetailView(APIView):
-    def get(self, request, pk):
-        comment = Comment.objects.get(pk=pk)  # Отримуємо коментар
-        serializer = CommentSerializer(comment)
-        return Response(serializer.data , status=status.HTTP_200_OK)
+    permission_classes = [IsAuthenticated]
 
-    def put(self, request, pk):
-        comment = Comment.objects.get(pk=pk)  # Оновлюємо коментар
-        serializer = CommentSerializer(comment, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data , status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request, post_id, pk):
+        try:
+            comment = Comment.objects.get(post_id=post_id, pk=pk)
+            serializer = CommentSerializer(comment)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Comment.DoesNotExist:
+            return Response({"detail": "Коментар не знайдено"}, status=status.HTTP_404_NOT_FOUND)
 
-    def delete(self, request, pk):
-        comment = Comment.objects.get(pk=pk)  # Видаляємо коментар
-        comment.delete()
-        return Response({"detail": "Коментар успішно видалено."}, status=status.HTTP_204_NO_CONTENT)
+    def put(self, request, post_id, pk):
+        try:
+            comment = Comment.objects.get(post_id=post_id, pk=pk)
+            
+            # Перевіряємо чи користувач є автором коментаря
+            if comment.author != request.user:
+                return Response({"detail": "Ви не маєте прав на редагування цього коментаря"}, status=status.HTTP_403_FORBIDDEN)
+            
+            serializer = CommentSerializer(comment, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Comment.DoesNotExist:
+            return Response({"detail": "Коментар не знайдено"}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, post_id, pk):
+        try:
+            comment = Comment.objects.get(post_id=post_id, pk=pk)
+            
+            # Перевіряємо чи користувач є автором коментаря
+            if comment.author != request.user:
+                return Response({"detail": "Ви не маєте прав на видалення цього коментаря"}, status=status.HTTP_403_FORBIDDEN)
+            
+            comment.delete()
+            return Response({"detail": "Коментар успішно видалено"}, status=status.HTTP_204_NO_CONTENT)
+        except Comment.DoesNotExist:
+            return Response({"detail": "Коментар не знайдено"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class RecommendedPostsView(APIView):
