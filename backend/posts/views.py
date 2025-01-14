@@ -2,6 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError
 from .models import Post, Comment, Like
 from rest_framework import status
 from .serializers import PostSerializer, CommentSerializer
@@ -198,3 +199,17 @@ class RecentLikesView(APIView):
         posts = [like.post for like in recent_likes]
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class PostListView(APIView):
+    def post(self, request):    
+        try:
+            data = request.data.copy()
+            data['author'] = request.user.id
+            
+            serializer = PostSerializer(data=data, context={'request': request})
+            if serializer.is_valid():    
+                serializer.save(author=request.user)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
