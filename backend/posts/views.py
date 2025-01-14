@@ -12,6 +12,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from datetime import timedelta
 from django.utils.timezone import now
 from users.models import CustomUser
+from .utlis import MediaProcessor
 
 # Пост: список та деталі
 class PostListView(APIView):
@@ -22,13 +23,13 @@ class PostListView(APIView):
         serializer = PostSerializer(posts, many=True, context={'request': request})  # Додаємо контекст
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-    def post(self, request):  
+    def post(self, request):
         try:
             data = request.data.copy()  # Копіюємо дані з запиту
             data['author'] = request.user.id  # Додаємо ID автора
-            
-            if 'original_post' in data:  # Перевіряємо, чи є ID оригінального поста
+
+            # Перевіряємо, чи є ID оригінального поста
+            if 'original_post' in data:
                 try:
                     original_post = Post.objects.get(pk=data['original_post'])
                     data['content'] = data.get('content', '') + f'\n\nОригінальний пост: {original_post.content}'
@@ -36,7 +37,25 @@ class PostListView(APIView):
                     return Response({"detail": "Оригінальний пост не знайдено."}, status=status.HTTP_404_NOT_FOUND)
                 if original_post.original_post is not None:
                     return Response({"detail": "Це не оригінальний пост."}, status=status.HTTP_400_BAD_REQUEST)
-            
+
+            # Створюємо процесор медіа
+            processor = MediaProcessor()
+
+            # Обробляємо зображення
+            if 'image' in request.FILES:
+                data['image'] = processor.process_image(request.FILES['image'])
+
+            # Обробляємо відео
+            if 'video' in request.FILES:
+                processed_video, thumbnail = processor.process_video(request.FILES['video'])
+                data['video'] = processed_video
+                data['video_thumbnail'] = thumbnail
+
+            # Обробляємо аудіо
+            if 'audio' in request.FILES:
+                data['audio'] = processor.process_audio(request.FILES['audio'])
+
+            # Сериалізуємо дані
             serializer = PostSerializer(data=data, context={'request': request})
             if serializer.is_valid():    
                 serializer.save(author=request.user)
@@ -44,6 +63,9 @@ class PostListView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 # Пост: деталі, оновлення, видалення
 class PostDetailView(APIView):    
