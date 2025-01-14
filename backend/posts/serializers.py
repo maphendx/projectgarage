@@ -22,10 +22,12 @@ class PostSerializer(serializers.ModelSerializer):
         if request is None:
             return None
         profile_url = request.build_absolute_uri(f"api/users/profile/{obj.author.id}/")
+        hashtags = obj.author.hashtags.all()[:3]
+        hashtags_data = [{"id": hashtag.id, "name": hashtag.name} for hashtag in hashtags]
         return {
             "id": obj.author.id,
             "photo": obj.author.photo.url,
-            "hashtags": obj.author.hashtags.all()[:3],
+            "hashtags": hashtags_data,
             "display_name": obj.author.display_name,
             "profile_url": profile_url
         }
