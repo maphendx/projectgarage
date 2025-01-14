@@ -17,7 +17,7 @@ class CommentSerializer(serializers.ModelSerializer):
 class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'display_name']  # Додаємо display_name
+        fields = ['id', 'full_name', 'display_name']  # Додаємо display_name
 
 
 # Сериалізатор для постів
