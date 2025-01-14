@@ -13,8 +13,16 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ['id', 'author', 'content', 'created_at', 'updated_at']
 
+
+class AuthorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'display_name']  # Додаємо display_name
+
+
 # Сериалізатор для постів
 class PostSerializer(serializers.ModelSerializer):
+    author = AuthorSerializer(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)  # Додаємо коментарі до поста
 
     class Meta:
