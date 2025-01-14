@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 import json
 from django.views import View 
-from rest_framework import generics, status
+from rest_framework import generics, status, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -78,10 +78,16 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         user = self.get_object()
         if 'password' in self.request.data:
             password = self.request.data['password']
+            if not password:  # перевірка на пустий пароль
+                raise serializers.ValidationError({"password": "Пароль не може бути пустим"})
+            
             user.set_password(password)
-            user.save()  # Зберігаємо оновлений пароль
-            # Видаляємо всі токени, пов'язані з цим користувачем
+            user.save()
+            
+            # Створюємо новий токен замість видалення всіх
             Token.objects.filter(user=user).delete()
+            Token.objects.create(user=user)
+            
         serializer.save()
 
 
