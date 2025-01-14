@@ -22,25 +22,28 @@ class PostListView(APIView):
         serializer = PostSerializer(posts, many=True, context={'request': request})  # Додаємо контекст
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def post(self, request):    
-        data = request.data.copy()  # Копіюємо дані з запиту
-        data['author'] = request.user.id  # Додаємо ID автора
-        
-        if 'original_post' in data:  # Перевіряємо, чи є ID оригінального поста
-            try:
-                original_post = Post.objects.get(pk=data['original_post'])
-                data['content'] = data.get('content', '') + f'\n\nОригінальний пост: {original_post.content}'
-            except Post.DoesNotExist:
-                return Response({"detail": "Оригінальний пост не знайдено."}, status=status.HTTP_404_NOT_FOUND)
-            if original_post.original_post is not None:
-                return Response({"detail": "Це не оригінальний пост."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        serializer = PostSerializer(data=data, context={'request': request})  # Додаємо контекст
-        if serializer.is_valid():    
-            serializer.save(author=request.user)  # Створюємо новий пост
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def post(self, request):  
+        try:
+            data = request.data.copy()  # Копіюємо дані з запиту
+            data['author'] = request.user.id  # Додаємо ID автора
+            
+            if 'original_post' in data:  # Перевіряємо, чи є ID оригінального поста
+                try:
+                    original_post = Post.objects.get(pk=data['original_post'])
+                    data['content'] = data.get('content', '') + f'\n\nОригінальний пост: {original_post.content}'
+                except Post.DoesNotExist:
+                    return Response({"detail": "Оригінальний пост не знайдено."}, status=status.HTTP_404_NOT_FOUND)
+                if original_post.original_post is not None:
+                    return Response({"detail": "Це не оригінальний пост."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            serializer = PostSerializer(data=data, context={'request': request})
+            if serializer.is_valid():    
+                serializer.save(author=request.user)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # Пост: деталі, оновлення, видалення
 class PostDetailView(APIView):    
@@ -199,17 +202,3 @@ class RecentLikesView(APIView):
         posts = [like.post for like in recent_likes]
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-class PostListView(APIView):
-    def post(self, request):    
-        try:
-            data = request.data.copy()
-            data['author'] = request.user.id
-            
-            serializer = PostSerializer(data=data, context={'request': request})
-            if serializer.is_valid():    
-                serializer.save(author=request.user)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except ValidationError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
