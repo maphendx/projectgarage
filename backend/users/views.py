@@ -10,7 +10,10 @@ from .models import CustomUser
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, SubscribeSerializer
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from users.backends import RecommendationService
+from nltk.metrics import jaccard_distance
+from django.db.models import Q
+from users.models import CustomUser
+
 
 
 # Реєстрація користувача
@@ -179,6 +182,48 @@ class UserSubscribersView(APIView):
         except CustomUser.DoesNotExist:
             return Response({"message": "Користувача не зндено"}, status=status.HTTP_404_NOT_FOUND)
 
+
+class RecommendationService:
+    @staticmethod
+    def recommend_users(current_user, threshold=0.6):
+        recommended_users = []
+
+        # 1. Схожість хештегів
+        current_user_tags = set(tag.name for tag in current_user.hashtags.all())
+        for user in CustomUser.objects.exclude(id=current_user.id):
+            user_tags = set(tag.name for tag in user.hashtags.all())
+            if len(user_tags) == 0:
+                continue
+            similarity = 1 - jaccard_distance(current_user_tags, user_tags)
+            if similarity >= threshold:
+                recommended_users.append(user)
+
+        # 2. Активність
+        recommended_users.extend(
+            CustomUser.objects.filter(total_likes__gte=current_user.total_likes).exclude(id=current_user.id)
+        )
+
+        # 3. Взаємний пошук
+        recommended_users.extend(
+            CustomUser.objects.filter(
+                subscriptions__in=current_user.subscriptions.all(),
+                subscribers__in=current_user.subscribers.all()
+            ).exclude(id=current_user.id)
+        )
+
+        # 4. Географічний принцип
+        recommended_users.extend(
+            CustomUser.objects.filter(
+                Q(location__icontains=current_user.location)
+            ).exclude(id=current_user.id)
+        )
+
+        # Видалення дублікатів
+        recommended_users = list(set(recommended_users))
+        return recommended_users
+
+
+
 class RecommendationView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -193,4 +238,16 @@ class RecommendationView(APIView):
         recommendations = RecommendationService.recommend_users(current_user, threshold=0.7) #Якщо користувачі мають невелику кількість спільних хештегів, великий поріг може призвести до порожніх рекомендацій.
         serializer = UserProfileSerializer(recommendations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class UserProfileDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        try:
+            user = CustomUser.objects.get(pk=user_id)
+            serializer = UserProfileSerializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response({"detail": "Користувача не знайдено."}, status=status.HTTP_404_NOT_FOUND)
+
 

@@ -14,18 +14,24 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ['id', 'author', 'content', 'created_at', 'updated_at']
 
 
-class AuthorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ['id', 'full_name', 'display_name']  # Додаємо display_name
+
 
 
 # Сериалізатор для постів
 class PostSerializer(serializers.ModelSerializer):
-    author = AuthorSerializer(read_only=True)
-    comments = CommentSerializer(many=True, read_only=True)  # Додаємо коментарі до поста
+    author = serializers.SerializerMethodField()
+
+    def get_author(self, obj):
+        request = self.context.get('request')  # Отримуємо об'єкт запиту
+        profile_url = request.build_absolute_uri(f"/users/profile/{obj.author.id}/")  # Формуємо URL
+        return {
+            "id": obj.author.id,
+            "display_name": obj.author.display_name,
+            "profile_url": profile_url
+        }
+
+    comments = CommentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ['id', 'content', 'image', 'video', 'hashtags', 'likes', 'comments', 'created_at', 'updated_at', 'original_post']
-        read_only_fields = ['author']
+        fields = ['id', 'author', 'content', 'image', 'video', 'hashtags', 'likes', 'comments', 'created_at', 'updated_at', 'original_post']
