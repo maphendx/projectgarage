@@ -31,7 +31,7 @@ class UserLoginSerializer(serializers.Serializer):
     password = serializers.CharField(required=True, write_only=True)
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    posts = PostSerializer(many=True, read_only=True, source='posts')
+    posts = PostSerializer(many=True, read_only=True)
 
     class Meta:
         model = CustomUser
