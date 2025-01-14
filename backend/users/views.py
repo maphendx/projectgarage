@@ -58,14 +58,21 @@ class UserLoginView(generics.GenericAPIView):
 # Профіль користувача
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated]  # Перевірка на аутентифікацію
-
-    def get_queryset(self):
-        """Отримання постів аутентифікованого користувача."""
-        return Post.objects.filter(author=self.request.user).order_by('-created_at')
+    permission_classes = [IsAuthenticated]  # Доступ тільки для авторизованих користувачів
 
     def get_object(self):
-        return self.request.user  # Отримуємо профіль аутентифікованого користувача
+        """
+        Повертає профіль поточного авторизованого користувача.
+        """
+        return self.request.user
+
+    def get(self, request, *args, **kwargs):
+        """
+        Обробляє GET-запит і повертає профіль користувача разом із його постами.
+        """
+        user = self.get_object()
+        serializer = self.get_serializer(user)
+        return Response(serializer.data)
 
     def perform_update(self, serializer):
         user = self.get_object()
