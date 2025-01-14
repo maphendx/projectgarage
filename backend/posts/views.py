@@ -12,7 +12,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from datetime import timedelta
 from django.utils.timezone import now
 from users.models import CustomUser
-from .utlis import MediaProcessor
+
 
 # Пост: список та деталі
 class PostListView(APIView):
@@ -37,23 +37,6 @@ class PostListView(APIView):
                     return Response({"detail": "Оригінальний пост не знайдено."}, status=status.HTTP_404_NOT_FOUND)
                 if original_post.original_post is not None:
                     return Response({"detail": "Це не оригінальний пост."}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Створюємо процесор медіа
-            processor = MediaProcessor()
-
-            # Обробляємо зображення
-            if 'image' in request.FILES:
-                data['image'] = processor.process_image(request.FILES['image'])
-
-            # Обробляємо відео
-            if 'video' in request.FILES:
-                processed_video, thumbnail = processor.process_video(request.FILES['video'])
-                data['video'] = processed_video
-                data['video_thumbnail'] = thumbnail
-
-            # Обробляємо аудіо
-            if 'audio' in request.FILES:
-                data['audio'] = processor.process_audio(request.FILES['audio'])
 
             # Сериалізуємо дані
             serializer = PostSerializer(data=data, context={'request': request})
@@ -224,3 +207,42 @@ class RecentLikesView(APIView):
         posts = [like.post for like in recent_likes]
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+# ... existing code ...
+
+class LikeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, post_id):
+        try:
+            post = Post.objects.get(pk=post_id)
+            
+            # Перевіряємо чи користувач вже лайкнув цей пост
+            like, created = Like.objects.get_or_create(
+                user=request.user,
+                post=post
+            )
+            
+            if not created:
+                # Якщо лайк вже існує - видаляємо його (тобто "знімаємо" лайк)
+                like.delete()
+                return Response({
+                    "detail": "Лайк видалено",
+                    "likes_count": post.likes.count()
+                }, status=status.HTTP_200_OK)
+            
+            return Response({
+                "detail": "Лайк додано",
+                "likes_count": post.likes.count()
+            }, status=status.HTTP_201_CREATED)
+            
+        except Post.DoesNotExist:
+            return Response(
+                {"detail": "Пост не знайдено"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"detail": str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )

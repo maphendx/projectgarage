@@ -1,5 +1,7 @@
 from django.urls import path
-from .views import PostListView, PostDetailView, CommentListView, CommentDetailView, RecommendedPostsView, RecentLikesView
+from .views import PostListView, PostDetailView, CommentListView, CommentDetailView, RecommendedPostsView, RecentLikesView, LikeView
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     # Шляхи для постів
@@ -13,4 +15,7 @@ urlpatterns = [
     
     # Шляхи для історії лайкнутого
     path('history/likes/', RecentLikesView.as_view(), name='like-list'),
+    # Шлях для лайкування поста
+    path('posts/<int:post_id>/like/', LikeView.as_view(), name='post-like'),
 ]
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  
