@@ -160,12 +160,3 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
-
-# Налаштування для медіа-процесора
-MEDIA_PROCESSOR = {
-    'IMAGE_MAX_SIZE': (1920, 1080),
-    'IMAGE_QUALITY': 85,
-    'VIDEO_MAX_SIZE': (1280, 720),
-    'AUDIO_FORMAT': 'mp3',
-    'AUDIO_BITRATE': '192k',
-}
