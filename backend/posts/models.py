@@ -68,6 +68,7 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     original_post = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
+    video_thumbnail = models.ImageField(upload_to='posts/video_thumbnails/', blank=True, null=True)
 
     def __str__(self):
         if self.original_post:
