@@ -246,6 +246,7 @@ class UserProfileDetailView(APIView):
         try:
             user = CustomUser.objects.get(pk=user_id)
             serializer = UserProfileSerializer(user)
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         except CustomUser.DoesNotExist:
             return Response({"detail": "Користувача не знайдено."}, status=status.HTTP_404_NOT_FOUND)
