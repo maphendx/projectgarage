@@ -10,7 +10,7 @@ from .models import CustomUser
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, SubscribeSerializer
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from backends import RecommendationService
+from users.backends import RecommendationService
 
 
 # Реєстрація користувача
