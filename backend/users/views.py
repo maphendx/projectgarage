@@ -58,7 +58,6 @@ class UserLoginView(generics.GenericAPIView):
 # Профіль користувача
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
-    queryset = CustomUser.objects.all()
     permission_classes = [IsAuthenticated]  # Перевірка на аутентифікацію
 
     def get_queryset(self):
