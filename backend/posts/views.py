@@ -82,16 +82,17 @@ class CommentListView(APIView):
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-class CommentListView(APIView):
-    permission_classes = [IsAuthenticated]
-
     def post(self, request, post_id):
         try:
             # Перевіряємо чи існує пост
             post = Post.objects.get(pk=post_id)
             
             # Створюємо коментар безпосередньо
-            comment = Comment.objects.create(post=post, author=request.user, content=request.data.get('content'))
+            comment = Comment.objects.create(
+                post=post,  # Використовуємо об'єкт поста замість post_id
+                author=request.user,
+                content=request.data.get('content')
+            )
             
             serializer = CommentSerializer(comment)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
