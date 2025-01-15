@@ -23,7 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls), # адмінка ТРЕБА ПЕРЕРОБИТИ НА КАСТОМНИЙ
     path('api/users/', include('users.urls')),
     path('api/posts/', include('posts.urls')),
-    #path('api/messaging/', include('messaging.urls')),
+    path('api/messaging/', include('messaging.urls')),
     #path('api/voice-channels/', include('voice_channels.urls')),
     #path('api/ai/', include('ai.urls')),
 ]

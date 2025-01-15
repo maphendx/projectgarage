@@ -16,7 +16,7 @@ class CommentSerializer(serializers.ModelSerializer):
 # Сериалізатор для постів
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
-    is_liked = serializers.SerializerMethodField()  # Додаємо нове поле
+    is_liked = serializers.SerializerMethodField()  
 
     def get_author(self, obj):
         request = self.context.get('request')
