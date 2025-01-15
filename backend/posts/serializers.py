@@ -17,6 +17,7 @@ class CommentSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()  
+    comments = serializers.SerializerMethodField()
 
     def get_author(self, obj):
         request = self.context.get('request')
@@ -38,6 +39,9 @@ class PostSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.likes.filter(id=request.user.id).exists()
         return False
+
+    def get_comments(self, obj):
+        return obj.post_comments.count()
 
     class Meta:
         model = Post
