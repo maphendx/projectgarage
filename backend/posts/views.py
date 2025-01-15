@@ -82,21 +82,20 @@ class CommentListView(APIView):
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+class CommentListView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, post_id):
         try:
             # Перевіряємо чи існує пост
             post = Post.objects.get(pk=post_id)
             
-            # Створюємо дані для коментаря
-            data = request.data.copy()
-            data['post'] = post_id
-            data['author'] = request.user.id
+            # Створюємо коментар безпосередньо
+            comment = Comment.objects.create(post=post, author=request.user, content=request.data.get('content'))
             
-            serializer = CommentSerializer(data=data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            serializer = CommentSerializer(comment)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
         except Post.DoesNotExist:
             return Response({"detail": "Пост не знайдено"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
