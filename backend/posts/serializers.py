@@ -16,6 +16,7 @@ class CommentSerializer(serializers.ModelSerializer):
 # Сериалізатор для постів
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()  # Додаємо нове поле
 
     def get_author(self, obj):
         request = self.context.get('request')
@@ -32,7 +33,12 @@ class PostSerializer(serializers.ModelSerializer):
             "profile_url": profile_url
         }
 
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(id=request.user.id).exists()
+        return False
+
     class Meta:
         model = Post
-        fields = ['id', 'author', 'content', 'image', 'video', 'audio', 'hashtags', 'likes', 'comments', 'created_at', 'updated_at', 'original_post']
-
+        fields = ['id', 'author', 'content', 'image', 'video', 'audio', 'hashtags', 'likes', 'comments', 'created_at', 'updated_at', 'original_post', 'is_liked']
