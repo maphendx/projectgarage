@@ -29,7 +29,7 @@ class PostSerializer(serializers.ModelSerializer):
         hashtags_data = [{"id": hashtag.id, "name": hashtag.name} for hashtag in hashtags]
         
         # Дефолтна SVG картинка
-        default_avatar = request.build_absolute_uri('/static/posts/g396.svg')
+        default_avatar = request.build_absolute_uri('media/default/default_avatar/g396.svg')
         
         # Використовуємо фото користувача або дефолтну SVG
         photo_url = obj.author.photo.url if obj.author.photo else default_avatar
