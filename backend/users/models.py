@@ -39,7 +39,7 @@ class CustomUser(models.Model):
     subscriptions_count = models.PositiveIntegerField(default=0)  # Кількість підписок
     subscribers_count = models.PositiveIntegerField(default=0)  # Кількість підписаних
     total_likes = models.PositiveIntegerField(default=0)  # Кількість лайків за весь час
-    photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)  # Фото
+    photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True, default='default/default_avatar/g396.svg')  # Фото
     bio = models.TextField(blank=True, null=True)  # Коротке біо
     hashtags = models.ManyToManyField(UserHashtag, blank=False)  # Хештеги користувача
     objects = CustomUserManager()  # Використовуємо кастомний менеджер для створення користувачів

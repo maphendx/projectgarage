@@ -40,4 +40,5 @@ coverage/
 .codegpt
 
 migrations/
-media/
+media/posts/
+media/profile_photos/
