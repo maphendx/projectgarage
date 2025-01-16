@@ -23,12 +23,20 @@ class PostSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request is None:
             return None
+        
         profile_url = request.build_absolute_uri(f"api/users/profile/{obj.author.id}/")
         hashtags = obj.author.hashtags.all()[:3]
         hashtags_data = [{"id": hashtag.id, "name": hashtag.name} for hashtag in hashtags]
+        
+        # Дефолтна SVG картинка
+        default_avatar = request.build_absolute_uri('/static/posts/g396.svg')
+        
+        # Використовуємо фото користувача або дефолтну SVG
+        photo_url = obj.author.photo.url if obj.author.photo else default_avatar
+        
         return {
             "id": obj.author.id,
-            "photo": obj.author.photo.url,
+            "photo": photo_url,
             "hashtags": hashtags_data,
             "display_name": obj.author.display_name,
             "profile_url": profile_url
