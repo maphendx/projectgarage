@@ -169,3 +169,8 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+import os
+# Створюємо папку для дефолтних (чортових) аватарок, якщо вона не існує 
+DEFAULT_AVATAR_DIR = os.path.join(MEDIA_ROOT, 'default', 'default_avatar')
+os.makedirs(DEFAULT_AVATAR_DIR, exist_ok=True)

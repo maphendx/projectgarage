@@ -2,6 +2,22 @@ from django.db import models
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.exceptions import ValidationError
+import os
+import random
+from django.conf import settings
+
+def get_random_avatar():
+    """Повертає випадкову аватарку з папки default_avatar"""
+    avatar_dir = os.path.join(settings.MEDIA_ROOT, 'default', 'default_avatar')
+    allowed_extensions = ('.png', '.jpg', '.jpeg', '.svg')
+    avatars = [
+        f for f in os.listdir(avatar_dir) 
+        if os.path.isfile(os.path.join(avatar_dir, f)) 
+        and f.lower().endswith(allowed_extensions)
+    ]
+    if avatars:
+        return os.path.join('default', 'default_avatar', random.choice(avatars))
+    return 'default/default_avatar/default.png'
 
 class UserHashtag(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -39,7 +55,7 @@ class CustomUser(models.Model):
     subscriptions_count = models.PositiveIntegerField(default=0)  # Кількість підписок
     subscribers_count = models.PositiveIntegerField(default=0)  # Кількість підписаних
     total_likes = models.PositiveIntegerField(default=0)  # Кількість лайків за весь час
-    photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True, default='default/default_avatar/g396.svg')  # Фото
+    photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True, default=get_random_avatar)  # Фото
     bio = models.TextField(blank=True, null=True)  # Коротке біо
     hashtags = models.ManyToManyField(UserHashtag, blank=False)  # Хештеги користувача
     objects = CustomUserManager()  # Використовуємо кастомний менеджер для створення користувачів
