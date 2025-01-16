@@ -138,34 +138,34 @@ class HashtagView(APIView):
         hashtag = request.data.get('hashtag')  # Changed from request.POST to request.data
         
         if not hashtag:
-            return JsonResponse({'error': 'Хештег не вказаний'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Хештег не вказаний'}, status=status.HTTP_400_BAD_REQUEST)
         
         if not user.is_authenticated:
-            return JsonResponse({'error': 'Тільки аутентифіковані користувачі можуть додавати хештеги.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Тільки аутентифіковані користувачі можуть додавати хештеги.'}, status=status.HTTP_403_FORBIDDEN)
     
         try:
             user.add_hashtag(hashtag)
-            return JsonResponse({'message': 'Хештег додано успішно'}, status=status.HTTP_201_CREATED)
+            return Response({'message': 'Хештег додано успішно'}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            return JsonResponse({'error': f'{e}'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': f'{e}'}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request):
         user = request.user
         hashtag = request.data.get('hashtag')  
         
         if not hashtag:
-            return JsonResponse({'error': 'Хештег не вказаний'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Хештег не вказаний'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not user.is_authenticated:
-            return JsonResponse({'error': 'Тільки аутентифіковані користувачі можуть видаляти хештеги.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Тільки аутентифіковані користувачі можуть видаляти хештеги.'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             user.remove_hashtag(hashtag)
-            return JsonResponse({'message': 'Хештег видалено успішно'}, status=status.HTTP_200_OK)
+            return Response({'message': 'Хештег видалено успішно'}, status=status.HTTP_200_OK)
         except PermissionError as e:
-            return JsonResponse({'error': str(e)}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': str(e)}, status=status.HTTP_403_FORBIDDEN)
         except Exception as e:
-            return JsonResponse({'error': f'{e}'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': f'{e}'}, status=status.HTTP_400_BAD_REQUEST)
 
 class SubscriptionsView(APIView):
     permission_classes = [IsAuthenticated]
