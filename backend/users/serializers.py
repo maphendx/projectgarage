@@ -6,6 +6,7 @@ from posts.serializers import PostSerializer
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
+    photo = serializers.ImageField(required=False)
 
     class Meta:
         model = CustomUser
@@ -17,12 +18,26 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        # Видаляємо підтвердження паролю
         validated_data.pop('password2', None)
+        # Зберігаємо пароль
         password = validated_data.pop('password', None)
+        
+        # Видаляємо фото з validated_data, якщо воно не було надано
+        # Це дозволить використати дефолтне значення з моделі
+        if 'photo' not in validated_data or not validated_data['photo']:
+            validated_data.pop('photo', None)
+            
+        # Створюємо користувача
         user = self.Meta.model(**validated_data)
+        
+        # Встановлюємо пароль
         if password is not None:
-            user.set_password(password)  # Хешування паролю
+            user.set_password(password)
+            
+        # Зберігаємо користувача
         user.save()
+        
         return user
 
 
