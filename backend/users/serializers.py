@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser
+from .models import CustomUser, UserHashtag
 from django.contrib.auth.password_validation import validate_password
 from posts.serializers import PostSerializer
 
@@ -43,3 +43,8 @@ class SubscribeSerializer(serializers.Serializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'display_name', 'photo']
+
+class UserHashtagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserHashtag
+        fields = ['name']
