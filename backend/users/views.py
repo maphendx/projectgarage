@@ -268,4 +268,50 @@ class RecommendationView(APIView):
         serializer = UserProfileSerializer(recommendations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class SearchView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        query = request.GET.get('query', '')
+        search_type = request.GET.get('type', 'all')
+        response_data = {}
+        
+        if search_type in ['all', 'users']:
+            users = CustomUser.objects.filter(Q(display_name__icontains=query) | Q(full_name__icontains=query) | Q(hashtags__name__icontains=query)).distinct()
+            
+            hashtag_query = request.GET.get('user_hashtag')
+            if hashtag_query:
+                users = users.filter(hashtags__name__icontains=hashtag_query)
+                
+            response_data['users'] = UserProfileSerializer(users, many=True, context={'request': request}).data
+        
+        if search_type in ['all', 'posts']:
+            posts = Post.objects.filter(Q(content__icontains=query) | Q(hashtags__name__icontains=query)).distinct()
+            
+            hashtag_query = request.GET.get('post_hashtag')
+            if hashtag_query:
+                posts = posts.filter(hashtags__name__icontains=hashtag_query)
+                
+            response_data['posts'] = PostSerializer(posts, many=True, context={'request': request}).data
+        
+        # Перевірка на відсутність результатів
+        if (search_type == 'all' and not response_data.get('users') and not response_data.get('posts')) or (search_type == 'users' and not response_data.get('users')) or (search_type == 'posts' and not response_data.get('posts')):
+            return Response({
+                "message": "Наша мережа не настільки популярна щоб тут було це. Шукайте це деінде, або ж створіть свій пост!",
+                "metadata": {
+                    'query': query,
+                    'search_type': search_type,
+                    'total_users': 0,
+                    'total_posts': 0,
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Додавання метаданих про результати пошуку
+        response_data['metadata'] = {
+            'query': query,
+            'search_type': search_type,
+            'total_users': len(response_data.get('users', [])),
+            'total_posts': len(response_data.get('posts', [])),
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
