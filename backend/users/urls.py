@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserRegistrationView, UserLoginView, UserProfileView, UserLogoutView, UserDeleteView, HashtagView, SubscriptionsView, UserSubscriptionsView, RecommendationView, UserProfileDetailView
+from .views import UserRegistrationView, UserLoginView, UserProfileView, UserLogoutView, UserDeleteView, HashtagView, SubscriptionsView, UserSubscriptionsView, RecommendationView, UserProfileDetailView, SearchView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -14,6 +14,9 @@ urlpatterns = [
     path('subscriptions/<int:user_id>', SubscriptionsView.as_view(), name='subscribe-view'),
     path('subscriptions/<int:user_id>/list/', UserSubscriptionsView.as_view(), name='user-subscribers-view'),
     path('recommendations/', RecommendationView.as_view(), name='user-recommendations'),
+    path('search/', SearchView.as_view(), name='search'),
+    path('search/users/', SearchView.as_view(), name='search-users'),
+    path('search/posts/', SearchView.as_view(), name='search-posts'),
 ]
 
 # Додавання статичних файлів (зображення)
