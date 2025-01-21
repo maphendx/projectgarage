@@ -15,7 +15,6 @@ class CommentSerializer(serializers.ModelSerializer):
 
 # Сериалізатор для постів
 class PostSerializer(serializers.ModelSerializer):
-<<<<<<< HEAD
     author = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()  
     comments = serializers.SerializerMethodField()
@@ -55,10 +54,3 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['id', 'author', 'content', 'image', 'video', 'audio', 'hashtags', 'likes', 'comments', 'created_at', 'updated_at', 'original_post', 'is_liked']
-=======
-    comments = CommentSerializer(many=True, read_only=True)  # Додаємо коментарі до поста
-
-    class Meta:
-        model = Post
-        fields = ['id', 'author', 'content', 'image', 'video', 'hashtags', 'likes', 'comments', 'created_at', 'updated_at']
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f

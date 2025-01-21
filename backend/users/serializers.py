@@ -1,28 +1,16 @@
 from rest_framework import serializers
-<<<<<<< HEAD
 from .models import CustomUser, UserHashtag
 from django.contrib.auth.password_validation import validate_password
 from posts.serializers import PostSerializer
-=======
-from .models import CustomUser
-from django.contrib.auth.password_validation import validate_password
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
-<<<<<<< HEAD
     photo = serializers.ImageField(required=False)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'display_name', 'full_name', 'password', 'password2', 'photo']
-=======
-
-    class Meta:
-        model = CustomUser
-        fields = ['email', 'display_name', 'full_name', 'password', 'password2']
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -30,7 +18,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-<<<<<<< HEAD
         # Видаляємо підтвердження паролю
         validated_data.pop('password2', None)
         # Зберігаємо пароль
@@ -51,14 +38,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         # Зберігаємо користувача
         user.save()
         
-=======
-        validated_data.pop('password2', None)
-        password = validated_data.pop('password', None)
-        user = self.Meta.model(**validated_data)
-        if password is not None:
-            user.set_password(password)  # Хешування паролю
-        user.save()
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
         return user
 
 
@@ -67,7 +46,6 @@ class UserLoginSerializer(serializers.Serializer):
     password = serializers.CharField(required=True, write_only=True)
 
 class UserProfileSerializer(serializers.ModelSerializer):
-<<<<<<< HEAD
     posts = PostSerializer(many=True, read_only=True)
 
     class Meta:
@@ -85,9 +63,3 @@ class UserHashtagSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserHashtag
         fields = ['name']
-=======
-    class Meta:
-        model = CustomUser
-        fields = ['email', 'full_name', 'display_name', 'bio', 'photo', 'hashtags', 'subscriptions_count', 'subscribers_count', 'total_likes']
-        read_only_fields = ['subscriptions_count', 'subscribers_count', 'total_likes']
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f

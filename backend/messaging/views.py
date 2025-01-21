@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -30,8 +29,3 @@ class MessageView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-=======
-from django.shortcuts import render
-
-# Create your views here.
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f

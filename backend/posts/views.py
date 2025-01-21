@@ -2,7 +2,6 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-<<<<<<< HEAD
 from rest_framework.exceptions import ValidationError
 from .models import Post, Comment, Like
 from rest_framework import status
@@ -14,11 +13,6 @@ from datetime import timedelta
 from django.utils.timezone import now
 from users.models import CustomUser
 
-=======
-from .models import Post, Comment
-from rest_framework import status
-from .serializers import PostSerializer, CommentSerializer
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
 # Пост: список та деталі
 class PostListView(APIView):
@@ -26,7 +20,6 @@ class PostListView(APIView):
 
     def get(self, request):
         posts = Post.objects.all()  # Отримуємо всі пости
-<<<<<<< HEAD
         serializer = PostSerializer(posts, many=True, context={'request': request})  # Додаємо контекст
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -56,39 +49,20 @@ class PostListView(APIView):
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-=======
-        serializer = PostSerializer(posts, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):    
-        serializer = PostSerializer(data=request.data)    
-        if serializer.is_valid():    
-            serializer.save()  # Створюємо новий пост
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
 # Пост: деталі, оновлення, видалення
 class PostDetailView(APIView):    
     def get(self, request, pk):    
         post = Post.objects.get(pk=pk)  # Отримуємо пост за ID
         serializer = PostSerializer(post)    
-<<<<<<< HEAD
         return Response(serializer.data , status=status.HTTP_200_OK)
-=======
-        return Response(serializer.data)
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
     def put(self, request, pk):    
         post = Post.objects.get(pk=pk)  # Оновлюємо пост
         serializer = PostSerializer(post, data=request.data)    
         if serializer.is_valid():    
             serializer.save()        
-<<<<<<< HEAD
             return Response(serializer.data , status=status.HTTP_200_OK)
-=======
-            return Response(serializer.data)
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):    
@@ -98,7 +72,6 @@ class PostDetailView(APIView):
 
 # Коментарі: список та створення
 class CommentListView(APIView):
-<<<<<<< HEAD
     permission_classes = [IsAuthenticated]
 
     def get(self, request, post_id):
@@ -272,36 +245,3 @@ class LikeView(APIView):
                 {"detail": str(e)}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
-=======
-    def get(self, request):
-        comments = Comment.objects.all()  # Отримуємо всі коментарі
-        serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = CommentSerializer(data=request.data)  # Створюємо новий коментар
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# Коментарі: деталі, оновлення, видалення
-class CommentDetailView(APIView):
-    def get(self, request, pk):
-        comment = Comment.objects.get(pk=pk)  # Отримуємо коментар
-        serializer = CommentSerializer(comment)
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        comment = Comment.objects.get(pk=pk)  # Оновлюємо коментар
-        serializer = CommentSerializer(comment, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk):
-        comment = Comment.objects.get(pk=pk)  # Видаляємо коментар
-        comment.delete()
-        return Response({"detail": "Коментар успішно видалено."}, status=status.HTTP_204_NO_CONTENT)
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f

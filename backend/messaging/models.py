@@ -1,5 +1,4 @@
 from django.db import models
-<<<<<<< HEAD
 from django.conf import settings
 
 class ChatRoom(models.Model):
@@ -18,7 +17,3 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.sender.display_name}: {self.content[:50]}"
-=======
-
-# Create your models here.
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f

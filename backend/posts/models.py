@@ -1,11 +1,8 @@
 from django.db import models
 from users.models import CustomUser
-<<<<<<< HEAD
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 import os
-=======
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
 # Модель для хештегів
 class Hashtag(models.Model):
@@ -23,7 +20,6 @@ class Comment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-<<<<<<< HEAD
         return f'Comment {self.id} on post {self.post.id} by {self.author.display_name}'
 
 def validate_image_file_size(value):
@@ -67,15 +63,11 @@ def validate_file_extension(value, file_type):
         raise ValidationError('Підтримуються формати: ' + ', '.join(valid_video_extensions))
     elif file_type == 'audio' and ext.lower() not in valid_audio_extensions:
         raise ValidationError('Підтримуються формати: ' + ', '.join(valid_audio_extensions))
-=======
-        return f'Comment {self.id} on post {self.post.id} by {self.author.username}'
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
 # Модель для постів
 class Post(models.Model):
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField(blank=True)
-<<<<<<< HEAD
     image = models.ImageField(
         upload_to='posts/images/', 
         blank=True, 
@@ -122,15 +114,3 @@ class Like(models.Model):
 
     class Meta:
         unique_together = ('user', 'post')  # Уникальність для пари (користувач, пост)
-=======
-    image = models.ImageField(upload_to='posts/images/', blank=True)
-    video = models.FileField(upload_to='posts/videos/', blank=True)
-    hashtags = models.ManyToManyField('Hashtag', blank=True)
-    likes = models.ManyToManyField(CustomUser, related_name='liked_posts', blank=True)
-    comments = models.ManyToManyField('Comment', blank=True, related_name='commented_posts')  # Змінив related_name
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f'Post {self.id} by {self.author.username}'
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f

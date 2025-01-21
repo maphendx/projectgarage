@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.hashers import make_password, check_password
-<<<<<<< HEAD
 from django.core.exceptions import ValidationError
 import os
 import random
@@ -29,9 +28,6 @@ class UserHashtag(models.Model):
     class Meta:
         verbose_name = 'Хештег користувача'
         verbose_name_plural = 'Хештеги користувачів'
-=======
-from django.apps import apps # для одержання класів моделей
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, display_name, password=None, **extra_fields):
@@ -59,19 +55,11 @@ class CustomUser(models.Model):
     subscriptions_count = models.PositiveIntegerField(default=0)  # Кількість підписок
     subscribers_count = models.PositiveIntegerField(default=0)  # Кількість підписаних
     total_likes = models.PositiveIntegerField(default=0)  # Кількість лайків за весь час
-<<<<<<< HEAD
     photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True, default=get_random_avatar)  # Фото
     bio = models.TextField(blank=True, null=True)  # Коротке біо
     hashtags = models.ManyToManyField(UserHashtag, blank=False)  # Хештеги користувача
     objects = CustomUserManager()  # Використовуємо кастомний менеджер для створення користувачів
     subscriptions = models.ManyToManyField("self", symmetrical=False, blank=True, related_name="subscribers")
-=======
-    photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)  # Фото
-    bio = models.TextField(blank=True, null=True)  # Коротке біо
-    hashtags = models.ManyToManyField("posts.Hashtag") # Хештеги
-
-    objects = CustomUserManager()  # Використовуємо кастомний менеджер для створення користувачів
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
     REQUIRED_FIELDS = ['display_name', 'password']  # Вказуємо обов'язкові поля
     USERNAME_FIELD = 'email'  # Використовуємо email для автентифікації користувачів
@@ -79,7 +67,6 @@ class CustomUser(models.Model):
     def __str__(self):
         return self.display_name
 
-<<<<<<< HEAD
     def subscribe(self, user):
         """Підписка на користувача."""
         self.subscriptions.add(user)
@@ -96,8 +83,6 @@ class CustomUser(models.Model):
         self.save()
         user.save()
 
-=======
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
     def set_password(self, raw_password):
         """Хешуємо пароль."""
         self.password = make_password(raw_password)
@@ -108,11 +93,7 @@ class CustomUser(models.Model):
 
     @property
     def hashtagClass(self):
-<<<<<<< HEAD
         return UserHashtag
-=======
-        return apps.get_model("posts", "Hashtag")
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
     @property
     def is_authenticated(self):
@@ -126,37 +107,23 @@ class CustomUser(models.Model):
 
     @property
     def hashtags_list(self):
-<<<<<<< HEAD
         """Повертає список хештегів користувача."""
-=======
-        """Повертає список хештегів тільки для аутентифікованих користувачів."""
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
         if not self.is_authenticated or not self.hashtags:
             return []
         
         hashSet = self.hashtags.all()
-<<<<<<< HEAD
         from users.serializers import UserHashtagSerializer
         serializer = UserHashtagSerializer(hashSet, many=True)
         return serializer.data
 
     def add_hashtag(self, hashtag):
         """Додає новий хештег до користувача."""
-=======
-        from posts.serializers import HashtagSerializer # воно не просто так всередині імпотується, там інакше циклічний імпорт помилка смерть
-        serializer = HashtagSerializer(hashSet, many=True)
-        return serializer.data
-
-    def add_hashtag(self, hashtag):
-        """Додає новий хештег до користувача, тільки якщо користувач аутентифікований."""
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
         if not self.is_authenticated:
             raise PermissionError("Тільки аутентифіковані користувачі можуть додавати хештеги.")
         if self.hashtags.filter(name=hashtag):
             raise Exception("Даний хештег вже пов'язаний з поточним користувачем.")
         try:
             self.hashtags.get_or_create(name=hashtag)
-<<<<<<< HEAD
         except:  # Для випадку, якщо тег вже в БД є, але не зв'язаний з цим юзером через проміжну таблицю
             self.hashtags.add(self.hashtagClass.objects.get(name=hashtag))
 
@@ -168,23 +135,10 @@ class CustomUser(models.Model):
         self.hashtags.remove(hashtag_instance)
         if not hashtag_instance.customuser_set.exists():
             hashtag_instance.delete()
-=======
-        except: # Для випадку, якщо тег вже в БД є, але не зв'язаний з цим юзером через проміжну таблицю
-            self.hashtags.add(self.hashtagClass.objects.get(name=hashtag))
-
-    def remove_hashtag(self, hashtag):
-        """Видаляє хештег з користувача, тільки якщо користувач аутентифікований."""
-        if not self.is_authenticated:
-            raise PermissionError("Тільки аутентифіковані користувачі можуть видаляти хештеги.")
-        if not self.hashtags.filter(name=hashtag):
-            raise Exception("Даний хештег не пов'язаний з поточним користувачем.")
-        self.hashtags.remove(self.hashtagClass.objects.get(name=hashtag))
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
     class Meta:
         verbose_name = 'Користувач'
         verbose_name_plural = 'Користувачі'
-<<<<<<< HEAD
 
     def clean(self):
         # """Перевірка на кількість хештегів."""
@@ -196,5 +150,3 @@ class CustomUser(models.Model):
         """Перевіряємо обмеження перед збереженням."""
         self.full_clean()  # Викликає метод clean()
         super().save(*args, **kwargs)
-=======
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f

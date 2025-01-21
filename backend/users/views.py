@@ -1,17 +1,12 @@
 from django.http import JsonResponse
 import json
 from django.views import View 
-<<<<<<< HEAD
 from rest_framework import generics, status, serializers
-=======
-from rest_framework import generics, status
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from .models import CustomUser
-<<<<<<< HEAD
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, SubscribeSerializer
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
@@ -21,11 +16,6 @@ from users.models import CustomUser
 from posts.models import Post
 from posts.serializers import PostSerializer
 
-=======
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
 
 # Реєстрація користувача
@@ -68,7 +58,6 @@ class UserLoginView(generics.GenericAPIView):
 # Профіль користувача
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
-<<<<<<< HEAD
     permission_classes = [IsAuthenticated]  # Доступ тільки для авторизованих користувачів
 
     def get_object(self):
@@ -84,19 +73,11 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         user = self.get_object()
         serializer = self.get_serializer(user)
         return Response(serializer.data)
-=======
-    queryset = CustomUser.objects.all()
-    permission_classes = [IsAuthenticated]  # Перевірка на аутентифікацію
-
-    def get_object(self):
-        return self.request.user  # Отримуємо профіль аутентифікованого користувача
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
     def perform_update(self, serializer):
         user = self.get_object()
         if 'password' in self.request.data:
             password = self.request.data['password']
-<<<<<<< HEAD
             if not password:  # перевірка на пустий пароль
                 raise serializers.ValidationError({"password": "Пароль не може бути пустим"})
             
@@ -120,20 +101,11 @@ class UserProfileDetailView(generics.ListAPIView):
         return Post.objects.filter(author__id=user_id).order_by('-created_at')
 
 
-=======
-            user.set_password(password)  # Якщо пароль змінюється
-        serializer.save()
-
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 # Вихід з акаунту (інвалідизація токену)
 class UserLogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
-<<<<<<< HEAD
     def post(self, request, *args, **kwargs): 
-=======
-    def post(self, request, *args, **kwargs):
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
         try:
             # Отримуємо токен, пов'язаний з користувачем
             token = Token.objects.get(user=request.user)
@@ -149,11 +121,8 @@ class UserDeleteView(APIView):
     def delete(self, request, *args, **kwargs):
         user = request.user
         user.delete()  # Видаляємо користувача
-<<<<<<< HEAD
         token = Token.objects.get(user=request.user)
         token.delete()  # Видаляємо токен для завершення сесії
-=======
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
         return Response({"message": "Ваш акаунт був успішно видалений!"}, status=status.HTTP_204_NO_CONTENT)
 
 
@@ -162,18 +131,13 @@ class HashtagView(APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-<<<<<<< HEAD
         return Response(user.hashtags_list, status=status.HTTP_200_OK)
-=======
-        return Response(user.hashtags_list)
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
     def post(self, request):
         user = request.user
         hashtag = request.data.get('hashtag')  # Changed from request.POST to request.data
         
         if not hashtag:
-<<<<<<< HEAD
             return Response({'error': 'Хештег не вказаний'}, status=status.HTTP_400_BAD_REQUEST)
         
         if not user.is_authenticated:
@@ -184,24 +148,11 @@ class HashtagView(APIView):
             return Response({'message': 'Хештег додано успішно'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': f'{e}'}, status=status.HTTP_400_BAD_REQUEST)
-=======
-            return JsonResponse({'error': 'Хештег не вказаний'}, status=400)
-        
-        if not user.is_authenticated:
-            return JsonResponse({'error': 'Тільки аутентифіковані користувачі можуть додавати хештеги.'}, status=403)
-    
-        try:
-            user.add_hashtag(hashtag)
-            return JsonResponse({'message': 'Хештег додано успішно'}, status=200)
-        except Exception as e:
-            return JsonResponse({'error': f'{e}'}, status=400)
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
     def delete(self, request):
         user = request.user
         hashtag = request.data.get('hashtag')  
         
-<<<<<<< HEAD
         if not hashtag:
             return Response({'error': 'Хештег не вказаний'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -364,19 +315,3 @@ class SearchView(APIView):
         }
         
         return Response(response_data, status=status.HTTP_200_OK)
-=======
-        
-        if not hashtag:
-            return JsonResponse({'error': 'Хештег не вказаний'}, status=400)
-
-        if not user.is_authenticated:
-            return JsonResponse({'error': 'Тільки аутентифіковані користувачі можуть видаляти хештеги.'}, status=403)
-
-        try:
-            user.remove_hashtag(hashtag)
-            return JsonResponse({'message': 'Хештег видалено успішно'}, status=200)
-        except PermissionError as e:
-            return JsonResponse({'error': str(e)}, status=403)
-        except Exception as e:
-            return JsonResponse({'error': f'{e}'}, status=400)
->>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
