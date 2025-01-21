@@ -16,13 +16,28 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+<<<<<<< HEAD
+from django.conf import settings
+from django.conf.urls.static import static
+=======
 
+>>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 
 urlpatterns = [
     path('admin/', admin.site.urls), # адмінка ТРЕБА ПЕРЕРОБИТИ НА КАСТОМНИЙ
     path('api/users/', include('users.urls')),
     path('api/posts/', include('posts.urls')),
+<<<<<<< HEAD
+    path('api/messaging/', include('messaging.urls')),
+    #path('api/voice-channels/', include('voice_channels.urls')),
+    #path('api/ai/', include('ai.urls')),
+]
+
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)    
+=======
     #path('api/messaging/', include('messaging.urls')),
     #path('api/voice-channels/', include('voice_channels.urls')),
     #path('api/ai/', include('ai.urls')),
 ]
+>>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f

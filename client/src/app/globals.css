@@ -3,12 +3,30 @@
 @tailwind utilities;
 
 :root {
+<<<<<<< HEAD
+  --background: #1c1c1f;
+  --foreground: #171717;
+  --rt-color-white: #fff;
+  --rt-color-dark: #222;
+  --rt-color-success: #8dc572;
+  --rt-color-error: #be6464;
+  --rt-color-warning: #f0ad4e;
+  --rt-color-info: #337ab7;
+  --rt-opacity: 0.9;
+  --rt-transition-show-delay: 0.15s;
+  --rt-transition-closing-delay: 0.15s;
+=======
   --background: #ffffff;
   --foreground: #171717;
+>>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
+<<<<<<< HEAD
+    --header-height: 60px;
+=======
+>>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
     --background: #0a0a0a;
     --foreground: #ededed;
   }
@@ -17,5 +35,8 @@
 body {
   color: var(--foreground);
   background: var(--background);
+<<<<<<< HEAD
+=======
   font-family: Arial, Helvetica, sans-serif;
+>>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
 }

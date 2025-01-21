@@ -90,7 +90,11 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'social_network_db',    # Назва бази даних   (треба створити вручну в постгрес)
         'USER': 'postgres',             # Ім'я користувача   (скоріш за все в вас так і залишиться postgres)
+<<<<<<< HEAD
+        'PASSWORD': '4839150',          # Пароль користувача (тут все зрозуміло) 
+=======
         'PASSWORD': 'Shift2201',          # Пароль користувача (тут все зрозуміло) 
+>>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
         'HOST': 'localhost',            # Ім'я хоста         (ті дані які ви вказали в постгрес)
         'PORT': '5432',                 # Порт бази даних    (дивись вище)
     }
@@ -159,4 +163,22 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # Залиште дефолтний бекенд для інших випадків
 ]
 
+<<<<<<< HEAD
 CORS_ALLOW_ALL_ORIGINS = True
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+
+import os
+# Створюємо папку для дефолтних (чортових) аватарок, якщо вона не існує 
+DEFAULT_AVATAR_DIR = os.path.join(MEDIA_ROOT, 'default', 'default_avatar')
+os.makedirs(DEFAULT_AVATAR_DIR, exist_ok=True)
+=======
+CORS_ALLOW_ALL_ORIGINS = True
+>>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
