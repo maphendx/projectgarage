@@ -7,6 +7,10 @@ import AsidePanelLeft from '@/components/surrounding/asideLeft';
 import Topbar from '@/components/surrounding/topbar';
 import { InfoBlock } from '@/components/other';
 import ProfileSettings from '@/components/ProfileSettings';
+<<<<<<< HEAD
+=======
+import { motion } from 'framer-motion';
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
 
 interface UserData {
   display_name?: string;
@@ -175,6 +179,7 @@ const Profile: React.FC = () => {
         <main className='flex-1 overflow-auto p-6'>
           <div className='space-y-6'>
             <div className='flex items-center space-x-5'>
+<<<<<<< HEAD
               <Image
                 src={userData.photo || '/default-profile.jpg'}
                 alt='Profile Photo'
@@ -183,6 +188,22 @@ const Profile: React.FC = () => {
                 style={{ width: '100px', height: '100px' }}
                 className='rounded-[20px]'
               />
+=======
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              >
+                <Image
+                  src={userData.photo || '/default-profile.jpg'}
+                  alt='Profile Photo'
+                  width={100}
+                  height={100}
+                  style={{ width: '100px', height: '100px' }}
+                  className='rounded-[20px]'
+                />
+              </motion.div>
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
               <div>
                 <h3 className='inline-block text-xl font-semibold'>
                   {userData.display_name || 'User'}
@@ -216,22 +237,44 @@ const Profile: React.FC = () => {
             </div>
 
             {isOwnProfile && (
+<<<<<<< HEAD
               <button
                 onClick={() => setIsSettingsOpen(true)}
                 className='h-12 rounded-[20px] bg-[#6374B6] px-4 py-2 text-white'
               >
                 Редагувати профіль
               </button>
+=======
+              <motion.button
+                onClick={() => setIsSettingsOpen(true)}
+                className='h-12 rounded-[20px] bg-[#6374B6] px-4 py-2 text-white'
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              >
+                Редагувати профіль
+              </motion.button>
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
             )}
             <div className='mx-auto min-h-[85vh] w-[100%] max-w-[100%] rounded-[30px] border-[1px] border-white border-opacity-10 bg-opacity-70 bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-xl'>
               <h4 className='text-lg font-semibold'>Публікації</h4>
               {userData.posts && userData.posts.length > 0 ? (
                 <div className='space-y-4'>
                   {userData.posts.map((post) => (
+<<<<<<< HEAD
                     <div
                       key={post.id}
                       className='mb-6 rounded-[30px] border-[1px] border-white border-opacity-10 bg-gradient-to-r from-[#2D2F3AB3] to-[#1A1A2EB3] p-6'
                       style={{ boxShadow: '0 4px 4px rgba(0, 0, 0, 0.25)' }}
+=======
+                    <motion.div
+                      key={post.id}
+                      className='mb-6 rounded-[30px] border-[1px] border-white border-opacity-10 bg-gradient-to-r from-[#2D2F3AB3] to-[#1A1A2EB3] p-6'
+                      style={{ boxShadow: '0 4px 4px rgba(0, 0, 0, 0.25)' }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
                     >
                       <p className='text-sm'>{post.content}</p>
                       {post.image && (
@@ -250,7 +293,11 @@ const Profile: React.FC = () => {
                         </span>
                         <span className='ml-4'>Коментарі: {post.comments}</span>
                       </div>
+<<<<<<< HEAD
                     </div>
+=======
+                    </motion.div>
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
                   ))}
                 </div>
               ) : (

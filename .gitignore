@@ -8,9 +8,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+<<<<<<< HEAD
 *.pyc
 __pycache__/
 
+=======
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
 # OS files
 .DS_Store
 Thumbs.db
@@ -40,12 +43,18 @@ coverage/
 # Temporary files
 *.tmp
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
 *.temp
 .codegpt
 
 migrations/
 media/posts/
 media/profile_photos/
+<<<<<<< HEAD
 =======
 *.temp
 >>>>>>> 097572a9b26d0de8d5f2cac76cb8430959a6088f
+=======
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)

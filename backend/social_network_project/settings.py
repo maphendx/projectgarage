@@ -173,4 +173,8 @@ CHANNEL_LAYERS = {
 import os
 # Створюємо папку для дефолтних (чортових) аватарок, якщо вона не існує 
 DEFAULT_AVATAR_DIR = os.path.join(MEDIA_ROOT, 'default', 'default_avatar')
+<<<<<<< HEAD
 os.makedirs(DEFAULT_AVATAR_DIR, exist_ok=True)
+=======
+os.makedirs(DEFAULT_AVATAR_DIR, exist_ok=True)
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)

@@ -62,4 +62,8 @@ class SubscribeSerializer(serializers.Serializer):
 class UserHashtagSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserHashtag
+<<<<<<< HEAD
         fields = ['name']
+=======
+        fields = ['name']
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)

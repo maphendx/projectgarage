@@ -113,4 +113,8 @@ class Like(models.Model):
     liked_at = models.DateTimeField(default=now)  # Час лайку
 
     class Meta:
+<<<<<<< HEAD
         unique_together = ('user', 'post')  # Уникальність для пари (користувач, пост)
+=======
+        unique_together = ('user', 'post')  # Уникальність для пари (користувач, пост)
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)

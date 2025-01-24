@@ -53,4 +53,8 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
+<<<<<<< HEAD
         fields = ['id', 'author', 'content', 'image', 'video', 'audio', 'hashtags', 'likes', 'comments', 'created_at', 'updated_at', 'original_post', 'is_liked']
+=======
+        fields = ['id', 'author', 'content', 'image', 'video', 'audio', 'hashtags', 'likes', 'comments', 'created_at', 'updated_at', 'original_post', 'is_liked']
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)

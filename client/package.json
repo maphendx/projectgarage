@@ -11,6 +11,10 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@types/react-tooltip": "^3.11.0",
+<<<<<<< HEAD
+=======
+    "framer-motion": "^12.0.3",
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
     "lucide-react": "^0.473.0",
     "next": "15.1.4",
     "react": "^19.0.0",

@@ -314,4 +314,8 @@ class SearchView(APIView):
             'total_posts': len(response_data.get('posts', [])),
         }
         
+<<<<<<< HEAD
         return Response(response_data, status=status.HTTP_200_OK)
+=======
+        return Response(response_data, status=status.HTTP_200_OK)
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)

@@ -2,6 +2,7 @@ import { InfoBlock } from '@/components/other';
 import PostButton from './postButton';
 import { ReactElement, useState, useRef } from 'react';
 import { UserData } from '@/components/not_components';
+<<<<<<< HEAD
 
 interface CompInterface {
   userData: UserData | null;
@@ -11,11 +12,26 @@ interface CompInterface {
 const NewPostBlock = ({ userData, handlePostsListTrigger }: CompInterface) => {
   const [content, setContent] = useState('');
   const [messageControl, setMessageControl] = useState<boolean>(true); // ці два поца для загального повідомлення (infoblock) про щось вдалий або невдалий пост
+=======
+import { motion } from 'framer-motion';
+
+interface CompInterface {
+  userData: UserData | null;
+  onPostCreated: () => Promise<void>;
+}
+
+const NewPostBlock = ({ userData, onPostCreated }: CompInterface) => {
+  const [content, setContent] = useState('');
+  const [messageControl, setMessageControl] = useState<boolean>(true);
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
   const [messageBlock, setMessageBlock] = useState<ReactElement | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+<<<<<<< HEAD
   // авто-ресайз текстової області
+=======
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
   const handleInput = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -23,7 +39,10 @@ const NewPostBlock = ({ userData, handlePostsListTrigger }: CompInterface) => {
     }
   };
 
+<<<<<<< HEAD
   // оновлення блоку повідомлення
+=======
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
   const updateMessage = (message: ReactElement) => {
     if (messageBlock !== null) {
       setMessageControl(false);
@@ -37,11 +56,17 @@ const NewPostBlock = ({ userData, handlePostsListTrigger }: CompInterface) => {
     }
   };
 
+<<<<<<< HEAD
   // обробник кнопки створення поста
   const handleClick = async () => {
     const token = localStorage.getItem('token');
 
     // перевірка контенту поста
+=======
+  const handleClick = async () => {
+    const token = localStorage.getItem('token');
+
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
     if (content.length <= 5 || content.trim().length <= 3) {
       updateMessage(
         <InfoBlock
@@ -56,6 +81,7 @@ const NewPostBlock = ({ userData, handlePostsListTrigger }: CompInterface) => {
     }
 
     try {
+<<<<<<< HEAD
       const postPostResponse = await fetch(
         'http://localhost:8000/api/posts/posts/',
         {
@@ -76,6 +102,24 @@ const NewPostBlock = ({ userData, handlePostsListTrigger }: CompInterface) => {
       // якщо успішно: очистити контент, оновити повідомлення, та перезавантажити список постів
       setContent('');
       handlePostsListTrigger();
+=======
+      const response = await fetch('http://localhost:8000/api/posts/posts/', {
+        headers: {
+          Authorization: `Token ${token}`,
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+        body: JSON.stringify({ content, hashtags: [1] }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Неочікувана помилка');
+      }
+
+      setContent('');
+      await onPostCreated();
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
       updateMessage(
         <InfoBlock
           key={Date.now()}
@@ -100,7 +144,10 @@ const NewPostBlock = ({ userData, handlePostsListTrigger }: CompInterface) => {
     }
   };
 
+<<<<<<< HEAD
   // обробка зміни в текстовій області
+=======
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
   const handleContentChange = (
     event: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
@@ -132,6 +179,7 @@ const NewPostBlock = ({ userData, handlePostsListTrigger }: CompInterface) => {
       </div>
       <div className='flex items-center justify-between'>
         <div className='flex space-x-4'>
+<<<<<<< HEAD
           <PostButton text='Фото' iconClass='fas fa-image mr-2' />
           <PostButton text='Відео' iconClass='fas fa-video mr-2' />
           <PostButton text='Аудіо' iconClass='fas fa-music mr-2' />
@@ -142,6 +190,39 @@ const NewPostBlock = ({ userData, handlePostsListTrigger }: CompInterface) => {
         >
           Опублікувати
         </button>
+=======
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          >
+            <PostButton text='Фото' iconClass='fas fa-image mr-2' />
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          >
+            <PostButton text='Відео' iconClass='fas fa-video mr-2' />
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          >
+            <PostButton text='Аудіо' iconClass='fas fa-music mr-2' />
+          </motion.div>
+        </div>
+        <motion.button
+          className='h-12 rounded-[20px] bg-[#6374B6] px-4 py-2 text-white'
+          onClick={handleClick}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+        >
+          Опублікувати
+        </motion.button>
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
       </div>
       {messageBlock}
     </div>

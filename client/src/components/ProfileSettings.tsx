@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+=======
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
 
 interface ProfileSettingsProps {
   onUpdateBio: (newBio: string) => void;
@@ -18,6 +24,13 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   const [hashtags, setHashtags] = useState<string[]>(initialHashtags);
   const router = useRouter();
 
+<<<<<<< HEAD
+=======
+  useEffect(() => {
+    setHashtags(initialHashtags);
+  }, [initialHashtags]);
+
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
   const handleBioChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setBio(event.target.value);
   };
@@ -41,7 +54,10 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
+<<<<<<< HEAD
 
+=======
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
     router.push('/');
   };
 
@@ -55,12 +71,25 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         throw new Error('Failed to delete profile');
       }
     } catch (error) {
+<<<<<<< HEAD
       console.error('Error deleting profile', error);
+=======
+      console.error('Помилка видалення профілю', error);
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
     }
   };
 
   return (
+<<<<<<< HEAD
     <div className='p-6'>
+=======
+    <motion.div
+      className='p-6'
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+    >
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
       <h2 className='mb-4 text-xl font-semibold text-white'>
         Редагування профілю
       </h2>
@@ -100,6 +129,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
       {/* Buttons */}
       <div className='flex space-x-4'>
+<<<<<<< HEAD
         <button
           onClick={handleSave}
           className='w-full rounded-[20px] bg-[#6374B6] px-4 py-2 text-white'
@@ -129,6 +159,49 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         </button>
       </div>
     </div>
+=======
+        <motion.button
+          onClick={handleSave}
+          className='w-full rounded-[20px] bg-[#6374B6] px-4 py-2 text-white'
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+        >
+          Зберегти
+        </motion.button>
+        <motion.button
+          onClick={onClose}
+          className='w-full rounded-[20px] bg-gray-600 px-4 py-2 text-white hover:bg-gray-500'
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+        >
+          Відмінити
+        </motion.button>
+      </div>
+
+      <div className='mt-4 flex space-x-4'>
+        <motion.button
+          onClick={handleLogout}
+          className='w-full rounded-[20px] bg-red-600 px-4 py-2 text-white hover:bg-red-500'
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+        >
+          Покинути обліковий запис
+        </motion.button>
+        <motion.button
+          onClick={handleDeleteProfile}
+          className='w-full rounded-[20px] bg-red-800 px-4 py-2 text-white hover:bg-red-700'
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+        >
+          Видалити профіль
+        </motion.button>
+      </div>
+    </motion.div>
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
   );
 };
 

@@ -128,6 +128,7 @@ class CustomUser(models.Model):
             self.hashtags.add(self.hashtagClass.objects.get(name=hashtag))
 
     def remove_hashtag(self, hashtag):
+<<<<<<< HEAD
         """Видалення хештегу"""
         if not self.hashtags.filter(name=hashtag).exists():
             raise ValueError(f"Хештег '{hashtag}' не знайдено.")
@@ -135,6 +136,14 @@ class CustomUser(models.Model):
         self.hashtags.remove(hashtag_instance)
         if not hashtag_instance.customuser_set.exists():
             hashtag_instance.delete()
+=======
+        """Видаляє хештег з користувача."""
+        if not self.is_authenticated:
+            raise PermissionError("Тільки аутентифіковані користувачі можуть видаляти хештеги.")
+        if not self.hashtags.filter(name=hashtag):
+            raise Exception("Даний хештег не пов'язаний з поточним користувачем.")
+        self.hashtags.remove(self.hashtagClass.objects.get(name=hashtag))
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
 
     class Meta:
         verbose_name = 'Користувач'
@@ -149,4 +158,8 @@ class CustomUser(models.Model):
     def save(self, *args, **kwargs):
         """Перевіряємо обмеження перед збереженням."""
         self.full_clean()  # Викликає метод clean()
+<<<<<<< HEAD
         super().save(*args, **kwargs)
+=======
+        super().save(*args, **kwargs)
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)

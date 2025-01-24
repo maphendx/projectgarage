@@ -18,4 +18,8 @@ urlpatterns = [
     # Шлях для лайкування поста
     path('posts/<int:post_id>/like/', LikeView.as_view(), name='post-like'),
 ]
+<<<<<<< HEAD
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  
+=======
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)

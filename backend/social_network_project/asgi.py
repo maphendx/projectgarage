@@ -22,4 +22,8 @@ application = ProtocolTypeRouter({
             messaging.routing.websocket_urlpatterns
         )
     ),
+<<<<<<< HEAD
 })
+=======
+})
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)

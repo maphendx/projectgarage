@@ -6,6 +6,10 @@ import Image from 'next/image';
 import Modal from '@/components/Modal';
 import { useRouter } from 'next/navigation';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+<<<<<<< HEAD
+=======
+import { motion } from 'framer-motion';
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
 
 const Home: React.FC = () => {
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
@@ -87,8 +91,23 @@ const Home: React.FC = () => {
         <link rel='icon' href='/favicon.ico' />
       </Head>
 
+<<<<<<< HEAD
       <main className='flex min-h-screen flex-col md:flex-row'>
         <div className='flex flex-1 items-center justify-center p-8'>
+=======
+      <motion.main
+        className='flex min-h-screen flex-col md:flex-row'
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.div
+          className='flex flex-1 items-center justify-center p-8'
+          initial={{ x: -100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
           <Image
             src='/logo.svg'
             alt='Do Re Do Logo'
@@ -97,9 +116,20 @@ const Home: React.FC = () => {
             className='hidden w-full max-w-sm md:block'
             priority
           />
+<<<<<<< HEAD
         </div>
 
         <div className='flex flex-1 items-center justify-center px-6'>
+=======
+        </motion.div>
+
+        <motion.div
+          className='flex flex-1 items-center justify-center px-6'
+          initial={{ x: 100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
           <div className='w-full max-w-md'>
             <div className='mb-6'>
               <h2 className='text-4xl font-bold text-[#1C1C1F]'>Do Re Do</h2>
@@ -113,6 +143,7 @@ const Home: React.FC = () => {
             </div>
 
             <div className='space-y-3'>
+<<<<<<< HEAD
               <button
                 className='flex w-full transform items-center justify-center space-x-2 rounded-full bg-[#B5BFE7] py-3 text-[#1C1C1F] shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-[#6374B6]'
                 onClick={() => true}
@@ -126,6 +157,25 @@ const Home: React.FC = () => {
               >
                 Створити обліковий запис
               </button>
+=======
+              <motion.button
+                className='flex w-full transform items-center justify-center space-x-2 rounded-full bg-[#B5BFE7] py-3 text-[#1C1C1F] shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-[#6374B6]'
+                onClick={() => true}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span>Увійти з Google</span>
+              </motion.button>
+
+              <motion.button
+                className='w-full transform rounded-full bg-[#3C4B84] py-3 text-[#B5D6E7] shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-[#444C6C]'
+                onClick={() => setIsSignUpOpen(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Створити обліковий запис
+              </motion.button>
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
 
               <div className='relative py-2'>
                 <div className='absolute inset-0 flex items-center'>
@@ -136,6 +186,7 @@ const Home: React.FC = () => {
                 </div>
               </div>
 
+<<<<<<< HEAD
               <button
                 className='w-full transform rounded-full bg-[#B5D6E7]/80 py-3 text-[#1C1C1F] shadow-md backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] hover:bg-[#B5D6E7]/90'
                 onClick={() => setIsSignInOpen(true)}
@@ -146,6 +197,20 @@ const Home: React.FC = () => {
           </div>
         </div>
       </main>
+=======
+              <motion.button
+                className='w-full transform rounded-full bg-[#B5D6E7]/80 py-3 text-[#1C1C1F] shadow-md backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] hover:bg-[#B5D6E7]/90'
+                onClick={() => setIsSignInOpen(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Увійти до облікового запису
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.main>
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
 
       <Modal isOpen={isSignUpOpen} onClose={() => setIsSignUpOpen(false)}>
         <form onSubmit={handleSignUp}>
@@ -252,9 +317,20 @@ const Home: React.FC = () => {
       </Modal>
 
       {message && (
+<<<<<<< HEAD
         <div className='absolute bottom-4 left-1/2 -translate-x-1/2 transform rounded-lg bg-[#2B2D31] p-4 text-[#B5D6E7] shadow-lg'>
           {message}
         </div>
+=======
+        <motion.div
+          className='absolute bottom-4 left-1/2 -translate-x-1/2 transform rounded-lg bg-[#2B2D31] p-4 text-[#B5D6E7] shadow-lg'
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          {message}
+        </motion.div>
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
       )}
     </div>
   );

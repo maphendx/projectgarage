@@ -244,4 +244,8 @@ class LikeView(APIView):
             return Response(
                 {"detail": str(e)}, 
                 status=status.HTTP_400_BAD_REQUEST
+<<<<<<< HEAD
             )
+=======
+            )
+>>>>>>> 98e67a1 (попрацював з анімаціями та бібліотеко framer animaiton додав анімацію на головну сторінку та профіль)
