@@ -83,7 +83,7 @@ class Post(models.Model):
         blank=True, 
         validators=[validate_audio_file_size, validate_audio_file_extension]
     )
-    hashtags = models.ManyToManyField('Hashtag', blank=False)
+    hashtags = models.ManyToManyField('Hashtag', blank=True)
     likes = models.ManyToManyField(CustomUser, through='Like', related_name='liked_posts')
     comments = models.ManyToManyField('Comment', blank=True, related_name='commented_posts')  # Змінив related_name
     created_at = models.DateTimeField(auto_now_add=True)

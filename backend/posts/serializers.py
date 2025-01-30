@@ -2,11 +2,12 @@ from rest_framework import serializers
 from users.models import CustomUser
 from .models import Post, Comment, Hashtag
 from django.core.exceptions import ValidationError
+from django.db import transaction
 
 class HashtagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Hashtag
-        fields = ['name']
+        fields = ['id', 'name']
 
 class CommentSerializer(serializers.ModelSerializer): 
     class Meta:
@@ -17,12 +18,12 @@ class PostSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
-    hashtags = serializers.CharField(required=False, allow_blank=True)
-    hashtags_info = serializers.SerializerMethodField(read_only=True)
-    
-    image = serializers.ImageField(required=False, allow_null=True)
-    video = serializers.FileField(required=False, allow_null=True)
-    audio = serializers.FileField(required=False, allow_null=True)
+    hashtags = serializers.ListField(
+        child=serializers.CharField(max_length=255),
+        write_only=True,
+        required=False
+    )
+    hashtag_objects = HashtagSerializer(many=True, read_only=True, source='hashtags')
 
     def get_author(self, obj):
         request = self.context.get('request')
@@ -31,12 +32,12 @@ class PostSerializer(serializers.ModelSerializer):
         
         profile_url = request.build_absolute_uri(f"api/users/profile/{obj.author.id}/")
         hashtags = obj.author.hashtags.all()[:3]
-        hashtags_data = [{"id": hashtag.id, "name": hashtag.name} for hashtag in hashtags]
+        hashtags_data = [{hashtag.name} for hashtag in hashtags]
         
-        # Дефолтна SVG картинка
+        #  SVG 
         default_avatar = request.build_absolute_uri('media/default/default_avatar/g396.svg')
         
-        # Використовуємо фото користувача або дефолтну SVG
+        #      SVG
         photo_url = obj.author.photo.url if obj.author.photo else default_avatar
         
         return {
@@ -56,75 +57,45 @@ class PostSerializer(serializers.ModelSerializer):
     def get_comments(self, obj):
         return obj.post_comments.count()
 
-    def get_hashtags_info(self, obj):
-        return [{"id": hashtag.id, "name": hashtag.name} for hashtag in obj.hashtags.all()]
-
-    def validate_hashtags(self, value):
-        if not (1 <= len(value) <= 50):
-            raise serializers.ValidationError("Кількість хештегів має бути від 1 до 50.")
-        return value
-
     def validate_image(self, value):
         if value and value.size > 10 * 1024 * 1024:
-            raise ValidationError("Максимальний розмір зображення - 10MB")
+            raise ValidationError("Image size should not exceed 10MB")
         return value
 
     def validate_video(self, value):
         if value and value.size > 500 * 1024 * 1024:
-            raise ValidationError("Максимальний розмір відео - 500MB")
+            raise ValidationError("Video size should not exceed 500MB")
         return value
 
     def validate_audio(self, value):
         if value and value.size > 20 * 1024 * 1024:
-            raise ValidationError("Максимальний розмір аудіо - 20MB")
+            raise ValidationError("Audio size should not exceed 20MB")
         return value
 
     def validate_hashtags(self, value):
-        """
-        Розбиває вхідний рядок на хештеги, видаляє # і пробіли, перевіряє кількість.
-        """
         if not value:
-            return []
-            
-        # Розділяємо рядок на теги, ігноруючи порожні
-        tags = [tag.strip().lstrip('#').lower() for tag in value.split() if tag.strip()]
-        
-        # Видаляємо дублікати
-        unique_tags = list(set(tags))
-        
-        # Перевірка кількості
-        if not (1 <= len(unique_tags) <= 50):
-            raise serializers.ValidationError("Кількість хештегів має бути від 1 до 50.")
-        
-        return unique_tags
+            return value
+        for tag in value:
+            if not tag.startswith("#"):
+                raise ValidationError(f"Hashtag '{tag}' should start with '#'")
+        return value
+
+    def create_hashtags(self, hashtags):
+        hashtag_objects = []
+        for tag in hashtags:
+            hashtag, created = Hashtag.objects.get_or_create(name=tag.lower())
+            hashtag_objects.append(hashtag)
+        return hashtag_objects
 
     def create(self, validated_data):
-        # Отримуємо список хештегів після валідації
         hashtags_data = validated_data.pop('hashtags', [])
-        post = Post.objects.create(**validated_data)
-
-        hashtags = []
-        for tag_name in hashtags_data:
-            if tag_name:  # Переконуємося, що тег не порожній
-                hashtag, created = Hashtag.objects.get_or_create(name=tag_name)
-                hashtags.append(hashtag)
-        
-        post.hashtags.set(hashtags)
-        return post
-
-    def update(self, instance, validated_data):
-        hashtags_data = validated_data.pop('hashtags', [])
-        instance = super().update(instance, validated_data)
-
-        hashtags = []
-        for tag_name in hashtags_data:
-            if tag_name:
-                hashtag, created = Hashtag.objects.get_or_create(name=tag_name)
-                hashtags.append(hashtag)
-        
-        instance.hashtags.set(hashtags)
-        return instance
+        with transaction.atomic():
+            hashtags = self.create_hashtags(hashtags_data)
+            post = Post.objects.create(**validated_data)
+            post.hashtags.set(hashtags)
+            return post
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'content', 'image', 'video', 'audio', 'hashtags', 'hashtags_info', 'likes', 'comments', 'created_at', 'updated_at', 'original_post', 'is_liked']
+        fields = ['id', 'author', 'content', 'image', 'video', 'audio', 'likes', 'comments', 'created_at', 'updated_at', 'original_post', 'is_liked', 'hashtags', 'hashtag_objects']
+        read_only_fields = ['id', 'likes', 'comments', 'created_at', 'updated_at', 'is_liked', 'hashtag_objects']
