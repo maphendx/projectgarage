@@ -1,7 +1,7 @@
 import os
 
 # Список папок, вміст яких слід ігнорувати
-IGNORED_FOLDERS = {'.venv', 'node_modules', 'staticfiles', 'migrations', '__pycache__', 'venv', 'client', '.git'}
+IGNORED_FOLDERS = {'.venv', 'node_modules', 'staticfiles', 'migrations', '__pycache__', 'venv', 'client', '.git', 'media' }
 
 def print_tree(start_path, prefix=""):
     # Перевірка, чи існує шлях
