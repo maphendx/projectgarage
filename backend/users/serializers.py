@@ -45,8 +45,14 @@ class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(required=True, write_only=True)
 
+class UserHashtagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserHashtag
+        fields = ['name']
+
 class UserProfileSerializer(serializers.ModelSerializer):
     posts = PostSerializer(many=True, read_only=True)
+    hashtags = UserHashtagSerializer(many=True, read_only=True)
 
     class Meta:
         model = CustomUser
@@ -58,8 +64,3 @@ class SubscribeSerializer(serializers.Serializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'display_name', 'photo']
-
-class UserHashtagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserHashtag
-        fields = ['name']
