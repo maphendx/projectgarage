@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -39,6 +39,7 @@ INSTALLED_APPS = [       # коли створюєш нові додатки ї�
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
@@ -48,6 +49,10 @@ INSTALLED_APPS = [       # коли створюєш нові додатки ї�
     'messaging',        # Повідомлення
     'voice_channels',   # Голосові канали
     'ai',               # Штучний інтелект
+    'allauth',          # Google Auth
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google'
 ]
 
 MIDDLEWARE = [
@@ -59,6 +64,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'social_network_project.urls'
@@ -90,7 +96,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'social_network_db_2',    # Назва бази даних   (треба створити вручну в постгрес)
         'USER': 'postgres',             # Ім'я користувача   (скоріш за все в вас так і залишиться postgres)
-        'PASSWORD': '4839150',          # Пароль користувача (тут все зрозуміло) 
+        'PASSWORD': 'maks31231781',          # Пароль користувача (тут все зрозуміло) 
         'HOST': 'localhost',            # Ім'я хоста         (ті дані які ви вказали в постгрес)
         'PORT': '5432',                 # Порт бази даних    (дивись вище)
     }
@@ -134,6 +140,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -157,7 +165,36 @@ REST_FRAMEWORK = {
 AUTHENTICATION_BACKENDS = [
     'users.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',  # Залиште дефолтний бекенд для інших випадків
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
+
+SITE_ID = 3
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
+ACCOUNT_AUTHENTICATION_METHOD = "email"  # Вхід через email
+ACCOUNT_USERNAME_REQUIRED = False  # Вимкнути вимогу username
+ACCOUNT_EMAIL_REQUIRED = True  # Email обов’язковий
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None  # Вказати, що username немає
+ACCOUNT_EMAIL_VERIFICATION = "optional"  # Чи потрібна верифікація email
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APPS": [
+            {
+                "name": "Do.Re.Do",
+                "client_id": "787039931575-u6m6gef67qnirlrn4icoonfedbgoigmi.apps.googleusercontent.com",
+                "secret": "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",
+                "key": "",
+            }
+        ],
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {
+            "access_type":"online",
+        }
+    }
+}
 
 CORS_ALLOW_ALL_ORIGINS = True
 

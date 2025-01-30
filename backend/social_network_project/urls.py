@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/posts/', include('posts.urls')),
     path('api/messaging/', include('messaging.urls')),
+    path('accounts/signup/', include('allauth.urls')),   # Google реєстрація
     #path('api/voice-channels/', include('voice_channels.urls')),
     #path('api/ai/', include('ai.urls')),
 ]

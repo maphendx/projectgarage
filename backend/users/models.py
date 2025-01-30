@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.exceptions import ValidationError
 import os
@@ -44,7 +44,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, display_name, password, **extra_fields)
 
-class CustomUser(models.Model):
+class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)  # Унікальна електронна пошта для авторизації
     full_name = models.CharField(max_length=100, blank=True, null=True)  # ПІБ
     display_name = models.CharField(max_length=50, unique=True)  # Ім'я, яке бачать інші
@@ -60,12 +60,19 @@ class CustomUser(models.Model):
     hashtags = models.ManyToManyField(UserHashtag, blank=False)  # Хештеги користувача
     objects = CustomUserManager()  # Використовуємо кастомний менеджер для створення користувачів
     subscriptions = models.ManyToManyField("self", symmetrical=False, blank=True, related_name="subscribers")
+    is_superuser = models.BooleanField(default=False)
 
     REQUIRED_FIELDS = ['display_name', 'password']  # Вказуємо обов'язкові поля
     USERNAME_FIELD = 'email'  # Використовуємо email для автентифікації користувачів
 
     def __str__(self):
         return self.display_name
+    
+    def has_perm(self, perm, obj=None):
+        return True
+    
+    def has_module_perms(self, app_label):
+        return True
 
     def subscribe(self, user):
         """Підписка на користувача."""
