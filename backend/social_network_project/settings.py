@@ -174,3 +174,15 @@ import os
 # Створюємо папку для дефолтних (чортових) аватарок, якщо вона не існує 
 DEFAULT_AVATAR_DIR = os.path.join(MEDIA_ROOT, 'default', 'default_avatar')
 os.makedirs(DEFAULT_AVATAR_DIR, exist_ok=True)
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'generate-recommendations-every-3-days': {
+        'task': 'ai.tasks.generate_recommendations_periodically',
+        'schedule': crontab(hour=0, day_of_month=range(1, 32, 3)),
+    },
+}

@@ -15,7 +15,8 @@ from django.db.models import Q
 from users.models import CustomUser
 from posts.models import Post
 from posts.serializers import PostSerializer
-
+from ai.models import Recommendation  # Імпортуємо модель Recommendation
+from ai.serializers import RecommendationSerializer  # Імпортуємо серіалізатор 
 
 
 # Реєстрація користувача
@@ -72,6 +73,9 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         """
         user = self.get_object()
         serializer = self.get_serializer(user)
+        recommendations = Recommendation.objects.filter(user=user)
+        serializer_recommendations = RecommendationSerializer(recommendations, many=True)
+        serializer.data['recommendations'] = serializer_recommendations.data
         return Response(serializer.data)
 
     def perform_update(self, serializer):

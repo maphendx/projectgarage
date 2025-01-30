@@ -185,10 +185,7 @@ class RecommendedPostsView(APIView):
         subscriptions = user.subscriptions.all()
 
         # Репости від підписок
-        reposts_from_subscriptions = Post.objects.filter(
-            original_post__isnull=False,
-            author__in=subscriptions
-        )
+        reposts_from_subscriptions = Post.objects.filter(original_post__isnull=False, author__in=subscriptions )
 
         # Популярні пости (на основі взаємодій)
         popular_posts = Post.objects.annotate(
