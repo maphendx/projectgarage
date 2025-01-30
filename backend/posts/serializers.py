@@ -83,18 +83,28 @@ class PostSerializer(serializers.ModelSerializer):
         hashtags_data = validated_data.pop('hashtags', [])
         post = Post.objects.create(**validated_data)
 
-        hashtags = [Hashtag.objects.get_or_create(name=name.lower())[0] for name in hashtags_data]
+        hashtags = []
+        for tag_name in hashtags_data:
+            tag_name = tag_name.lower().strip()
+            if tag_name:
+                hashtag, created = Hashtag.objects.get_or_create(name=tag_name)
+                hashtags.append(hashtag)
+        
         post.hashtags.set(hashtags)
-
         return post
 
     def update(self, instance, validated_data):
         hashtags_data = validated_data.pop('hashtags', [])
         instance = super().update(instance, validated_data)
 
-        hashtags = [Hashtag.objects.get_or_create(name=name.lower())[0] for name in hashtags_data]
+        hashtags = []
+        for tag_name in hashtags_data:
+            tag_name = tag_name.lower().strip()
+            if tag_name:
+                hashtag, created = Hashtag.objects.get_or_create(name=tag_name)
+                hashtags.append(hashtag)
+        
         instance.hashtags.set(hashtags)
-
         return instance
 
     class Meta:
