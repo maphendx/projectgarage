@@ -1,3 +1,4 @@
+from rest_framework import views
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,51 +13,67 @@ from sklearn.metrics.pairwise import cosine_similarity
 from datetime import timedelta
 from django.utils.timezone import now
 from users.models import CustomUser
+from django.db import transaction
 
 
 # Пост: список та деталі
-class PostListView(APIView):
-    permission_classes = (IsAuthenticated,)  # Доступ лише для авторизованих користувачів
+class PostListView(views.APIView):
+    permission_classes = [IsAuthenticated]  # Тільки авторизовані користувачі можуть створювати пости
 
     def get(self, request):
-        posts = Post.objects.all()  # Отримуємо всі пости
-        serializer = PostSerializer(posts, many=True, context={'request': request})  # Додаємо контекст
+        """
+        Отримання списку всіх постів.
+        """
+        posts = Post.objects.all().prefetch_related('hashtags', 'likes', 'comments', 'author')
+        serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-            try:
-                data = request.data.copy()
-                data['author'] = request.user.id
+        """
+        Створення нового поста з хештегами.
+        """
+        try:
+            data = request.data.copy()
+            data['author'] = request.user.id
 
-                # Обробка оригінального поста (якщо є)
-                if 'original_post' in data:
-                    try:
-                        original_post = Post.objects.get(pk=data['original_post'])
-                        data['content'] = data.get('content', '') + f'\n\nReposted from: {original_post.content}'
-                    except Post.DoesNotExist:
-                        return Response({"detail": "Оригінальний пост не знайдено."}, status=status.HTTP_404_NOT_FOUND)
-                    if original_post.original_post is not None:
-                        return Response({"detail": "Неможливо репостити репост."}, status=status.HTTP_400_BAD_REQUEST)
+            # Обробка оригінального поста, якщо це репост
+            if 'original_post' in data:
+                try:
+                    original_post = Post.objects.get(pk=data['original_post'])
+                    data['content'] = data.get('content', '') + f'\n\nReposted from: {original_post.content}'
+                except Post.DoesNotExist:
+                    return Response({"detail": "Original post does not exist."}, status=status.HTTP_404_NOT_FOUND)
+                if original_post.original_post is not None:
+                    return Response({"detail": "Reposting a repost is not allowed."}, status=status.HTTP_400_BAD_REQUEST)
 
-                # Обробка хештегів
-                hashtags_data = data.get('hashtags', [])
-                if not isinstance(hashtags_data, list):
-                    return Response({"detail": "Хештеги повинні бути в списку."}, status=status.HTTP_400_BAD_REQUEST)
-                if not (1 <= len(hashtags_data) <= 50):
-                    return Response({"detail": "Кількість хештегів повинна бути від 1 до 50."}, status=status.HTTP_400_BAD_REQUEST)
-
-                data['hashtags'] = hashtags_data  # Передаємо список назв хештегів в сериалізатор
-
-                # Валідація та створення поста
-                serializer = PostSerializer(data=data, context={'request': request})
-                if serializer.is_valid():
-                    serializer.save(author=request.user)
-                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # Валідація та створення поста
+            serializer = PostSerializer(data=data, context={'request': request})
+            if serializer.is_valid():
+                with transaction.atomic():
+                    # Отримання або створення хештегів
+                    hashtags_data = data.get('hashtags', [])
+                    hashtags = []
+                    for tag in hashtags_data:
+                        if not tag.startswith("#"):
+                            raise ValidationError(f"Hashtag '{tag}' should start with '#'")
+                        hashtag, created = Hashtag.objects.get_or_create(name=tag.lower())
+                        hashtags.append(hashtag)
+                    
+                    # Збереження поста
+                    post = serializer.save(author=request.user)
+                    
+                    # Прив'язка хештегів до поста
+                    post.hashtags.set(hashtags)
+                
+                # Повернення даних поста з хештегами
+                serializer_with_hashtags = PostSerializer(post, context={'request': request})
+                return Response(serializer_with_hashtags.data, status=status.HTTP_201_CREATED)
+            else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            except ValidationError as e:
-                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            except Exception as e:
-                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as ve:
+            return Response({"detail": ve.message}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # Пост: деталі, оновлення, видалення
 class PostDetailView(APIView):    
