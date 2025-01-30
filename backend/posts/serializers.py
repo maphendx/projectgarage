@@ -17,7 +17,7 @@ class PostSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
-    hashtags = serializers.ListField(child=serializers.CharField(), write_only=True, required=True)
+    hashtags = serializers.ListField(child=serializers.CharField())
     hashtags_info = serializers.SerializerMethodField(read_only=True)
     
     image = serializers.ImageField(required=False, allow_null=True)
