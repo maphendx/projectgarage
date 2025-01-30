@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
-from .models import Post, Comment, Like
+from .models import Post, Comment, Like, Hashtag
 from rest_framework import status
 from .serializers import PostSerializer, CommentSerializer
 from django.db.models import Q, Count 
@@ -38,6 +38,27 @@ class PostListView(APIView):
                 if original_post.original_post is not None:
                     return Response({"detail": "Це не оригінальний пост."}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Обробка хештегів
+            hashtags_data = data.get('hashtags', [])
+            if not isinstance(hashtags_data, list):
+                return Response({"detail": "Хештеги повинні бути у вигляді списку."}, status=status.HTTP_400_BAD_REQUEST)
+            if not (1 <= len(hashtags_data) <= 50):
+                return Response({"detail": "Кількість хештегів має бути від 1 до 50."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Отримуємо або створюємо хештеги
+            hashtags = []
+            for tag_name in hashtags_data:
+                if not isinstance(tag_name, str):
+                    return Response({"detail": "Назви хештегів повинні бути рядками."}, status=status.HTTP_400_BAD_REQUEST)
+                tag_name = tag_name.lower().strip()
+                if not tag_name:
+                    return Response({"detail": "Назви хештегів не можуть бути порожніми."}, status=status.HTTP_400_BAD_REQUEST)
+                hashtag, created = Hashtag.objects.get_or_create(name=tag_name)
+                hashtags.append(hashtag)
+
+            # Додаємо хештеги до даних
+            data['hashtags'] = hashtags
+
             # Сериалізуємо дані
             serializer = PostSerializer(data=data, context={'request': request})
             if serializer.is_valid():    
@@ -48,7 +69,6 @@ class PostListView(APIView):
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
 # Пост: деталі, оновлення, видалення
 class PostDetailView(APIView):    
@@ -199,6 +219,9 @@ class RecentLikesView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        '''
+        Повертає список недавніх лайків користувача
+        '''
         recent_likes = Like.objects.filter(
             liked_at__gte=now() - timedelta(days=7),
             user=request.user
