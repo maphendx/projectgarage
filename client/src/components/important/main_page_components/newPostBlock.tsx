@@ -1,18 +1,18 @@
-import { InfoBlock } from '@/components/other';
 import PostButton from './postButton';
-import { ReactElement, useState, useRef } from 'react';
-import { UserData } from '@/components/not_components';
+import { ReactElement, useState, useRef, useEffect } from 'react';
+import { FileContainer, FileType, UserData } from '@/components/not_components';
 import { motion } from 'framer-motion';
+import Modal from '@/components/Modal';
 
 interface CompInterface {
   userData: UserData | null;
   onPostCreated: () => Promise<void>;
+  showAddFile: (type : FileType) => void;
+  addFileStorage: FileContainer
 }
 
-const NewPostBlock = ({ userData, onPostCreated }: CompInterface) => {
+const NewPostBlock = ({ userData, onPostCreated, showAddFile, addFileStorage }: CompInterface) => {
   const [content, setContent] = useState('');
-  const [messageControl, setMessageControl] = useState<boolean>(true);
-  const [messageBlock, setMessageBlock] = useState<ReactElement | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -23,43 +23,27 @@ const NewPostBlock = ({ userData, onPostCreated }: CompInterface) => {
     }
   };
 
-  const updateMessage = (message: ReactElement) => {
-    if (messageBlock !== null) {
-      setMessageControl(false);
-      setTimeout(() => {
-        setMessageControl(true);
-        setMessageBlock(message);
-      }, 1010);
-    } else {
-      setMessageControl(true);
-      setMessageBlock(message);
-    }
-  };
-
   const handleClick = async () => {
     const token = localStorage.getItem('token');
 
     if (content.length <= 5 || content.trim().length <= 3) {
-      updateMessage(
-        <InfoBlock
-          key={Date.now()}
-          getClasses='bg-red-600'
-          getMessage='Текст посту занадто короткий!'
-          getIconClasses='fa fa-times-circle'
-          isAlive={messageControl}
-        />,
-      );
       return;
     }
 
     try {
+      const formData = new FormData();
+      formData.append("content", content)
+      formData.append("hashtags", "1")
+      addFileStorage.photos.forEach((element : File) => formData.append("image", element))
+      addFileStorage.videos.forEach((element : File) => formData.append("video", element))
+      addFileStorage.audios.forEach((element : File) => formData.append("audio", element))
+
       const response = await fetch('http://localhost:8000/api/posts/posts/', {
         headers: {
           Authorization: `Token ${token}`,
-          'Content-Type': 'application/json',
         },
         method: 'POST',
-        body: JSON.stringify({ content, hashtags: [1] }),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -69,27 +53,9 @@ const NewPostBlock = ({ userData, onPostCreated }: CompInterface) => {
 
       setContent('');
       await onPostCreated();
-      updateMessage(
-        <InfoBlock
-          key={Date.now()}
-          getClasses='bg-green-600'
-          getMessage='Пост успішно опубліковано!'
-          getIconClasses='fa fa-check-circle'
-          isAlive={messageControl}
-        />,
-      );
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      updateMessage(
-        <InfoBlock
-          key={Date.now()}
-          getClasses='bg-red-600'
-          getMessage={`Публікація не вдалась! ${errorMessage}`}
-          getIconClasses='fa fa-times-circle'
-          isAlive={messageControl}
-        />,
-      );
+      error instanceof Error ? error.message : 'Unknown error';
     }
   };
 
@@ -129,21 +95,21 @@ const NewPostBlock = ({ userData, onPostCreated }: CompInterface) => {
             whileTap={{ scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           >
-            <PostButton text='Фото' iconClass='fas fa-image mr-2' />
+            <PostButton text='Фото' iconClass='fas fa-image mr-2' onClick={() => showAddFile(FileType.Photo)}/>
           </motion.div>
           <motion.div
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           >
-            <PostButton text='Відео' iconClass='fas fa-video mr-2' />
+            <PostButton text='Відео' iconClass='fas fa-video mr-2' onClick={() => showAddFile(FileType.Video)}/>
           </motion.div>
           <motion.div
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           >
-            <PostButton text='Аудіо' iconClass='fas fa-music mr-2' />
+            <PostButton text='Аудіо' iconClass='fas fa-music mr-2' onClick={() => showAddFile(FileType.Audio)}/>
           </motion.div>
         </div>
         <motion.button
@@ -156,7 +122,6 @@ const NewPostBlock = ({ userData, onPostCreated }: CompInterface) => {
           Опублікувати
         </motion.button>
       </div>
-      {messageBlock}
     </div>
   );
 };

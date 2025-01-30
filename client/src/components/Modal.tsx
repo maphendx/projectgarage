@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 interface ModalProps {
@@ -8,6 +8,18 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'; // Забороняємо прокрутку
+    } else {
+      document.body.style.overflow = ''; // Відновлюємо прокрутку
+    }
+
+    return () => {
+      document.body.style.overflow = ''; // Очистка ефекту при розмонтуванні
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (

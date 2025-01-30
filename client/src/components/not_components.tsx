@@ -18,6 +18,7 @@ export interface Post {
   reposts?: string[];
   created_at?: string;
   image?: string;
+  audio?: string;
   is_liked?: boolean;
   author?: { display_name?: string; photo?: string };
 }
@@ -41,3 +42,15 @@ const dateFormatter = (get: string | undefined) => {
 };
 
 export default dateFormatter;
+
+export enum FileType {
+  Photo = "PHOTO",
+  Audio = "AUDIO",
+  Video = "VIDEO",
+}
+
+export interface FileContainer {
+  photos : File[],
+  videos : File[],
+  audios : File[],
+}

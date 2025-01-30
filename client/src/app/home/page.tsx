@@ -1,8 +1,7 @@
 'use client';
 
 import MainContent from '@/components/important/main_page_content';
-import { Post, UserData } from '@/components/not_components';
-import { InfoBlock } from '@/components/other';
+import { FileContainer, FileType, Post, UserData } from '@/components/not_components';
 import AsidePanelLeft from '@/components/surrounding/asideLeft';
 import { AsidePanelRight } from '@/components/surrounding/asideRight';
 import MusicPlayer from '@/components/surrounding/player';
@@ -10,6 +9,9 @@ import Topbar from '@/components/surrounding/topbar';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Modal from '@/components/Modal';
+import DropzoneUploader from '@/components/DropzoneUploader';
+import { useError } from '@/context/ErrorContext';
 
 export default function Home() {
   const router = useRouter();
@@ -17,6 +19,54 @@ export default function Home() {
   const [postsListToShow, setPostsListToShow] = useState<Post[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { showError } = useError();
+  const [addFileWindow, setAddFileWindow] = useState<boolean>(false); // 3 чела для загрузки файлів
+  const [addFileType, setAddfileType] = useState<FileType>(FileType.Audio);
+  const [addFilesLoaded, setAddFilesLoaded] = useState<File[]>([]);
+  const [addFileStorage, setAddFileStorage] = useState<FileContainer>({
+    photos: [],
+    videos: [],
+    audios: [],
+  });
+
+  const handleAddFile = (fileType : FileType) => {
+    setAddFileWindow(true);
+    setAddfileType(fileType);
+  }
+
+  const handleConfirmFile = () => {
+    console.error(`Довжина ${addFilesLoaded.length}`)
+    
+    showError(`Довжина ${addFilesLoaded.length}`, "info");
+    if (addFilesLoaded.length > 0) {
+      switch (addFileType) {
+        case FileType.Audio: {
+          setAddFileStorage(prevState => ({
+            ...prevState, 
+            audios: [...addFilesLoaded]
+          }));
+          break;
+        }
+        case FileType.Video: {
+          setAddFileStorage(prevState => ({
+            ...prevState, 
+            videos: [...addFilesLoaded]
+          }));
+          break;
+        }
+        case FileType.Photo: {
+          setAddFileStorage(prevState => ({
+            ...prevState, 
+            photos: [...addFilesLoaded]
+          }));
+          break;
+        }
+      }
+    }
+    setAddFileWindow(false);
+    setAddFilesLoaded([]);
+  }
+
 
   const fetchData = async (url: string) => {
     const token = localStorage.getItem('token');
@@ -126,6 +176,8 @@ export default function Home() {
                     userData={userData}
                     postsList={postsListToShow}
                     handlePostsListTrigger={handlePostsListTrigger}
+                    showAddFile={handleAddFile}
+                    addFileStorage={addFileStorage}
                   />
                 </motion.div>
               </AnimatePresence>
@@ -142,22 +194,23 @@ export default function Home() {
             <MusicPlayer />
           </footer>
 
-          {/* Error Notification */}
-          {error && (
-            <motion.div
-              className='fixed bottom-0 left-0 right-0 bg-red-600 p-4 text-center text-white'
-              initial={{ y: 100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 100, opacity: 0 }}
+          <Modal onClose={() => setAddFileWindow(false)} isOpen={addFileWindow}>
+          <div className='flex flex-col'>
+            <h2 className="text-lg mb-3 text-center">
+              Додати файли
+            </h2>
+            <DropzoneUploader setFiles={setAddFilesLoaded} />
+            <motion.button
+            className='mt-3 bg-green-950 p-2 rounded-lg'
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+            onClick={handleConfirmFile}
             >
-              <InfoBlock
-                getMessage={`Помилка! ${error}`}
-                getClasses='text-sm'
-                getIconClasses='fa fa-times-circle'
-                isAlive={true}
-              />
-            </motion.div>
-          )}
+              Підтвердити
+            </motion.button>
+          </div>
+          </Modal>
         </>
       )}
     </motion.div>

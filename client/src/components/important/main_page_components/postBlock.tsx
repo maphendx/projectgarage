@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import dateFormatter, { Post, UserData } from '@/components/not_components';
 import CommentBlock from './commentsBlock';
+import MiniPlayer from '@/components/MiniPlayer';
 
 export const PostBlock = ({
   getPost,
@@ -116,6 +117,7 @@ export const PostBlock = ({
             }
             src={post.image}
           />
+          {post.audio && <MiniPlayer audioSrc={post.audio} />}
         </div>
         <div className='mt-4 flex items-center space-x-4'>
           <motion.div

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Post, UserData } from '../not_components';
+import { FileContainer, FileType, Post, UserData } from '../not_components';
 import { PostBlock } from './main_page_components/postBlock';
 import NewPostBlock from './main_page_components/newPostBlock';
 import { motion, useAnimation } from 'framer-motion';
@@ -8,12 +8,16 @@ interface CompInterface {
   userData: UserData | null;
   postsList: Post[] | null;
   handlePostsListTrigger: () => Promise<void>;
+  showAddFile: (type : FileType) => void;
+  addFileStorage: FileContainer;
 }
 
 const MainContent = ({
   userData,
   postsList,
   handlePostsListTrigger,
+  showAddFile,
+  addFileStorage,
 }: CompInterface) => {
   const [localPostsList, setLocalPostsList] = useState<Post[] | null>(
     postsList,
@@ -66,7 +70,7 @@ const MainContent = ({
     <main>
       <div className='flex min-h-screen items-center justify-center'>
         <div className='posts-container mx-auto min-h-[85vh] w-[100%] max-w-[100%] rounded-[30px] border-[1px] border-white border-opacity-10 bg-opacity-70 bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-xl'>
-          <NewPostBlock userData={userData} onPostCreated={refreshPosts} />
+          <NewPostBlock userData={userData} onPostCreated={refreshPosts} showAddFile={showAddFile} addFileStorage={addFileStorage} />
           {localPostsList ? (
             localPostsList.map((post: Post) => (
               <motion.div

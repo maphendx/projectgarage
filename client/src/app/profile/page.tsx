@@ -5,7 +5,6 @@ import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import AsidePanelLeft from '@/components/surrounding/asideLeft';
 import Topbar from '@/components/surrounding/topbar';
-import { InfoBlock } from '@/components/other';
 import ProfileSettings from '@/components/ProfileSettings';
 import { motion } from 'framer-motion';
 
@@ -145,19 +144,6 @@ const Profile: React.FC = () => {
     }
   };
 
-  if (error) {
-    return (
-      <div className='fixed bottom-0 left-0 right-0 p-4 text-center text-white'>
-        <InfoBlock
-          getMessage={`Error! ${error}`}
-          getClasses='text-sm'
-          getIconClasses='fa fa-times-circle'
-          isAlive={true}
-        />
-      </div>
-    );
-  }
-
   if (!userData) {
     return <div className='mt-20 text-center text-white'>Loading...</div>;
   }
@@ -214,7 +200,7 @@ const Profile: React.FC = () => {
                         key={index}
                         className='mr-2 inline-block rounded-full bg-gray-700 px-2 py-1 text-xs'
                       >
-                        #{tag}
+                        #{tag.name}
                       </span>
                     ))}
                   </div>
