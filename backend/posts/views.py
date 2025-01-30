@@ -24,51 +24,39 @@ class PostListView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        try:
-            data = request.data.copy()  # Копіюємо дані з запиту
-            data['author'] = request.user.id  # Додаємо ID автора
+            try:
+                data = request.data.copy()
+                data['author'] = request.user.id
 
-            # Перевіряємо, чи є ID оригінального поста
-            if 'original_post' in data:
-                try:
-                    original_post = Post.objects.get(pk=data['original_post'])
-                    data['content'] = data.get('content', '') + f'\n\nОригінальний пост: {original_post.content}'
-                except Post.DoesNotExist:
-                    return Response({"detail": "Оригінальний пост не знайдено."}, status=status.HTTP_404_NOT_FOUND)
-                if original_post.original_post is not None:
-                    return Response({"detail": "Це не оригінальний пост."}, status=status.HTTP_400_BAD_REQUEST)
+                # Обробка оригінального поста (якщо є)
+                if 'original_post' in data:
+                    try:
+                        original_post = Post.objects.get(pk=data['original_post'])
+                        data['content'] = data.get('content', '') + f'\n\nReposted from: {original_post.content}'
+                    except Post.DoesNotExist:
+                        return Response({"detail": "Оригінальний пост не знайдено."}, status=status.HTTP_404_NOT_FOUND)
+                    if original_post.original_post is not None:
+                        return Response({"detail": "Неможливо репостити репост."}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Обробка хештегів
-            hashtags_data = data.get('hashtags', [])
-            if not isinstance(hashtags_data, list):
-                return Response({"detail": "Хештеги повинні бути у вигляді списку."}, status=status.HTTP_400_BAD_REQUEST)
-            if not (1 <= len(hashtags_data) <= 50):
-                return Response({"detail": "Кількість хештегів має бути від 1 до 50."}, status=status.HTTP_400_BAD_REQUEST)
+                # Обробка хештегів
+                hashtags_data = data.get('hashtags', [])
+                if not isinstance(hashtags_data, list):
+                    return Response({"detail": "Хештеги повинні бути в списку."}, status=status.HTTP_400_BAD_REQUEST)
+                if not (1 <= len(hashtags_data) <= 50):
+                    return Response({"detail": "Кількість хештегів повинна бути від 1 до 50."}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Отримуємо або створюємо хештеги
-            hashtags = []
-            for tag_name in hashtags_data:
-                if not isinstance(tag_name, str):
-                    return Response({"detail": "Назви хештегів повинні бути рядками."}, status=status.HTTP_400_BAD_REQUEST)
-                tag_name = tag_name.lower().strip()
-                if not tag_name:
-                    return Response({"detail": "Назви хештегів не можуть бути порожніми."}, status=status.HTTP_400_BAD_REQUEST)
-                hashtag, created = Hashtag.objects.get_or_create(name=tag_name)
-                hashtags.append(hashtag)
+                data['hashtags'] = hashtags_data  # Передаємо список назв хештегів в сериалізатор
 
-            # Додаємо хештеги до даних
-            data['hashtags'] = hashtags
-
-            # Сериалізуємо дані
-            serializer = PostSerializer(data=data, context={'request': request})
-            if serializer.is_valid():    
-                serializer.save(author=request.user)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except ValidationError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                # Валідація та створення поста
+                serializer = PostSerializer(data=data, context={'request': request})
+                if serializer.is_valid():
+                    serializer.save(author=request.user)
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except ValidationError as e:
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # Пост: деталі, оновлення, видалення
 class PostDetailView(APIView):    
