@@ -17,7 +17,7 @@ class PostSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
-    hashtags = serializers.ListField(child=serializers.CharField())
+    hashtags = serializers.CharField(required=False, allow_blank=True)
     hashtags_info = serializers.SerializerMethodField(read_only=True)
     
     image = serializers.ImageField(required=False, allow_null=True)
@@ -79,14 +79,33 @@ class PostSerializer(serializers.ModelSerializer):
             raise ValidationError("Максимальний розмір аудіо - 20MB")
         return value
 
+    def validate_hashtags(self, value):
+        """
+        Розбиває вхідний рядок на хештеги, видаляє # і пробіли, перевіряє кількість.
+        """
+        if not value:
+            return []
+            
+        # Розділяємо рядок на теги, ігноруючи порожні
+        tags = [tag.strip().lstrip('#').lower() for tag in value.split() if tag.strip()]
+        
+        # Видаляємо дублікати
+        unique_tags = list(set(tags))
+        
+        # Перевірка кількості
+        if not (1 <= len(unique_tags) <= 50):
+            raise serializers.ValidationError("Кількість хештегів має бути від 1 до 50.")
+        
+        return unique_tags
+
     def create(self, validated_data):
+        # Отримуємо список хештегів після валідації
         hashtags_data = validated_data.pop('hashtags', [])
         post = Post.objects.create(**validated_data)
 
         hashtags = []
         for tag_name in hashtags_data:
-            tag_name = tag_name.lower().strip()
-            if tag_name:
+            if tag_name:  # Переконуємося, що тег не порожній
                 hashtag, created = Hashtag.objects.get_or_create(name=tag_name)
                 hashtags.append(hashtag)
         
@@ -99,7 +118,6 @@ class PostSerializer(serializers.ModelSerializer):
 
         hashtags = []
         for tag_name in hashtags_data:
-            tag_name = tag_name.lower().strip()
             if tag_name:
                 hashtag, created = Hashtag.objects.get_or_create(name=tag_name)
                 hashtags.append(hashtag)
