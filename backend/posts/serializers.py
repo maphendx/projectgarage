@@ -1,23 +1,28 @@
 from rest_framework import serializers
 from users.models import CustomUser
 from .models import Post, Comment, Hashtag
+from django.core.exceptions import ValidationError
 
 class HashtagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Hashtag
         fields = ['name']
 
-# Сериалізатор для коментарів
 class CommentSerializer(serializers.ModelSerializer): 
     class Meta:
         model = Comment
         fields = ['id', 'author', 'content', 'created_at', 'updated_at']
 
-# Сериалізатор для постів
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
-    is_liked = serializers.SerializerMethodField()  
+    is_liked = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
+    hashtags = serializers.ListField(child=serializers.CharField(), write_only=True, required=True)
+    hashtags_info = serializers.SerializerMethodField(read_only=True)
+    
+    image = serializers.ImageField(required=False, allow_null=True)
+    video = serializers.FileField(required=False, allow_null=True)
+    audio = serializers.FileField(required=False, allow_null=True)
 
     def get_author(self, obj):
         request = self.context.get('request')
@@ -51,6 +56,47 @@ class PostSerializer(serializers.ModelSerializer):
     def get_comments(self, obj):
         return obj.post_comments.count()
 
+    def get_hashtags_info(self, obj):
+        return [{"id": hashtag.id, "name": hashtag.name} for hashtag in obj.hashtags.all()]
+
+    def validate_hashtags(self, value):
+        if not (1 <= len(value) <= 50):
+            raise serializers.ValidationError("Кількість хештегів має бути від 1 до 50.")
+        return value
+
+    def validate_image(self, value):
+        if value and value.size > 10 * 1024 * 1024:
+            raise ValidationError("Максимальний розмір зображення - 10MB")
+        return value
+
+    def validate_video(self, value):
+        if value and value.size > 500 * 1024 * 1024:
+            raise ValidationError("Максимальний розмір відео - 500MB")
+        return value
+
+    def validate_audio(self, value):
+        if value and value.size > 20 * 1024 * 1024:
+            raise ValidationError("Максимальний розмір аудіо - 20MB")
+        return value
+
+    def create(self, validated_data):
+        hashtags_data = validated_data.pop('hashtags', [])
+        post = Post.objects.create(**validated_data)
+
+        hashtags = [Hashtag.objects.get_or_create(name=name.lower())[0] for name in hashtags_data]
+        post.hashtags.set(hashtags)
+
+        return post
+
+    def update(self, instance, validated_data):
+        hashtags_data = validated_data.pop('hashtags', [])
+        instance = super().update(instance, validated_data)
+
+        hashtags = [Hashtag.objects.get_or_create(name=name.lower())[0] for name in hashtags_data]
+        instance.hashtags.set(hashtags)
+
+        return instance
+
     class Meta:
         model = Post
-        fields = ['id', 'author', 'content', 'image', 'video', 'audio', 'hashtags', 'likes', 'comments', 'created_at', 'updated_at', 'original_post', 'is_liked']
+        fields = ['id', 'author', 'content', 'image', 'video', 'audio', 'hashtags', 'hashtags_info', 'likes', 'comments', 'created_at', 'updated_at', 'original_post', 'is_liked']
