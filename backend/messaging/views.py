@@ -13,7 +13,8 @@ class ChatRoomView(APIView):
     def post(self, request):
         serializer = ChatRoomSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            chat_room = serializer.save()
+            chat_room.participants.add(*request.data.get('participants', []))
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -23,8 +24,10 @@ class MessageView(APIView):
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
 
-    def post(self, request):
-        serializer = MessageSerializer(data=request.data)
+    def post(self, request, room_id):
+        data = request.data.copy()
+        data['chat'] = room_id
+        serializer = MessageSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
