@@ -41,10 +41,10 @@ class PostListView(views.APIView):
                 try:
                     original_post = Post.objects.get(pk=data['original_post'])
                     data['content'] = data.get('content', '') + f'\n\nReposted from: {original_post.content}'
+                    if original_post.original_post is not None:
+                        return Response({"detail": "Reposting a repost is not allowed."}, status=status.HTTP_400_BAD_REQUEST)
                 except Post.DoesNotExist:
                     return Response({"detail": "Original post does not exist."}, status=status.HTTP_404_NOT_FOUND)
-                if original_post.original_post is not None:
-                    return Response({"detail": "Reposting a repost is not allowed."}, status=status.HTTP_400_BAD_REQUEST)
 
             # Валідація та створення поста
             serializer = PostSerializer(data=data, context={'request': request})
@@ -54,8 +54,9 @@ class PostListView(views.APIView):
                     hashtags_data = data.get('hashtags', [])
                     hashtags = []
                     for tag in hashtags_data:
+                        tag = tag.strip()
                         if not tag.startswith("#"):
-                            raise ValidationError(f"Hashtag '{tag}' should start with '#'")
+                            return Response({"detail": f"Hashtag '{tag}' should start with '#'"}, status=status.HTTP_400_BAD_REQUEST)
                         hashtag, created = Hashtag.objects.get_or_create(name=tag.lower())
                         hashtags.append(hashtag)
                     
