@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
-from .models import Post, Comment, Like, Hashtag
+from .models import Post, Comment, Like, Hashtag, PostImage, PostVideo, PostAudio
 from rest_framework import status
 from .serializers import PostSerializer, CommentSerializer
 from django.db.models import Q, Count 
@@ -35,6 +35,9 @@ class PostListView(views.APIView):
         try:
             data = request.data.copy()
             data['author'] = request.user.id
+            images = request.FILES.getlist("images")
+            videos = request.FILES.getlist("videos")
+            audios = request.FILES.getlist("audios")
 
             # Обробка оригінального поста, якщо це репост
             if 'original_post' in data:
@@ -59,16 +62,27 @@ class PostListView(views.APIView):
                             return Response({"detail": f"Hashtag '{tag}' should start with '#'"}, status=status.HTTP_400_BAD_REQUEST)
                         hashtag, created = Hashtag.objects.get_or_create(name=tag.lower())
                         hashtags.append(hashtag)
-                    
+
                     # Збереження поста
                     post = serializer.save(author=request.user)
-                    
+
                     # Прив'язка хештегів до поста
                     post.hashtags.set(hashtags)
-                
-                # Повернення даних поста з хештегами
-                serializer_with_hashtags = PostSerializer(post, context={'request': request})
-                return Response(serializer_with_hashtags.data, status=status.HTTP_201_CREATED)
+
+                    # Додавання зображень
+                    for image in images:
+                        PostImage.objects.create(post=post, image=image)
+
+                    # Додавання відео
+                    for video in videos:
+                        PostVideo.objects.create(post=post, video=video)
+
+                    # Додавання аудіо
+                    for audio in audios:
+                        PostAudio.objects.create(post=post, audio=audio)
+
+                # Повернення даних поста
+                return Response(PostSerializer(post, context={'request': request}).data, status=status.HTTP_201_CREATED)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as ve:

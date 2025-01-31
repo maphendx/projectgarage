@@ -68,21 +68,6 @@ def validate_file_extension(value, file_type):
 class Post(models.Model):
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField(blank=True)
-    image = models.ImageField(
-        upload_to='posts/images/', 
-        blank=True, 
-        validators=[validate_image_file_size, validate_image_file_extension]
-    )
-    video = models.FileField(
-        upload_to='posts/videos/', 
-        blank=True, 
-        validators=[validate_video_file_size, validate_video_file_extension]
-    )
-    audio = models.FileField(
-        upload_to='posts/audio/', 
-        blank=True, 
-        validators=[validate_audio_file_size, validate_audio_file_extension]
-    )
     hashtags = models.ManyToManyField('Hashtag', blank=True)
     likes = models.ManyToManyField(CustomUser, through='Like', related_name='liked_posts')
     comments = models.ManyToManyField('Comment', blank=True, related_name='commented_posts')  # Змінив related_name
@@ -97,9 +82,9 @@ class Post(models.Model):
         return f'Post {self.id} by {self.author.display_name}'
 
     def clean(self):
-        # """Перевірка на кількість хештегів."""
-        # if not (1 <= self.hashtags.count() <= 50):
-        #     raise ValidationError("Кількість хештегів має бути в межах від 1 до 50.")
+        """Перевірка на кількість хештегів."""
+        if not (1 <= self.hashtags.count() <= 50):
+            raise ValidationError("Кількість хештегів має бути в межах від 1 до 50.")
         pass
 
     def save(self, *args, **kwargs):
@@ -114,3 +99,15 @@ class Like(models.Model):
 
     class Meta:
         unique_together = ('user', 'post')  # Уникальність для пари (користувач, пост)
+
+class PostImage(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='posts/images/', validators=[validate_image_file_size, validate_image_file_extension])
+
+class PostVideo(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='videos')
+    video = models.FileField(upload_to='posts/videos/', validators=[validate_video_file_size, validate_video_file_extension])
+
+class PostAudio(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='audios')
+    audio = models.FileField(upload_to='posts/audio/', validators=[validate_audio_file_size, validate_audio_file_extension])
