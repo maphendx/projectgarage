@@ -93,7 +93,9 @@ class PostSerializer(serializers.ModelSerializer):
     def validate_hashtags(self, value):
         if not value:
             return value
-        for tag in value:
+        hashtags = value.split(',')
+        for tag in hashtags:
+            tag = tag.strip()  # Видалення пробілів на початку та в кінці
             if not tag.startswith("#"):
                 raise ValidationError(f"Hashtag '{tag}' should start with '#'")
         return value
@@ -128,9 +130,9 @@ class PostSerializer(serializers.ModelSerializer):
         for audio in audios:
             PostAudio.objects.create(post=post, audio=audio)
 
-            return post
+        return post
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'content', 'image', 'video', 'audio', 'likes', 'comments', 'created_at', 'updated_at', 'original_post', 'is_liked', 'hashtags', 'hashtag_objects']
+        fields = ['id', 'author', 'content', 'images', 'videos', 'audios', 'likes', 'comments', 'created_at', 'updated_at', 'original_post', 'is_liked', 'hashtags', 'hashtag_objects']
         read_only_fields = ['id', 'likes', 'comments', 'created_at', 'updated_at', 'is_liked', 'hashtag_objects']

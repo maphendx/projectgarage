@@ -67,7 +67,7 @@ class PostListView(views.APIView):
                     post = serializer.save(author=request.user)
 
                     # Прив'язка хештегів до поста
-                    post.hashtags.set(hashtags)
+                    post.hashtags.set(hashtags)  # Прив'язуємо хештеги після збереження поста
 
                     # Додавання зображень
                     for image in images:
