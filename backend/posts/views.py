@@ -24,7 +24,7 @@ class PostListView(views.APIView):
         """
         Отримання списку всіх постів.
         """
-        posts = Post.objects.all().prefetch_related('hashtags', 'likes', 'comments', 'author')
+        posts = Post.objects.all().prefetch_related('hashtags', 'likes', 'comments', 'author', 'images', 'videos', 'audios')
         serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 

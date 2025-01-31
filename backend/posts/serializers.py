@@ -15,16 +15,19 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ['id', 'author', 'content', 'created_at', 'updated_at']
 
 class PostImageSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(use_url=True)
     class Meta:
         model = PostImage
         fields = ['id', 'image']
 
 class PostVideoSerializer(serializers.ModelSerializer):
+    video = serializers.FileField(use_url=True)
     class Meta:
         model = PostVideo
         fields = ['id', 'video']
 
 class PostAudioSerializer(serializers.ModelSerializer):
+    audio = serializers.FileField(use_url=True)
     class Meta:
         model = PostAudio
         fields = ['id', 'audio']
