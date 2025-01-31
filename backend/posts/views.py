@@ -53,7 +53,7 @@ class PostListView(views.APIView):
                     # Отримання або створення хештегів
                     hashtags_data = data.get('hashtags', [])
                     hashtags = []
-                    for tag in hashtags_data:
+                    for tag in hashtags_data.split(','):
                         tag = tag.strip()
                         if not tag.startswith("#"):
                             return Response({"detail": f"Hashtag '{tag}' should start with '#'"}, status=status.HTTP_400_BAD_REQUEST)
