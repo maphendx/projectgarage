@@ -53,6 +53,8 @@ class PostListView(views.APIView):
             serializer = PostSerializer(data=data, context={'request': request})
             if serializer.is_valid():
                 with transaction.atomic():
+                    # Створення поста без збереження
+                    post = serializer.save(author=request.user)
                     # Отримання або створення хештегів
                     hashtags_data = data.get('hashtags', [])
                     hashtags = []
@@ -63,11 +65,8 @@ class PostListView(views.APIView):
                         hashtag, created = Hashtag.objects.get_or_create(name=tag.lower())
                         hashtags.append(hashtag)
 
-                    # Збереження поста
-                    post = serializer.save(author=request.user)
-
-                    # Прив'язка хештегів до поста
-                    post.hashtags.set(hashtags)  # Прив'язуємо хештеги після збереження поста
+                    # Збереження зв'язку many-to-many (після створення поста)
+                    post.hashtags.set(hashtags)
 
                     # Додавання зображень
                     for image in images:
