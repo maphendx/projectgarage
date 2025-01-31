@@ -29,6 +29,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
+      onClick={onClose}
     >
       <motion.div
         className='relative w-full max-w-md rounded-lg bg-[#2B2D31] p-6 text-[#B5D6E7] shadow-lg'
@@ -36,6 +37,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
         animate={{ scale: 1 }}
         exit={{ scale: 0.8 }}
         transition={{ duration: 0.3 }}
+        onClick={(e) => e.stopPropagation()}
       >
         <button
           className='absolute right-4 top-4 text-[#B5BFE7] hover:text-[#6374B6]'

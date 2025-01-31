@@ -7,9 +7,11 @@ import MiniPlayer from '@/components/MiniPlayer';
 export const PostBlock = ({
   getPost,
   getUser,
+  getRepostHandler,
 }: {
   getPost: Post;
   getUser: UserData | null;
+  getRepostHandler: (post : Post) => void;
 }) => {
   const [showComments, setShowComments] = useState<boolean>(false);
   const [post, setPost] = useState<Post>(getPost);
@@ -75,10 +77,6 @@ export const PostBlock = ({
     }
   };
 
-  const performRepostButton = async () => {
-    // репости тут будуть
-  };
-
   return (
     <motion.div
       className='post-block'
@@ -108,7 +106,7 @@ export const PostBlock = ({
         <p className='mt-4 whitespace-pre-wrap break-words text-white'>
           {post.content}
         </p>
-        <div className='flex flex-col items-center justify-center'>
+        <div className='flex flex-col items-start justify-start'>
           <img
             className={
               post.image
@@ -118,6 +116,19 @@ export const PostBlock = ({
             src={post.image}
           />
           {post.audio && <MiniPlayer audioSrc={post.audio} />}
+          {post.video && <div>
+            <video src={post.video}>
+
+            </video>
+          </div> }
+          {post.hashtag_objects.length > 0 ? 
+          <div className='flex flex-wrap'>
+            {post.hashtag_objects.map((element, key) => (
+            <div key={key} className='flex mr-2 mt-2 bg-[#ffffff0f] p-1 rounded-md'>
+              <p>{element.name}</p>
+            </div>
+            ))}
+          </div> : <></>}
         </div>
         <div className='mt-4 flex items-center space-x-4'>
           <motion.div
@@ -150,7 +161,7 @@ export const PostBlock = ({
           >
             <PostButton
               text={post.reposts?.length}
-              onClick={performRepostButton}
+              onClick={() => getRepostHandler(post)}
               iconClass='fas fa-share mr-1'
             />
           </motion.div>

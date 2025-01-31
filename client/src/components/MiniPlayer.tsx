@@ -1,4 +1,5 @@
 // components/AudioPlayer.tsx
+import { useError } from '@/context/ErrorContext';
 import { useState } from 'react';
 
 interface AudioPlayerProps {
@@ -8,14 +9,26 @@ interface AudioPlayerProps {
 const MiniPlayer: React.FC<AudioPlayerProps> = ({ audioSrc }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useState(new Audio(audioSrc))[0]; // Створюємо аудіо-елемент
+  const {showError} = useError();
 
-  const togglePlayPause = () => {
-    if (isPlaying) {
-      audioRef.pause();
-    } else {
-      audioRef.play();
+  const togglePlayPause = async () => {
+    try {
+      if (isPlaying) {
+        audioRef.pause();
+      } else {
+        await audioRef.play();
+      }
+      setIsPlaying(!isPlaying);  // Перемикаємо стан плеєра
     }
-    setIsPlaying(!isPlaying);  // Перемикаємо стан плеєра
+    catch (ex) {
+      if (ex instanceof DOMException && ex.name === "NotSupportedError") {
+        showError(`Помилка відтворення: ${ex}`)
+      }
+      else {
+        throw ex;
+      }
+    }
+    
   };
 
   return (

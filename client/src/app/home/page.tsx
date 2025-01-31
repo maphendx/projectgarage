@@ -20,7 +20,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { showError } = useError();
-  const [addFileWindow, setAddFileWindow] = useState<boolean>(false); // 3 чела для загрузки файлів
+  const [addFileWindow, setAddFileWindow] = useState<boolean>(false); // 4 чела для загрузки файлів
   const [addFileType, setAddfileType] = useState<FileType>(FileType.Audio);
   const [addFilesLoaded, setAddFilesLoaded] = useState<File[]>([]);
   const [addFileStorage, setAddFileStorage] = useState<FileContainer>({
@@ -29,15 +29,16 @@ export default function Home() {
     audios: [],
   });
 
+  useEffect(() => {
+    error && showError(error, "error");
+  },[error])
+
   const handleAddFile = (fileType : FileType) => {
     setAddFileWindow(true);
     setAddfileType(fileType);
   }
 
   const handleConfirmFile = () => {
-    console.error(`Довжина ${addFilesLoaded.length}`)
-    
-    showError(`Довжина ${addFilesLoaded.length}`, "info");
     if (addFilesLoaded.length > 0) {
       switch (addFileType) {
         case FileType.Audio: {
@@ -62,9 +63,38 @@ export default function Home() {
           break;
         }
       }
+      setAddFileWindow(false);
+      setAddFilesLoaded([]);
     }
-    setAddFileWindow(false);
-    setAddFilesLoaded([]);
+    else {
+      showError("Ви не додали жодного файлу!", "warning");
+    }
+  }
+
+  const resetAddFileStorage = (fileType : FileType) => {
+    switch (fileType) {
+      case FileType.Photo: {
+        setAddFileStorage(prevState => ({
+          ...prevState,
+          photos: []   
+        }));
+        break;
+      }
+      case FileType.Audio: {
+        setAddFileStorage(prevState => ({
+          ...prevState,
+          audios: []   
+        }));
+        break;
+      }
+      case FileType.Video: {
+        setAddFileStorage(prevState => ({
+          ...prevState,
+          videos: []   
+        }));
+        break;
+      }
+    }
   }
 
 
@@ -178,6 +208,7 @@ export default function Home() {
                     handlePostsListTrigger={handlePostsListTrigger}
                     showAddFile={handleAddFile}
                     addFileStorage={addFileStorage}
+                    resetAddFileStorage={resetAddFileStorage}
                   />
                 </motion.div>
               </AnimatePresence>
@@ -199,9 +230,9 @@ export default function Home() {
             <h2 className="text-lg mb-3 text-center">
               Додати файли
             </h2>
-            <DropzoneUploader setFiles={setAddFilesLoaded} />
+            <DropzoneUploader setFiles={setAddFilesLoaded} fileType={addFileType} />
             <motion.button
-            className='mt-3 bg-green-950 p-2 rounded-lg'
+            className='mt-3 bg-pink-800 p-2 rounded-lg hover:bg-pink-400 duration-300 transition-colors ease-out'
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 400, damping: 17 }}

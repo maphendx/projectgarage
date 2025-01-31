@@ -10,6 +10,7 @@ interface CompInterface {
   handlePostsListTrigger: () => Promise<void>;
   showAddFile: (type : FileType) => void;
   addFileStorage: FileContainer;
+  resetAddFileStorage: (fileType : FileType) => void;
 }
 
 const MainContent = ({
@@ -18,10 +19,12 @@ const MainContent = ({
   handlePostsListTrigger,
   showAddFile,
   addFileStorage,
+  resetAddFileStorage,
 }: CompInterface) => {
   const [localPostsList, setLocalPostsList] = useState<Post[] | null>(
     postsList,
   );
+  const [repostPost, setRepostPost] = useState<Post | undefined>(undefined);
   const controls = useAnimation();
 
   useEffect(() => {
@@ -66,11 +69,16 @@ const MainContent = ({
     await handlePostsListTrigger();
   };
 
+  const performRepostButton = (post : Post) => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setRepostPost(post);
+  };
+
   return (
     <main>
       <div className='flex min-h-screen items-center justify-center'>
         <div className='posts-container mx-auto min-h-[85vh] w-[100%] max-w-[100%] rounded-[30px] border-[1px] border-white border-opacity-10 bg-opacity-70 bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-xl'>
-          <NewPostBlock userData={userData} onPostCreated={refreshPosts} showAddFile={showAddFile} addFileStorage={addFileStorage} />
+          <NewPostBlock userData={userData} onPostCreated={refreshPosts} showAddFile={showAddFile} addFileStorage={addFileStorage} resetAddFileStorage={resetAddFileStorage} repostPost={repostPost} setRepostPost={setRepostPost} />
           {localPostsList ? (
             localPostsList.map((post: Post) => (
               <motion.div
@@ -80,7 +88,7 @@ const MainContent = ({
                 animate={controls}
                 viewport={{ once: true }}
               >
-                <PostBlock getUser={userData} getPost={post} />
+                <PostBlock getUser={userData} getPost={post} getRepostHandler={performRepostButton} />
               </motion.div>
             ))
           ) : (

@@ -19,7 +19,9 @@ export interface Post {
   created_at?: string;
   image?: string;
   audio?: string;
+  video?: string;
   is_liked?: boolean;
+  hashtag_objects: {id : number, name : string}[];
   author?: { display_name?: string; photo?: string };
 }
 

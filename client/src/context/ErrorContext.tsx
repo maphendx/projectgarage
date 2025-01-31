@@ -35,14 +35,14 @@ export const ErrorProvider = ({ children }: { children: ReactNode }) => {
       <AnimatePresence>
         {error && (
           <motion.div
-            className={`fixed z-50 bottom-4 left-1/2 transform translate-x-1/2 p-3 rounded-xl ${
+            className={`fixed z-50 bottom-4 left-1/2 p-3 rounded-xl ${
               error.type === "error" ? "bg-red-600" :
               error.type === "warning" ? "bg-yellow-500 text-black" :
               error.type === "success" ? "bg-green-500" :
               "bg-blue-500"
             }`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 20, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, y: 20 }}
           >
             {error.message}
