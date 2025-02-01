@@ -16,16 +16,42 @@ class CommentSerializer(serializers.ModelSerializer):
 
 # Серіалайзери для медіа
 class PostImageSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.image.url)
+        return obj.image.url
+
     class Meta:
         model = PostImage
         fields = ['id', 'image']
 
+
 class PostVideoSerializer(serializers.ModelSerializer):
+    video = serializers.SerializerMethodField()
+
+    def get_video(self, obj):
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.video.url)
+        return obj.video.url
+
     class Meta:
         model = PostVideo
         fields = ['id', 'video']
 
+
 class PostAudioSerializer(serializers.ModelSerializer):
+    audio = serializers.SerializerMethodField()
+
+    def get_audio(self, obj):
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.audio.url)
+        return obj.audio.url
+
     class Meta:
         model = PostAudio
         fields = ['id', 'audio']
@@ -50,7 +76,7 @@ class PostSerializer(serializers.ModelSerializer):
         hashtags_data = [{hashtag.name} for hashtag in hashtags]
         
         default_avatar = request.build_absolute_uri('media/default/default_avatar/g396.svg')
-        photo_url = obj.author.photo.url if obj.author.photo else default_avatar
+        photo_url = request.build_absolute_uri(obj.author.photo.url) if obj.author.photo else default_avatar
         
         return {
             "id": obj.author.id,

@@ -30,7 +30,7 @@ class PostListView(views.APIView):
         """
         Отримання списку всіх постів.
         """
-        posts = Post.objects.all().prefetch_related('hashtags', 'likes', 'comments', 'author')
+        posts = Post.objects.all().prefetch_related('hashtags', 'likes', 'post_comments', 'author')
         serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -72,26 +72,17 @@ class PostListView(views.APIView):
                 images_data = []
                 for image in images:
                     image.seek(0)
-                    images_data.append({
-                        'name': image.name,
-                        'content': image.read()
-                    })
+                    images_data.append({'name': image.name, 'content': image.read()})
 
                 videos_data = []
                 for video in videos:
                     video.seek(0)
-                    videos_data.append({
-                        'name': video.name,
-                        'content': video.read()
-                    })
+                    videos_data.append({'name': video.name, 'content': video.read()})
 
                 audios_data = []
                 for audio in audios:
                     audio.seek(0)
-                    audios_data.append({
-                        'name': audio.name,
-                        'content': audio.read()
-                    })
+                    audios_data.append({'name': audio.name, 'content': audio.read()})
 
                 # Функція для обробки файлів після коміту транзакції (з використанням байтів, а не файлових об'єктів)
                 def process_media_files():
@@ -115,11 +106,7 @@ class PostListView(views.APIView):
 
                         try:
                             (
-                                ffmpeg
-                                .input(temp_video_full_path)
-                                .output(final_video_full_path, vcodec='copy', acodec='copy')
-                                .overwrite_output()
-                                .run()
+                                ffmpeg.input(temp_video_full_path).output(final_video_full_path, vcodec='copy', acodec='copy').overwrite_output().run()
                             )
                         except Exception as e:
                             # Якщо ffmpeg викликає помилку, копіюємо оригінальний файл
@@ -155,15 +142,15 @@ class PostListView(views.APIView):
 class PostDetailView(APIView):    
     def get(self, request, pk):    
         post = Post.objects.get(pk=pk)  # Отримуємо пост за ID
-        serializer = PostSerializer(post)    
-        return Response(serializer.data , status=status.HTTP_200_OK)
+        serializer = PostSerializer(post, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):    
         post = Post.objects.get(pk=pk)  # Оновлюємо пост
-        serializer = PostSerializer(post, data=request.data)    
+        serializer = PostSerializer(post, data=request.data, context={'request': request})
         if serializer.is_valid():    
             serializer.save()        
-            return Response(serializer.data , status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):    
