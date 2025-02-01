@@ -1,8 +1,8 @@
 from rest_framework import serializers
 from users.models import CustomUser
-from .models import Post, Comment, Hashtag
+from .models import Post, Comment, Hashtag, PostImage, PostVideo, PostAudio
 from django.core.exceptions import ValidationError
-from django.db import transaction
+import re
 
 class HashtagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,12 +14,31 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ['id', 'author', 'content', 'created_at', 'updated_at']
 
+# Серіалайзери для медіа
+class PostImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostImage
+        fields = ['id', 'image']
+
+class PostVideoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostVideo
+        fields = ['id', 'video']
+
+class PostAudioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostAudio
+        fields = ['id', 'audio']
+
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
     hashtags = serializers.CharField(write_only=True, required=False)
     hashtag_objects = HashtagSerializer(many=True, read_only=True, source='hashtags')
+    images = PostImageSerializer(many=True, read_only=True)
+    videos = PostVideoSerializer(many=True, read_only=True)
+    audios = PostAudioSerializer(many=True, read_only=True)
 
     def get_author(self, obj):
         request = self.context.get('request')
@@ -30,10 +49,7 @@ class PostSerializer(serializers.ModelSerializer):
         hashtags = obj.author.hashtags.all()[:3]
         hashtags_data = [{hashtag.name} for hashtag in hashtags]
         
-        #  SVG 
         default_avatar = request.build_absolute_uri('media/default/default_avatar/g396.svg')
-        
-        #      SVG
         photo_url = obj.author.photo.url if obj.author.photo else default_avatar
         
         return {
@@ -53,47 +69,36 @@ class PostSerializer(serializers.ModelSerializer):
     def get_comments(self, obj):
         return obj.post_comments.count()
 
-    def validate_image(self, value):
-        if value and value.size > 10 * 1024 * 1024:
-            raise ValidationError("Image size should not exceed 10MB")
-        return value
-
-    def validate_video(self, value):
-        if value and value.size > 500 * 1024 * 1024:
-            raise ValidationError("Video size should not exceed 500MB")
-        return value
-
-    def validate_audio(self, value):
-        if value and value.size > 20 * 1024 * 1024:
-            raise ValidationError("Audio size should not exceed 20MB")
-        return value
-
     def validate_hashtags(self, value):
         if not value:
             return value
-        for tag in value:
+        hashtags = value.split(',')
+        for tag in hashtags:
+            tag = tag.strip()
             if not tag.startswith("#"):
-                raise ValidationError(f"Hashtag '{tag}' should start with '#'")
+                raise ValidationError(f"Hashtag '{tag}' має починатися з '#'")
+            if not re.match(r'^#[A-Za-z0-9]+$', tag):
+                raise ValidationError(f"Hashtag '{tag}' містить недопустимі символи")
         return value
 
-    def create_hashtags(self, hashtags):
-        hashtag_objects = []
-        for tag in hashtags:
-            hashtag, created = Hashtag.objects.get_or_create(name=tag.lower())
-            hashtag_objects.append(hashtag)
-        return hashtag_objects
-
     def create(self, validated_data):
-            hashtags_str = validated_data.pop('hashtags', '')
-            post = Post.objects.create(**validated_data)
-            if hashtags_str:
-                hashtag_list = [tag.strip().lower() for tag in hashtags_str.split(',') if tag.strip()]
-                hashtags = [Hashtag.objects.get_or_create(name=tag)[0] for tag in hashtag_list]
-                post.hashtags.set(hashtags)
-            
-            return post
+        hashtags_str = validated_data.pop('hashtags', '')
+        post = Post.objects.create(**validated_data)
+        if hashtags_str:
+            hashtag_list = [tag.strip().lower() for tag in hashtags_str.split(',') if tag.strip()]
+            hashtags = [Hashtag.objects.get_or_create(name=tag)[0] for tag in hashtag_list]
+            post.hashtags.set(hashtags)
+        return post
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'content', 'image', 'video', 'audio', 'likes', 'comments', 'created_at', 'updated_at', 'original_post', 'is_liked', 'hashtags', 'hashtag_objects']
-        read_only_fields = ['id', 'likes', 'comments', 'created_at', 'updated_at', 'is_liked', 'hashtag_objects']
+        fields = [
+            'id', 'author', 'content', 'hashtags', 'hashtag_objects', 
+            'images', 'videos', 'audios', 'likes', 'comments', 
+            'created_at', 'updated_at', 'original_post', 'is_liked'
+        ]
+        read_only_fields = [
+            'id', 'likes', 'comments', 'created_at', 
+            'updated_at', 'is_liked', 'hashtag_objects',
+            'images', 'videos', 'audios'
+        ]
