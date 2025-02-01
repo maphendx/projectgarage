@@ -4,6 +4,8 @@ import dateFormatter, { Post, UserData } from '@/components/not_components';
 import CommentBlock from './commentsBlock';
 import MiniPlayer from '@/components/MiniPlayer';
 import { useError } from '@/context/ErrorContext';
+import MicroPost from '@/components/MicroPost';
+
 
 export const PostBlock = ({
   getPost,
@@ -140,7 +142,7 @@ export const PostBlock = ({
         <p className='mt-4 whitespace-pre-wrap break-words text-white'>
           {post.content}
         </p>
-        <div className='flex flex-col items-start justify-start'>
+        <div className='flex flex-col items-start justify-start mb-4'>
           <img
             className={
               post.image
@@ -165,38 +167,7 @@ export const PostBlock = ({
           </div> : <></>}
         </div>
         {/* Блок репосту */}
-        {repostedPost &&
-          <motion.div
-          key={repostedPost.id}
-          className='mt-5 rounded-[30px] border-[1px] border-white border-opacity-10 bg-gradient-to-r from-[#2D2F3AB3] to-[#1A1A2EB3] p-6 flex place-content-between'
-          style={{ boxShadow: '0 4px 4px rgba(0, 0, 0, 0.25)' }}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-        >
-          <div>
-            <p className='text-sm'>{repostedPost.content}</p>
-            {repostedPost.image && (
-              <img
-              src={"http://localhost:8000" + repostedPost.image}
-              alt='Post image'
-              width={100}
-              height={100}
-              className='mt-2 rounded'
-            />
-            )}
-            { repostedPost.created_at && repostedPost.likes &&
-              <div className='mt-2 text-xs text-gray-400'>
-              {new Date(repostedPost.created_at).toLocaleString()}
-              <span className='ml-4'>
-                Вподобання: {repostedPost.likes.length}
-              </span>
-              <span className='ml-4'>Коментарі: {repostedPost.comments}</span>
-            </div>
-            }
-          </div>
-        </motion.div>
-        }
+        {repostedPost && (<MicroPost post={repostedPost} />)}
         {/* Блок з кнопками */}
         <div className='mt-4 flex items-center space-x-4'>
           <motion.div

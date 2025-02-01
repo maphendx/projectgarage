@@ -7,6 +7,8 @@ import AsidePanelLeft from '@/components/surrounding/asideLeft';
 import Topbar from '@/components/surrounding/topbar';
 import ProfileSettings from '@/components/ProfileSettings';
 import { motion } from 'framer-motion';
+import { Post } from '@/components/not_components';
+import MicroPost from '@/components/MicroPost';
 
 interface UserData {
   display_name?: string;
@@ -17,15 +19,7 @@ interface UserData {
   subscriptions_count?: number;
   subscribers_count?: number;
   total_likes?: number;
-  posts?: Array<{
-    id: number;
-    content: string;
-    image?: string | null;
-    created_at: string;
-    likes: number[];
-    comments: number;
-    is_liked: boolean;
-  }>;
+  posts?: Post[];
 }
 
 const Profile: React.FC = () => {
@@ -200,7 +194,7 @@ const Profile: React.FC = () => {
                         key={index}
                         className='mr-2 inline-block rounded-full bg-gray-700 px-2 py-1 text-xs'
                       >
-                        #{tag.name}
+                        #{tag}
                       </span>
                     ))}
                   </div>
@@ -223,33 +217,8 @@ const Profile: React.FC = () => {
               <h4 className='text-lg font-semibold'>Публікації</h4>
               {userData.posts && userData.posts.length > 0 ? (
                 <div className='space-y-4'>
-                  {userData.posts.map((post) => (
-                    <motion.div
-                      key={post.id}
-                      className='mb-6 rounded-[30px] border-[1px] border-white border-opacity-10 bg-gradient-to-r from-[#2D2F3AB3] to-[#1A1A2EB3] p-6'
-                      style={{ boxShadow: '0 4px 4px rgba(0, 0, 0, 0.25)' }}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, ease: 'easeOut' }}
-                    >
-                      <p className='text-sm'>{post.content}</p>
-                      {post.image && (
-                        <Image
-                          src={post.image}
-                          alt='Post image'
-                          width={100}
-                          height={100}
-                          className='mt-2 rounded'
-                        />
-                      )}
-                      <div className='mt-2 text-xs text-gray-400'>
-                        {new Date(post.created_at).toLocaleString()}
-                        <span className='ml-4'>
-                          Вподобання: {post.likes.length}
-                        </span>
-                        <span className='ml-4'>Коментарі: {post.comments}</span>
-                      </div>
-                    </motion.div>
+                  {userData.posts.map((post, key) => (
+                    <MicroPost post={post} key={key} />
                   ))}
                 </div>
               ) : (

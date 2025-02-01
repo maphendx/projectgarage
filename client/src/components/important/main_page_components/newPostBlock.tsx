@@ -3,6 +3,7 @@ import { ReactElement, useState, useRef, useEffect } from 'react';
 import { FileContainer, FileType, Post, UserData } from '@/components/not_components';
 import { motion } from 'framer-motion';
 import { useError } from '@/context/ErrorContext';
+import MicroPost from '@/components/MicroPost';
 
 interface CompInterface {
   userData: UserData | null;
@@ -192,47 +193,7 @@ const NewPostBlock = ({ userData, onPostCreated, showAddFile, addFileStorage, re
         </motion.div>
       ))}
       </div> : <></>}
-      {repostPost && setRepostPost && 
-        <motion.div
-        key={repostPost.id}
-        className='mt-5 rounded-[30px] border-[1px] border-white border-opacity-10 bg-gradient-to-r from-[#2D2F3AB3] to-[#1A1A2EB3] p-6 flex place-content-between'
-        style={{ boxShadow: '0 4px 4px rgba(0, 0, 0, 0.25)' }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-      >
-        <div>
-          <p className='text-sm'>{repostPost.content}</p>
-          {repostPost.image && (
-            <img
-            src={repostPost.image}
-            alt='Post image'
-            width={100}
-            height={100}
-            className='mt-2 rounded'
-          />
-          )}
-          { repostPost.created_at && repostPost.likes &&
-            <div className='mt-2 text-xs text-gray-400'>
-            {new Date(repostPost.created_at).toLocaleString()}
-            <span className='ml-4'>
-              Вподобання: {repostPost.likes.length}
-            </span>
-            <span className='ml-4'>Коментарі: {repostPost.comments}</span>
-          </div>
-          }
-        </div>
-        <motion.button
-              className='bg-[#ffffff0f] p-3 rounded-md ml-0.5 mr-2'
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-              onClick={() => setRepostPost(undefined)}
-            >
-              <i className="fas fa-times text-[#97A7E7]"></i>
-        </motion.button>
-      </motion.div>
-      }
+      {repostPost && setRepostPost && (<div className='mt-6'><MicroPost post={repostPost} setRepostPost={setRepostPost} /></div>)}
     </div>
   );
 };
