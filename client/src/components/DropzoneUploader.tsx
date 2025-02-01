@@ -21,6 +21,28 @@ const DropzoneUploader = ({setFiles, fileType} : {setFiles : (files : File[]) =>
         }
     }
 
+    const allowedTypesForDegenerat = (fileType: FileType) : {[key: string]: string[]} => {
+        switch (fileType) {
+          case FileType.Photo:
+            return {
+              'image/jpeg': ['.jpg', '.jpeg'],
+              'image/png': ['.png'],
+            };
+          case FileType.Video:
+            return {
+              'video/mp4': ['.mp4'],
+              'video/avi': ['.avi'],
+              'video/quicktime': ['.mov'],
+            };
+          case FileType.Audio:
+            return {
+              'audio/mpeg': ['.mp3'],
+              'audio/wav': ['.wav'],
+              'audio/ogg': ['.ogg'],
+            };
+        }
+    };
+
     const allowedTypesBeautiful = (fileType: FileType) => {
         switch (fileType) {
             case FileType.Photo:
@@ -40,11 +62,29 @@ const DropzoneUploader = ({setFiles, fileType} : {setFiles : (files : File[]) =>
           showError("Один або кілька файлів мають неправильний формат!", "error");
         }
 
+        if (fileType === FileType.Photo && acceptedFiles.length > 10) {
+            showError("Більше 10 фото завантажувати не можна!", "error");
+            return;
+        }
+        else if (fileType === FileType.Audio && acceptedFiles.length > 5) {
+            showError("Більше 5 аудіо завантажувати не можна!", "error");
+            return;
+        }
+        else if (fileType === FileType.Video && acceptedFiles.length > 5) {
+            showError("Більше 5 відео завантажувати не можна!", "error");
+            return;
+        }
+
         setFiles(filteredFiles); // Передаємо лише файли з правильним форматом
         setLocalFiles(filteredFiles); 
       }, [setFiles]);
 
-    const { getRootProps, getInputProps } = useDropzone({ onDrop });
+      const { getRootProps, getInputProps } = useDropzone({
+        onDrop: (acceptedFiles: File[]) => {
+          console.log(acceptedFiles);
+        },
+        accept: allowedTypesForDegenerat(fileType),
+      });
 
     return (
         <div {...getRootProps()} className="p-6 border-2 border-dashed rounded-lg text-center">

@@ -5,6 +5,7 @@ import CommentBlock from './commentsBlock';
 import MiniPlayer from '@/components/MiniPlayer';
 import { useError } from '@/context/ErrorContext';
 import MicroPost from '@/components/MicroPost';
+import VideoEmbed from '@/components/VideoEmbed';
 
 
 export const PostBlock = ({
@@ -127,7 +128,7 @@ export const PostBlock = ({
         <div className='flex'>
           <img
             className='h-10 w-10 rounded-[14px]'
-            src={'http://localhost:8000' + post.author?.photo}
+            src={post.author?.photo}
             alt='User'
           />
           <div className='ml-3'>
@@ -140,23 +141,37 @@ export const PostBlock = ({
           </div>
         </div>
         <p className='mt-4 whitespace-pre-wrap break-words text-white'>
-          {post.content}
+          {/* {post.content} */}
+          {post.content && <VideoEmbed content={post.content} />}
         </p>
         <div className='flex flex-col items-start justify-start mb-4'>
-          <img
-            className={
-              post.image
-                ? 'mt-3 min-h-[200px] min-w-[200px] rounded shadow-[0_3px_5px_2px_#101010] duration-300 hover:shadow-[0_1px_5px_2px_#000000]'
-                : 'hidden'
-            }
-            src={post.image}
-          />
-          {post.audio && <MiniPlayer audioSrc={post.audio} />}
-          {post.video && <div>
-            <video src={post.video}>
+          {/* Блок фотографій */}
+          <div className='flex'>
+            {post.images.length > 0 && 
+            <img
+            className='m-3 min-h-[200px] min-w-[200px] rounded shadow-[0_3px_5px_2px_#101010] duration-300 hover:shadow-[0_1px_5px_2px_#000000]'
+            src={post.images[0].image}
+            />}
 
+            {post.images.length > 1 && <div className='flex flex-wrap justify-center'>
+              {post.images.slice(1).map((element, key) => 
+            <img
+            key={key}
+            className='m-1 max-h-[200px] max-w-[200px] rounded shadow-[0_3px_5px_2px_#101010] duration-300 hover:shadow-[0_1px_5px_2px_#000000]'
+            src={element.image}
+            />
+            )}
+          </div>}
+          </div>
+          {/* Блок аудіо */}
+          {post.audios.length > 0 && post.audios.map((element, key) => (<MiniPlayer key={key} audioSrc={element.audio} />))}
+          {/* Блок відео */}
+          {post.videos.length > 0 && post.videos.map((element, key) => (<div key={key} 
+            className='mt-2 shadow-[0_3px_5px_2px_#101010] duration-300 hover:shadow-[0_1px_5px_2px_#000000] rounded-xl'>
+            <video controls className='rounded-xl'>
+              <source src={element.video} ></source>
             </video>
-          </div> }
+          </div>)) }
           {post.hashtag_objects.length > 0 ? 
           <div className='flex flex-wrap'>
             {post.hashtag_objects.map((element, key) => (

@@ -4,9 +4,10 @@ import { useState } from 'react';
 
 interface AudioPlayerProps {
   audioSrc: string;  // Джерело аудіофайлу (URL)
+  key?: number
 }
 
-const MiniPlayer: React.FC<AudioPlayerProps> = ({ audioSrc }) => {
+const MiniPlayer: React.FC<AudioPlayerProps> = ({ audioSrc, key }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useState(new Audio(audioSrc))[0]; // Створюємо аудіо-елемент
   const {showError} = useError();
@@ -32,7 +33,7 @@ const MiniPlayer: React.FC<AudioPlayerProps> = ({ audioSrc }) => {
   };
 
   return (
-    <div className="audio-player">
+    <div key={key} className="audio-player">
       <button onClick={togglePlayPause}>
         {isPlaying ? 'Pause' : 'Play'}
       </button>

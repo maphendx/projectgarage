@@ -13,15 +13,16 @@ const MicroPost = ({post : post, setRepostPost : setRepostPost} : {post : Post, 
         >
         <div>
             <p className='text-sm'>{post.content}</p>
-            {post.image && (
+            {post.images.length > 0 && <div className="flex flex-wrap">{ post.images.map((element, key) => (
             <img
-                src={post.image}
+                key={key}
+                src={element.image}
                 alt='Post image'
                 width={100}
                 height={100}
-                className='mt-2 rounded'
+                className='mt-2 rounded ml-1'
             />
-            )}
+            ))}</div>}
             <div className='mt-2 text-xs text-gray-400'>
             {dateFormatter(post.created_at)}
             <span className='ml-4'>
@@ -32,7 +33,7 @@ const MicroPost = ({post : post, setRepostPost : setRepostPost} : {post : Post, 
         </div>
         {setRepostPost && (
         <motion.button
-            className='bg-[#ffffff0f] p-3 rounded-md ml-0.5 mr-2'
+            className='bg-[#ffffff0f] p-3 rounded-md ml-0.5 mr-2 h-12 w-12'
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 17 }}

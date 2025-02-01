@@ -214,10 +214,10 @@ const Profile: React.FC = () => {
               </motion.button>
             )}
             <div className='mx-auto min-h-[85vh] w-[100%] max-w-[100%] rounded-[30px] border-[1px] border-white border-opacity-10 bg-opacity-70 bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-xl'>
-              <h4 className='text-lg font-semibold'>Публікації</h4>
+              <h4 className='text-lg font-semibold mb-3'>Публікації</h4>
               {userData.posts && userData.posts.length > 0 ? (
                 <div className='space-y-4'>
-                  {userData.posts.map((post, key) => (
+                  {userData.posts.toReversed().map((post, key) => (
                     <MicroPost post={post} key={key} />
                   ))}
                 </div>

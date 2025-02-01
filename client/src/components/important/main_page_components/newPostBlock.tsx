@@ -62,9 +62,9 @@ const NewPostBlock = ({ userData, onPostCreated, showAddFile, addFileStorage, re
       formData.append("hashtags", listHashtags.join(","))
       if (repostPost)
         formData.append("original_post", repostPost.id.toString())
-      addFileStorage.photos.forEach((element : File) => formData.append("image", element))
-      addFileStorage.videos.forEach((element : File) => formData.append("video", element))
-      addFileStorage.audios.forEach((element : File) => formData.append("audio", element))
+      addFileStorage.photos.forEach((element : File) => formData.append("images", element))
+      addFileStorage.videos.forEach((element : File) => formData.append("videos", element))
+      addFileStorage.audios.forEach((element : File) => formData.append("audios", element))
 
       const response = await fetch('http://localhost:8000/api/posts/posts/', {
         headers: {

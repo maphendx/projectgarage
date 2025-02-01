@@ -17,9 +17,9 @@ export interface Post {
   comments?: number;
   original_post?: number;
   created_at?: string;
-  image?: string;
-  audio?: string;
-  video?: string;
+  images: {id : number, image : string}[];
+  audios: {id : number, audio : string}[];
+  videos: {id : number, video : string}[];
   is_liked?: boolean;
   hashtag_objects: {id : number, name : string}[];
   author?: { display_name?: string; photo?: string };
