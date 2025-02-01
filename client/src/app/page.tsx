@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import Modal from '@/components/Modal';
@@ -18,6 +18,12 @@ const Home: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
   const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    if (token)
+      router.push("/home")
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

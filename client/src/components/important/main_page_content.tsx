@@ -3,6 +3,7 @@ import { FileContainer, FileType, Post, UserData } from '../not_components';
 import { PostBlock } from './main_page_components/postBlock';
 import NewPostBlock from './main_page_components/newPostBlock';
 import { motion, useAnimation } from 'framer-motion';
+import { useError } from '@/context/ErrorContext';
 
 interface CompInterface {
   userData: UserData | null;
@@ -25,6 +26,7 @@ const MainContent = ({
     postsList,
   );
   const [repostPost, setRepostPost] = useState<Post | undefined>(undefined);
+  const {showError} = useError();
   const controls = useAnimation();
 
   useEffect(() => {
@@ -70,8 +72,13 @@ const MainContent = ({
   };
 
   const performRepostButton = (post : Post) => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    setRepostPost(post);
+    if (post.original_post) {
+      showError("Робити репост репосту не можна!","error");
+    }
+    else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      setRepostPost(post);
+    }
   };
 
   return (

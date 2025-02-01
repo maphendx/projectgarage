@@ -15,7 +15,7 @@ export interface Post {
   content?: string;
   likes?: number[];
   comments?: number;
-  reposts?: string[];
+  original_post?: number;
   created_at?: string;
   image?: string;
   audio?: string;

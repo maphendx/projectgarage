@@ -26,7 +26,7 @@ const NewPostBlock = ({ userData, onPostCreated, showAddFile, addFileStorage, re
     if (currentHashtag.length < 3) {
       showError("Хештег не може бути коротшим трьох символів!", "error")
     }
-    else if (listHashtags.filter((element) => element === currentHashtag).length > 0) {
+    else if (listHashtags.filter((element) => element === ("#" + currentHashtag)).length > 0) {
       showError("Даний хештег вже було додано!", "error")
     }
     else {
@@ -50,6 +50,11 @@ const NewPostBlock = ({ userData, onPostCreated, showAddFile, addFileStorage, re
       return;
     }
 
+    if (listHashtags.length < 3) {
+      showError("Пост не може мати менше трьох хештегів!", "error");
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append("content", content)
@@ -70,8 +75,10 @@ const NewPostBlock = ({ userData, onPostCreated, showAddFile, addFileStorage, re
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(JSON.stringify(data));
-        //throw new Error(data.message || 'Неочікувана помилка');
+        if ("detail" in data)
+          throw new Error(data.detail)
+        else
+          throw new Error(`Помилка: ${JSON.stringify(data)}`);
       }
 
       showError("Пост успішно опубліковано!", "success");
@@ -81,9 +88,15 @@ const NewPostBlock = ({ userData, onPostCreated, showAddFile, addFileStorage, re
       SetListHashtags([]);
       setContent('');
       SetShowAddHashtags(false);
+      if (setRepostPost)
+        setRepostPost(undefined);
+      setTimeout(() => { // підрендює новий пост методом древнього колхозу
+        window.scrollBy(0, 1); // Примусовий скрол (на 1 піксель вниз)
+        window.scrollBy(0, -1); // Повернення назад
+      }, 220);
       await onPostCreated();
     } catch (error) {
-      showError(`Помилка: ${error}`, "error");
+      showError(`${error}`, "error");
     }
   };
 
@@ -158,7 +171,12 @@ const NewPostBlock = ({ userData, onPostCreated, showAddFile, addFileStorage, re
       {/* Список хештегів */}
       {listHashtags.length > 0 ? <div className='flex flex-wrap'>
         {listHashtags.map((element, key) => (
-        <div className='flex mr-2 mt-2'>
+        <motion.div key={key} className='flex mr-2 mt-2'
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 100 }}
+        >
           <div className='bg-[#ffffff0f] p-1 rounded-md'>
             <p>{element}</p>
           </div>
@@ -171,7 +189,7 @@ const NewPostBlock = ({ userData, onPostCreated, showAddFile, addFileStorage, re
             >
               <i className="fas fa-times text-white"></i>
           </motion.button>
-        </div>
+        </motion.div>
       ))}
       </div> : <></>}
       {repostPost && setRepostPost && 

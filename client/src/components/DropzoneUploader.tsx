@@ -50,7 +50,7 @@ const DropzoneUploader = ({setFiles, fileType} : {setFiles : (files : File[]) =>
         <div {...getRootProps()} className="p-6 border-2 border-dashed rounded-lg text-center">
             <input {...getInputProps()} />
             <p>Перетягни файл сюди або натисни, щоб вибрати</p>
-            <p>Доступні формати: {allowedTypesBeautiful(fileType).join(",")}</p>
+            <p>Доступні формати: {allowedTypesBeautiful(fileType).join(", ")}</p>
             {files && <p>Вибрано файлів: {files.length}</p>}
         </div>
     );
