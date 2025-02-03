@@ -103,13 +103,18 @@ export const PostBlock = ({
       );
 
       if (!dataResponse.ok) {
-        const error_text = await dataResponse.text();
-        throw new Error(`HTTP error! status: ${error_text}`);
+        const error_text = await dataResponse.json();
+        throw new Error(JSON.stringify(error_text));
       }
       const data = await dataResponse.json();
-      setPost({ ...post, likes: [data.likes_count], is_liked: !post.is_liked });
+      if (!post.is_liked) {
+        setPost({ ...post, likes: [...post.likes, post.author.id], is_liked: !post.is_liked });
+      }
+      else {
+        setPost({ ...post, likes: post.likes.filter(i => i !== post.author.id), is_liked: !post.is_liked });
+      }
     } catch (error) {
-      if (error instanceof Error) showError(`${error.message}`, "error");
+      showError(`${error}`, "error");
     }
   };
 
@@ -191,7 +196,7 @@ export const PostBlock = ({
             transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           >
             <PostButton
-              text={post.likes?.length === 1 ? `${post.likes[0]}` : '0'}
+              text={post.likes.length}
               onClick={performLikeButton}
               iconClass='fas fa-heart mr-1'
               additionClasses={post.is_liked ? 'font-bold text-white' : ''}

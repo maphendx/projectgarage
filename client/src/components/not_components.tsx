@@ -13,7 +13,7 @@ export interface UserData {
 export interface Post {
   id: number;
   content?: string;
-  likes?: number[];
+  likes: number[];
   comments?: number;
   original_post?: number;
   created_at?: string;
@@ -22,7 +22,7 @@ export interface Post {
   videos: {id : number, video : string}[];
   is_liked?: boolean;
   hashtag_objects: {id : number, name : string}[];
-  author?: { display_name?: string; photo?: string };
+  author: { display_name?: string; photo?: string, id: number };
 }
 
 const dateFormatter = (get: string | undefined) => {
