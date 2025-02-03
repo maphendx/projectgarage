@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserRegistrationView, UserLoginView, UserProfileView, UserLogoutView, UserDeleteView, HashtagView, SubscriptionsView, UserSubscriptionsView, RecommendationView, UserProfileDetailView, SearchView
+from .views import UserRegistrationView, UserLoginView, UserProfileView, UserLogoutView, UserDeleteView, HashtagView, SubscriptionsView, UserSubscriptionsView, RecommendationView, UserProfileDetailView, SearchView, GoogleAuthView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -17,6 +17,7 @@ urlpatterns = [
     path('search/', SearchView.as_view(), name='search'),
     path('search/users/', SearchView.as_view(), name='search-users'),
     path('search/posts/', SearchView.as_view(), name='search-posts'),
+    path('auth/google/', GoogleAuthView.as_view(), name='google-auth'),
 ]
 
 # Додавання статичних файлів (зображення)

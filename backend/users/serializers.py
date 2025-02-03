@@ -64,3 +64,17 @@ class SubscribeSerializer(serializers.Serializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'display_name', 'photo']
+
+class GoogleAuthResponseSerializer(serializers.Serializer):
+    """
+    Серіалізатор для перевірки даних, отриманих від Google.
+    Поля залежать від відповіді API Google.
+    """
+    sub = serializers.CharField(required=False)
+    email = serializers.EmailField(required=True)
+    email_verified = serializers.BooleanField(required=False)
+    name = serializers.CharField(required=False)
+    given_name = serializers.CharField(required=True)
+    family_name = serializers.CharField(required=False, allow_blank=True)
+    picture = serializers.URLField(required=False)
+    aud = serializers.CharField(required=False)

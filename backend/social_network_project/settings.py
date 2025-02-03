@@ -151,6 +151,7 @@ CORS_ALLOWED_ORIGINS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
 
@@ -188,3 +189,13 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days= 1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
+GOOGLE_CLIENT_ID = "787039931575-u6m6gef67qnirlrn4icoonfedbgoigmi.apps.googleusercontent.com"
