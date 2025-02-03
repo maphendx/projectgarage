@@ -3,19 +3,24 @@ const AsideIcon = ({
   text,
   about,
 }: {
-  img_url: string;
+  img_url?: string;
   text: string;
   about: string;
 }) => {
-  // чел для блокчів справа
   return (
     <div className='mt-4 flex items-center'>
       <div className='relative'>
-        <img
-          src={img_url}
-          className='ml-5 h-12 w-12 rounded-[14px] bg-[#D9D9D9]'
-          alt='типо чел'
-        />
+        {img_url ? (
+          <img
+            src={img_url}
+            className='ml-5 h-12 w-12 rounded-[14px] bg-[#D9D9D9]'
+            alt='типо чел'
+          />
+        ) : (
+          <div className='ml-5 flex h-12 w-12 items-center justify-center rounded-[14px] bg-[#D9D9D9] text-white'>
+            ❔
+          </div>
+        )}
         <span className='absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-400 ring-2 ring-gray-800'></span>
       </div>
       <div className='ml-3 mr-2'>

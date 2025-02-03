@@ -1,7 +1,12 @@
 'use client';
 
 import MainContent from '@/components/important/main_page_content';
-import { FileContainer, FileType, Post, UserData } from '@/components/not_components';
+import {
+  FileContainer,
+  FileType,
+  Post,
+  UserData,
+} from '@/components/not_components';
 import AsidePanelLeft from '@/components/surrounding/asideLeft';
 import { AsidePanelRight } from '@/components/surrounding/asideRight';
 import MusicPlayer from '@/components/surrounding/player';
@@ -30,73 +35,71 @@ export default function Home() {
   });
 
   useEffect(() => {
-    error && showError(error, "error");
-  },[error])
+    error && showError(error, 'error');
+  }, [error]);
 
-  const handleAddFile = (fileType : FileType) => {
+  const handleAddFile = (fileType: FileType) => {
     setAddFileWindow(true);
     setAddfileType(fileType);
-  }
+  };
 
   const handleConfirmFile = () => {
     if (addFilesLoaded.length > 0) {
       switch (addFileType) {
         case FileType.Audio: {
-          setAddFileStorage(prevState => ({
-            ...prevState, 
-            audios: [...addFilesLoaded]
+          setAddFileStorage((prevState) => ({
+            ...prevState,
+            audios: [...addFilesLoaded],
           }));
           break;
         }
         case FileType.Video: {
-          setAddFileStorage(prevState => ({
-            ...prevState, 
-            videos: [...addFilesLoaded]
+          setAddFileStorage((prevState) => ({
+            ...prevState,
+            videos: [...addFilesLoaded],
           }));
           break;
         }
         case FileType.Photo: {
-          setAddFileStorage(prevState => ({
-            ...prevState, 
-            photos: [...addFilesLoaded]
+          setAddFileStorage((prevState) => ({
+            ...prevState,
+            photos: [...addFilesLoaded],
           }));
           break;
         }
       }
       setAddFileWindow(false);
       setAddFilesLoaded([]);
+    } else {
+      showError('Ви не додали жодного файлу!', 'warning');
     }
-    else {
-      showError("Ви не додали жодного файлу!", "warning");
-    }
-  }
+  };
 
-  const resetAddFileStorage = (fileType : FileType) => {
+  const resetAddFileStorage = (fileType: FileType) => {
     switch (fileType) {
       case FileType.Photo: {
-        setAddFileStorage(prevState => ({
+        setAddFileStorage((prevState) => ({
           ...prevState,
-          photos: []   
+          photos: [],
         }));
         break;
       }
       case FileType.Audio: {
-        setAddFileStorage(prevState => ({
+        setAddFileStorage((prevState) => ({
           ...prevState,
-          audios: []   
+          audios: [],
         }));
         break;
       }
       case FileType.Video: {
-        setAddFileStorage(prevState => ({
+        setAddFileStorage((prevState) => ({
           ...prevState,
-          videos: []   
+          videos: [],
         }));
         break;
       }
     }
-  }
-
+  };
 
   const fetchData = async (url: string) => {
     const token = localStorage.getItem('token');
@@ -226,21 +229,22 @@ export default function Home() {
           </footer>
 
           <Modal onClose={() => setAddFileWindow(false)} isOpen={addFileWindow}>
-          <div className='flex flex-col'>
-            <h2 className="text-lg mb-3 text-center">
-              Додати файли
-            </h2>
-            <DropzoneUploader setFiles={setAddFilesLoaded} fileType={addFileType} />
-            <motion.button
-            className='mt-3 bg-pink-800 p-2 rounded-lg hover:bg-pink-400 duration-300 transition-colors ease-out'
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-            onClick={handleConfirmFile}
-            >
-              Підтвердити
-            </motion.button>
-          </div>
+            <div className='flex flex-col'>
+              <h2 className='mb-3 text-center text-lg'>Додати файли</h2>
+              <DropzoneUploader
+                setFiles={setAddFilesLoaded}
+                fileType={addFileType}
+              />
+              <motion.button
+                className='mt-3 rounded-lg bg-pink-800 p-2 transition-colors duration-300 ease-out hover:bg-pink-400'
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                onClick={handleConfirmFile}
+              >
+                Підтвердити
+              </motion.button>
+            </div>
           </Modal>
         </>
       )}

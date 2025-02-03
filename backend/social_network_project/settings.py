@@ -186,3 +186,5 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(hour=0, day_of_month=range(1, 32, 3)),
     },
 }
+
+FILE_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024

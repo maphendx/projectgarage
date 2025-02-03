@@ -20,9 +20,8 @@ const Home: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    if (token)
-      router.push("/home")
+    const token = localStorage.getItem('token');
+    if (token) router.push('/home');
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {

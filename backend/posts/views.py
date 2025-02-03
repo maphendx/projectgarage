@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
-from .models import Post, Comment, Like, Hashtag
+from .models import Post, Comment, Like, Hashtag, PostImage, PostVideo, PostAudio
 from rest_framework import status
 from .serializers import PostSerializer, CommentSerializer
 from django.db.models import Q, Count 
@@ -14,6 +14,12 @@ from datetime import timedelta
 from django.utils.timezone import now
 from users.models import CustomUser
 from django.db import transaction
+from django.core.files.base import ContentFile
+import os
+import ffmpeg
+from django.core.files import File
+from django.core.files.storage import default_storage
+import tempfile
 
 
 # Пост: список та деталі
@@ -24,50 +30,107 @@ class PostListView(views.APIView):
         """
         Отримання списку всіх постів.
         """
-        posts = Post.objects.all().prefetch_related('hashtags', 'likes', 'comments', 'author')
+        posts = Post.objects.all().prefetch_related('hashtags', 'likes', 'post_comments', 'author')
         serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         """
-        Створення нового поста з хештегами.
+        Створення нового поста з хештегами та медіа-файлами.
         """
         try:
             data = request.data.copy()
             data['author'] = request.user.id
 
-            # Обробка оригінального поста, якщо це репост
+            # Обробка репосту (якщо вказаний original_post)
             if 'original_post' in data:
                 try:
                     original_post = Post.objects.get(pk=data['original_post'])
                     data['content'] = data.get('content', '') + f'\n\nReposted from: {original_post.content}'
+                    if original_post.original_post is not None:
+                        return Response(
+                            {"detail": "Reposting a repost is not allowed."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
                 except Post.DoesNotExist:
-                    return Response({"detail": "Original post does not exist."}, status=status.HTTP_404_NOT_FOUND)
-                if original_post.original_post is not None:
-                    return Response({"detail": "Reposting a repost is not allowed."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {"detail": "Original post does not exist."},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
 
-            # Валідація та створення поста
+            # Валідація даних поста (без медіа) через серіалайзер.
             serializer = PostSerializer(data=data, context={'request': request})
             if serializer.is_valid():
-                with transaction.atomic():
-                    # Отримання або створення хештегів
-                    hashtags_data = data.get('hashtags', [])
-                    hashtags = []
-                    for tag in hashtags_data:
-                        if not tag.startswith("#"):
-                            raise ValidationError(f"Hashtag '{tag}' should start with '#'")
-                        hashtag, created = Hashtag.objects.get_or_create(name=tag.lower())
-                        hashtags.append(hashtag)
-                    
-                    # Збереження поста
-                    post = serializer.save(author=request.user)
-                    
-                    # Прив'язка хештегів до поста
-                    post.hashtags.set(hashtags)
-                
-                # Повернення даних поста з хештегами
-                serializer_with_hashtags = PostSerializer(post, context={'request': request})
-                return Response(serializer_with_hashtags.data, status=status.HTTP_201_CREATED)
+                # Збереження поста (без файлів)
+                post = serializer.save(author=request.user)
+
+                # Отримуємо файли і читаємо їх вміст, аби не зберігати файлові об'єкти в замиканні
+                images = request.FILES.getlist('images')
+                videos = request.FILES.getlist('videos')
+                audios = request.FILES.getlist('audios')
+
+                images_data = []
+                for image in images:
+                    image.seek(0)
+                    images_data.append({'name': image.name, 'content': image.read()})
+
+                videos_data = []
+                for video in videos:
+                    video.seek(0)
+                    videos_data.append({'name': video.name, 'content': video.read()})
+
+                audios_data = []
+                for audio in audios:
+                    audio.seek(0)
+                    audios_data.append({'name': audio.name, 'content': audio.read()})
+
+                # Функція для обробки файлів після коміту транзакції (з використанням байтів, а не файлових об'єктів)
+                def process_media_files():
+                    # Обробка зображень
+                    for img in images_data:
+                        new_image = ContentFile(img['content'], name=img['name'])
+                        PostImage.objects.create(post=post, image=new_image)
+
+                    # Обробка відео з використанням NamedTemporaryFile
+                    for vid in videos_data:
+                        file_ext = os.path.splitext(vid['name'])[1]
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_video:
+                            temp_video.write(vid['content'])
+                            temp_video.flush()
+                            temp_video_full_path = temp_video.name
+
+                        final_video_relative_path = os.path.join('posts/videos/', vid['name'])
+                        final_video_full_path = os.path.join(default_storage.location, final_video_relative_path)
+                        # Створюємо директорію, якщо вона не існує
+                        os.makedirs(os.path.dirname(final_video_full_path), exist_ok=True)
+
+                        try:
+                            (
+                                ffmpeg.input(temp_video_full_path).output(final_video_full_path, vcodec='copy', acodec='copy').overwrite_output().run()
+                            )
+                        except Exception as e:
+                            # Якщо ffmpeg викликає помилку, копіюємо оригінальний файл
+                            with open(temp_video_full_path, 'rb') as f_in:
+                                content = f_in.read()
+                            with open(final_video_full_path, 'wb') as f_out:
+                                f_out.write(content)
+                        finally:
+                            os.remove(temp_video_full_path)
+
+                        with open(final_video_full_path, 'rb') as f:
+                            video_file = File(f, name=vid['name'])
+                            PostVideo.objects.create(post=post, video=video_file)
+
+                    # Обробка аудіо (без додаткової обробки)
+                    for aud in audios_data:
+                        new_audio = ContentFile(aud['content'], name=aud['name'])
+                        PostAudio.objects.create(post=post, audio=new_audio)
+
+                # Виконуємо обробку файлів після завершення транзакції
+                transaction.on_commit(process_media_files)
+
+                serializer_with_media = PostSerializer(post, context={'request': request})
+                return Response(serializer_with_media.data, status=status.HTTP_201_CREATED)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as ve:
@@ -79,15 +142,15 @@ class PostListView(views.APIView):
 class PostDetailView(APIView):    
     def get(self, request, pk):    
         post = Post.objects.get(pk=pk)  # Отримуємо пост за ID
-        serializer = PostSerializer(post)    
-        return Response(serializer.data , status=status.HTTP_200_OK)
+        serializer = PostSerializer(post, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):    
         post = Post.objects.get(pk=pk)  # Оновлюємо пост
-        serializer = PostSerializer(post, data=request.data)    
+        serializer = PostSerializer(post, data=request.data, context={'request': request})
         if serializer.is_valid():    
             serializer.save()        
-            return Response(serializer.data , status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):    
