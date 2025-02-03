@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { ErrorProvider } from '@/context/ErrorContext';
-import ForceRender from '@/components/ForceRender';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -25,7 +24,6 @@ export default function RootLayout({
   return (
     <html lang='en' className={inter.className}>
       <body>
-        <ForceRender /> {/* Метод древнього колхозу для виправлення рендеру челіків */}
         <ErrorProvider>{children}</ErrorProvider>
       </body>
     </html>

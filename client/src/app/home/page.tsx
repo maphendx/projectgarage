@@ -119,6 +119,7 @@ export default function Home() {
       if (!dataResponse.ok) {
         throw new Error(`HTTP error! status: ${dataResponse.status}`);
       }
+
       return await dataResponse.json();
     } catch (err) {
       setError(`Не вдалося отримати дані за "${url}": ${err}`);
@@ -131,17 +132,21 @@ export default function Home() {
 
   const handlePostsListTrigger = async () => {
     const postsListResponse: Post[] = await fetchData(
-      'http://localhost:8000/api/posts/posts/',
+      `${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/`,
     );
     if (postsListResponse) {
       setPostsListToShow(postsListResponse.reverse());
+      setTimeout(() => {
+        window.scrollBy(0, 1); // Примусовий скрол (на 1 піксель вниз)
+        window.scrollBy(0, -1); // Повернення назад
+      }, 50);
     }
   };
 
   useEffect(() => {
     const loadUserData = async () => {
       const userDataResponse = await fetchData(
-        'http://localhost:8000/api/users/profile/',
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/profile/`,
       );
       if (userDataResponse) {
         setUserData(userDataResponse);

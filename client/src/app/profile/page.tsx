@@ -41,7 +41,7 @@ const Profile: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/users/${profileUrl}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/${profileUrl}`,
         {
           headers: {
             Authorization: token ? `Token ${token}` : '',
@@ -72,7 +72,7 @@ const Profile: React.FC = () => {
       try {
         const token = localStorage.getItem('token');
         const response = await fetch(
-          `http://localhost:8000/api/users/profile/`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/users/profile/`,
           {
             method: 'PATCH',
             headers: {
@@ -106,7 +106,7 @@ const Profile: React.FC = () => {
         // Remove hashtags
         for (const hashtag of currentHashtags) {
           if (!newHashtags.includes(hashtag)) {
-            await fetch(`http://localhost:8000/api/users/hashtags/`, {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`, {
               method: 'DELETE',
               headers: {
                 Authorization: `Token ${token}`,
@@ -120,7 +120,7 @@ const Profile: React.FC = () => {
         // Add new hashtags
         for (const hashtag of newHashtags) {
           if (!currentHashtags.includes(hashtag)) {
-            await fetch(`http://localhost:8000/api/users/hashtags/`, {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`, {
               method: 'POST',
               headers: {
                 Authorization: `Token ${token}`,

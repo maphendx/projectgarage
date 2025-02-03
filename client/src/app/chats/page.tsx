@@ -11,8 +11,8 @@ import AsidePanelLeft from '@/components/surrounding/asideLeft';
 import { AsidePanelRight } from '@/components/surrounding/asideRight';
 import MusicPlayer from '@/components/surrounding/player';
 
-const API_BASE_URL = 'http://localhost:8000/api';
-const WS_BASE_URL = 'ws://localhost:8000';
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api`;
+const WS_BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace("http","ws");
 
 const ErrorMessages = {
   AUTH_REQUIRED: "Авторизація обов'язкова",

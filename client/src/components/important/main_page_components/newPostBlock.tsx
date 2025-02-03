@@ -66,7 +66,7 @@ const NewPostBlock = ({ userData, onPostCreated, showAddFile, addFileStorage, re
       addFileStorage.videos.forEach((element : File) => formData.append("videos", element))
       addFileStorage.audios.forEach((element : File) => formData.append("audios", element))
 
-      const response = await fetch('http://localhost:8000/api/posts/posts/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/`, {
         headers: {
           Authorization: `Token ${token}`,
         },

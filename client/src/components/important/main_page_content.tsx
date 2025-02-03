@@ -83,7 +83,7 @@ const MainContent = ({
 
   return (
     <main>
-      <div className='flex min-h-screen items-center justify-center'>
+      <div className='flex min-h-screen justify-center'>
         <div className='posts-container mx-auto min-h-[85vh] w-[100%] max-w-[100%] rounded-[30px] border-[1px] border-white border-opacity-10 bg-opacity-70 bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-xl'>
           <NewPostBlock userData={userData} onPostCreated={refreshPosts} showAddFile={showAddFile} addFileStorage={addFileStorage} resetAddFileStorage={resetAddFileStorage} repostPost={repostPost} setRepostPost={setRepostPost} />
           {localPostsList ? (

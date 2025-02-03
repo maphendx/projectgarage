@@ -29,7 +29,7 @@ const Home: React.FC = () => {
     setMessage('Входимо до облікового запису...');
 
     try {
-      const response = await fetch('http://localhost:8000/api/users/login/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -56,7 +56,7 @@ const Home: React.FC = () => {
 
     try {
       const response = await fetch(
-        'http://localhost:8000/api/users/register/',
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/register/`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

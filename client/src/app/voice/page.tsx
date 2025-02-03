@@ -29,7 +29,7 @@ type Channel = {
   participants: number;
 };
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api`;
 
 export default function VoiceChatPage() {
   const router = useRouter();

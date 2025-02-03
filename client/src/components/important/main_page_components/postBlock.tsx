@@ -34,7 +34,7 @@ export const PostBlock = ({
   const loadRepostedPost = async (id : number) => {
     try {
       const dataResponse = await fetch(
-        `http://localhost:8000/api/posts/posts/${id}/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/${id}/`,
         {
           method: 'GET',
           headers: {
@@ -58,7 +58,7 @@ export const PostBlock = ({
   const updateListOfComments = async (commentsAdd?: boolean) => {
     try {
       const dataResponse = await fetch(
-        `http://localhost:8000/api/posts/posts/${post.id}/comments/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/${post.id}/comments/`,
         {
           headers: {
             Authorization: `Token ${token}`,
@@ -92,7 +92,7 @@ export const PostBlock = ({
   const performLikeButton = async () => {
     try {
       const dataResponse = await fetch(
-        `http://localhost:8000/api/posts/posts/${post.id}/like/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/${post.id}/like/`,
         {
           method: 'POST',
           headers: {
