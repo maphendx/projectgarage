@@ -20,6 +20,8 @@ import ffmpeg
 from django.core.files import File
 from django.core.files.storage import default_storage
 import tempfile
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 
 # Пост: список та деталі
@@ -42,12 +44,14 @@ class PostListView(views.APIView):
             data = request.data.copy()
             data['author'] = request.user.id
 
+            original_post_object = None  # Ініціалізуємо змінну для перевірки на оригінальність
+
             # Обробка репосту (якщо вказаний original_post)
             if 'original_post' in data:
                 try:
-                    original_post = Post.objects.get(pk=data['original_post'])
-                    data['content'] = data.get('content', '') + f'\n\nReposted from: {original_post.content}'
-                    if original_post.original_post is not None:
+                    original_post_object = Post.objects.get(pk=data['original_post'])  # Зберігаємо оригінальний пост
+                    data['content'] = data.get('content', '') + f'\n\nReposted from: {original_post_object.content}'
+                    if original_post_object.original_post is not None:
                         return Response(
                             {"detail": "Reposting a repost is not allowed."},
                             status=status.HTTP_400_BAD_REQUEST
@@ -63,6 +67,22 @@ class PostListView(views.APIView):
             if serializer.is_valid():
                 # Збереження поста (без файлів)
                 post = serializer.save(author=request.user)
+
+                # Якщо створено репост, створюємо повідомлення для автора оригінального поста
+                if original_post_object and request.user != original_post_object.author:
+                    Notification.objects.create(recipient=original_post_object.author, actor=request.user, notification_type='post_repost', post=original_post_object)
+                    channel_layer = get_channel_layer()
+                    async_to_sync(channel_layer.group_send)(
+                        f"notifications_{original_post_object.author.id}",
+                        {
+                            "type": "send_notification",
+                            "notification": {
+                                "type": "post_repost",
+                                "message": f"{request.user.display_name} репостнув ваш пост",
+                                "post_id": original_post_object.id,
+                            }
+                        }
+                    )
 
                 # Отримуємо файли і читаємо їх вміст, аби не зберігати файлові об'єкти в замиканні
                 images = request.FILES.getlist('images')
@@ -304,16 +324,35 @@ class LikeView(APIView):
         try:
             post = Post.objects.get(pk=post_id)
             
-            # Перевіряємо чи користувач вже лайкнув цей пост
+            # Перевіряємо, чи користувач вже лайкнув цей пост
             like, created = Like.objects.get_or_create(user=request.user, post=post)
             
             if not created:
-                # Якщо лайк вже існує - видаляємо його (тобто "знімаємо" лайк)
+                # Якщо лайк уже існує - видаляємо його (тобто "знімаємо" лайк)
                 like.delete()
                 return Response({
                     "detail": "Лайк видалено",
                     "likes_count": post.likes.count()
                 }, status=status.HTTP_200_OK)
+            
+            # Якщо лайк додано вперше, створюємо повідомлення для автора поста
+            # Переконуємося, що автор не став лайкати власний пост
+            if request.user != post.author:
+                # Створення запису повідомлення в базі даних
+                Notification.objects.create(recipient=post.author, actor=request.user, notification_type='post_like', post=post)
+                # Надсилання повідомлення через Channels (real-time сповіщення)
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    f"notifications_{post.author.id}",
+                    {
+                        "type": "send_notification",
+                        "notification": {
+                            "type": "post_like",
+                            "message": f"{request.user.display_name} лайкнув ваш пост",
+                            "post_id": post.id,
+                        }
+                    }
+                )
             
             return Response({
                 "detail": "Лайк додано",
