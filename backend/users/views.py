@@ -6,7 +6,6 @@ from rest_framework import generics, status, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView, GenericAPIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.authtoken.models import Token
 from .models import CustomUser
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, SubscribeSerializer, GoogleAuthResponseSerializer
 from django.contrib.auth.decorators import login_required
@@ -18,13 +17,13 @@ from posts.models import Post
 from posts.serializers import PostSerializer
 from ai.models import Recommendation  # Імпортуємо модель Recommendation
 from ai.serializers import RecommendationSerializer  # Імпортуємо серіалізатор 
-from rest_framework_simplejwt.tokens import RefreshToken  # Додайте цей рядок
-import random  # Додайте цей рядок
-import string  # Додайте цей рядок
-import requests  # Додайте цей рядок
-from django.conf import settings  # Додайте цей рядок
-from django.db import transaction  # Додайте цей рядок
-from django.contrib.auth.models import BaseUserManager  # Додайте цей рядок
+from rest_framework_simplejwt.tokens import RefreshToken  
+import random  
+import string  
+import requests  
+from django.conf import settings  
+from django.db import transaction
+from django.contrib.auth.models import BaseUserManager 
 
 
 # Реєстрація користувача
@@ -35,8 +34,6 @@ class UserRegistrationView(generics.CreateAPIView):
         return self.create(request, *args, **kwargs)
 
 # Вхід користувача
-from rest_framework.authtoken.models import Token
-
 class UserLoginView(generics.GenericAPIView):
     serializer_class = UserLoginSerializer
 
@@ -47,18 +44,14 @@ class UserLoginView(generics.GenericAPIView):
                 user = CustomUser.objects.get(email=serializer.validated_data['email'])
             except CustomUser.DoesNotExist:
                 return Response({"message": "Користувача не знайдено!"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            if user.check_password(serializer.validated_data['password']):
-                # Create or get a token for the user
-                token, created = Token.objects.get_or_create(user=user)
-                
-                # Include the `display_name` in the response
-                display_name = user.display_name  # Replace `display_name` with the correct field in your model
 
+            if user.check_password(serializer.validated_data['password']):
+                # Генеруємо JWT токени для користувача
+                tokens = get_tokens_for_user(user)
                 return Response({
                     "message": "Успішний вхід!",
-                    "token": token.key,
-                    "display_name": display_name
+                    "tokens": tokens,
+                    "display_name": user.display_name
                 }, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "Невірний пароль!"}, status=status.HTTP_400_BAD_REQUEST)
@@ -96,10 +89,6 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
             user.set_password(password)
             user.save()
             
-            # Створюємо новий токен замість видалення всіх
-            Token.objects.filter(user=user).delete()
-            Token.objects.create(user=user)
-            
         serializer.save()
 
 
@@ -117,14 +106,17 @@ class UserProfileDetailView(generics.ListAPIView):
 class UserLogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs): 
+    def post(self, request, *args, **kwargs):
         try:
-            # Отримуємо токен, пов'язаний з користувачем
-            token = Token.objects.get(user=request.user)
-            token.delete()  # Видаляємо токен для завершення сесії
-            return Response({"message": "Вихід успішний!"}, status=status.HTTP_200_OK)
-        except Token.DoesNotExist:
-            return Response({"message": "Токен не знайдений."}, status=status.HTTP_400_BAD_REQUEST)
+            refresh_token = request.data.get("refresh_token")
+            if not refresh_token:
+                return Response({"message": "Не вказано refresh_token."}, status=status.HTTP_400_BAD_REQUEST)
+
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "Успішний вихід!"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # Видалення акаунту
 class UserDeleteView(APIView):
@@ -133,10 +125,7 @@ class UserDeleteView(APIView):
     def delete(self, request, *args, **kwargs):
         user = request.user
         user.delete()  # Видаляємо користувача
-        token = Token.objects.get(user=request.user)
-        token.delete()  # Видаляємо токен для завершення сесії
         return Response({"message": "Ваш акаунт був успішно видалений!"}, status=status.HTTP_204_NO_CONTENT)
-
 
 class HashtagView(APIView):
     permission_classes = [IsAuthenticated]

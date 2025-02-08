@@ -70,11 +70,19 @@ class GoogleAuthResponseSerializer(serializers.Serializer):
     Серіалізатор для перевірки даних, отриманих від Google.
     Поля залежать від відповіді API Google.
     """
-    sub = serializers.CharField(required=False)
-    email = serializers.EmailField(required=True)
-    email_verified = serializers.BooleanField(required=False)
-    name = serializers.CharField(required=False)
-    given_name = serializers.CharField(required=True)
-    family_name = serializers.CharField(required=False, allow_blank=True)
-    picture = serializers.URLField(required=False)
-    aud = serializers.CharField(required=False)
+    # "sub": Унікальний ідентифікатор користувача, що пропонується Google.
+    sub = serializers.CharField(required=False)# Це поле не є обов'язковим, оскільки може відсутнє в деяких відповідях.
+    # "email": Електронна адреса користувача. Поле обов'язкове,
+    email = serializers.EmailField(required=True)# оскільки електронна адреса є критичною для аутентифікації чи створення облікового запису.
+    # "email_verified": Логічне поле, яке вказує чи була електронна адреса підтверджена.
+    email_verified = serializers.BooleanField(required=False)# Це поле не є обов'язковим.
+    # "name": Повне ім'я користувача, як воно надане Google.
+    name = serializers.CharField(required=False)# Не обов'язкове, оскільки в деяких відповідях це поле може бути відсутнє.
+    # "given_name": Ім'я користувача.
+    given_name = serializers.CharField(required=True)# Це обов'язкове поле, яке повинне містити ім'я, отримане від Google.
+    # "family_name": Прізвище користувача.
+    family_name = serializers.CharField(required=False, allow_blank=True)# Поле не є обов'язковим та дозволяє порожнє значення, якщо Google не надає інформацію.
+    # "picture": URL зображення профілю користувача.
+    picture = serializers.URLField(required=False)# Це поле не є обов'язковим, але в разі наявності має бути дійсною URL-адресою.
+    # "aud": Аудиторія або ідентифікатор клієнта, який отримує дані від Google.
+    aud = serializers.CharField(required=False)# Не є обов'язковим, використовується для перевірки відповідності клієнта.

@@ -160,7 +160,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # Залиште дефолтний бекенд для інших випадків
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = True # Увага мля це тимчасова позиція тому що, Це небезпечно для продакшну, оскільки будь-хто може надсилати запити до вашого API, а оскільки ми стараємось робити максимально наближене до справжнього повноціного проекту а потім це помінятью
 
 CHANNEL_LAYERS = {
     'default': {
@@ -198,4 +198,5 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
 }
+
 GOOGLE_CLIENT_ID = "787039931575-u6m6gef67qnirlrn4icoonfedbgoigmi.apps.googleusercontent.com"
