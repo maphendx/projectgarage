@@ -59,7 +59,7 @@ class CustomUser(models.Model):
     bio = models.TextField(blank=True, null=True)  # Коротке біо
     hashtags = models.ManyToManyField(UserHashtag, blank=False)  # Хештеги користувача
     objects = CustomUserManager()  # Використовуємо кастомний менеджер для створення користувачів
-    subscriptions = models.ManyToManyField("self", symmetrical=False, blank=True, related_name="subscribers")
+    subscriptions = models.ManyToManyField("self", symmetrical=False, blank=True, related_name="subscribers") # 
 
     REQUIRED_FIELDS = ['display_name', 'password']  # Вказуємо обов'язкові поля
     USERNAME_FIELD = 'email'  # Використовуємо email для автентифікації користувачів
@@ -90,6 +90,16 @@ class CustomUser(models.Model):
     def check_password(self, raw_password):
         """Перевірка паролю."""
         return check_password(raw_password, self.password)
+
+    @property
+    def subscriptions_count(self):
+        """Повертає кількість користувачів, на яких підписаний даний користувач."""
+        return self.subscriptions.count()
+
+    @property
+    def subscribers_count(self):
+        """Повертає кількість користувачів, які підписані на даного користувача."""
+        return self.subscribers.count()
 
     @property
     def hashtagClass(self):

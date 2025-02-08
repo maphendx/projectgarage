@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
-from .models import Post, Comment, Like, Hashtag, PostImage, PostVideo, PostAudio
+from .models import Post, Comment, Like, Hashtag, PostImage, PostVideo, PostAudio, Notification
 from rest_framework import status
 from .serializers import PostSerializer, CommentSerializer
 from django.db.models import Q, Count 
@@ -24,7 +24,7 @@ import tempfile
 
 # Пост: список та деталі
 class PostListView(views.APIView):
-    permission_classes = [IsAuthenticated]  # Тільки авторизовані користувачі можуть створювати пости
+    # permission_classes = [IsAuthenticated]  # Тільки авторизовані користувачі можуть створювати пости
 
     def get(self, request):
         """
@@ -305,10 +305,7 @@ class LikeView(APIView):
             post = Post.objects.get(pk=post_id)
             
             # Перевіряємо чи користувач вже лайкнув цей пост
-            like, created = Like.objects.get_or_create(
-                user=request.user,
-                post=post
-            )
+            like, created = Like.objects.get_or_create(user=request.user, post=post)
             
             if not created:
                 # Якщо лайк вже існує - видаляємо його (тобто "знімаємо" лайк)
@@ -333,3 +330,25 @@ class LikeView(APIView):
                 {"detail": str(e)}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+class MarkNotificationAsReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, notification_id):
+        try:
+            notification = Notification.objects.get(id=notification_id, recipient=request.user)
+        except Notification.DoesNotExist:
+            return Response({"error": "Повідомлення не знайдено."}, status=status.HTTP_404_NOT_FOUND)
+
+        notification.is_read = True
+        notification.save()
+
+        return Response({"message": "Повідомлення відзначене як прочитане."}, status=status.HTTP_200_OK)
+
+class MarkAllNotificationsAsReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        notifications = Notification.objects.filter(recipient=request.user, is_read=False)
+        notifications.update(is_read=True)
+        return Response({"message": "Усі повідомлення відзначені як прочитані."}, status=status.HTTP_200_OK)
