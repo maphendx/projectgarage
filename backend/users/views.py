@@ -4,8 +4,9 @@ import json
 from django.views import View 
 from rest_framework import generics, status, serializers
 from rest_framework.response import Response
-from rest_framework.views import APIView, GenericAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import CustomUser
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, SubscribeSerializer, GoogleAuthResponseSerializer
 from django.contrib.auth.decorators import login_required
@@ -24,6 +25,7 @@ import requests
 from django.conf import settings  
 from django.db import transaction
 from django.contrib.auth.models import BaseUserManager 
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 
 
 # Реєстрація користувача
@@ -342,6 +344,17 @@ def create_display_name(email):
         if not CustomUser.objects.filter(display_name=display_name).exists():
             return display_name
     raise Exception("Перевищено кількість спроб створити унікальний display_name.")
+
+
+class MyTokenRefreshView(generics.GenericAPIView):
+    serializer_class = TokenRefreshSerializer
+    permission_classes = [AllowAny]  # Дозволяємо доступ без автентифікації
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # Повертаємо новий access токен (а також refresh токен, якщо потрібно)
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 class GoogleAuthView(GenericAPIView):
     """

@@ -112,7 +112,10 @@ class Like(models.Model):
 class Notification(models.Model):
     NOTIFICATION_TYPES = (
         ('new_post', 'Новий пост'),
-        # Додаткові типи повідомлень можна додати сюди
+        ('new_subscription', 'Нова підписка'),
+        ('post_like', 'Пост лайкнуто'),
+        ('post_repost', 'Пост репостнуто'),
+        ('new_comment', 'Новий коментар'),
     )
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
