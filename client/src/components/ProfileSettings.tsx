@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import fetchClient from '@/other/fetchClient';
 
 interface ProfileSettingsProps {
   onUpdateBio: (newBio: string) => void;
@@ -45,15 +46,17 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     router.push('/');
   };
 
   const handleDeleteProfile = async () => {
     try {
-      const response = await fetch('/api/users/delete', { method: 'DELETE' });
+      const response = await fetchClient('/api/users/delete', { method: 'DELETE' });
       if (response.ok) {
-        localStorage.removeItem('authToken');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
         router.push('/');
       } else {
         throw new Error('Failed to delete profile');

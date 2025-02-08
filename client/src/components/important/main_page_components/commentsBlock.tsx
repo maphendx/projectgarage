@@ -1,6 +1,7 @@
 import { UserData } from '@/components/not_components';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import fetchClient from '@/other/fetchClient';
 
 interface CompInterface {
   isVisible: boolean;
@@ -28,18 +29,15 @@ const CommentBlock = ({
   };
 
   const handleClick = async () => {
-    const token = localStorage.getItem('token');
-
     try {
       if (content.length <= 5 || content.trim().length <= 3) {
         throw new Error('Текст коментара занадто короткий!');
       }
 
-      const response = await fetch(
+      const response = await fetchClient(
         `${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/${postId}/comments/`,
         {
           headers: {
-            Authorization: `Token ${token}`,
             'Content-Type': 'application/json',
           },
           method: 'POST',

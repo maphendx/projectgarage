@@ -9,6 +9,7 @@ import ProfileSettings from '@/components/ProfileSettings';
 import { motion } from 'framer-motion';
 import { Post } from '@/components/not_components';
 import MicroPost from '@/components/MicroPost';
+import fetchClient from '@/other/fetchClient';
 
 interface UserData {
   display_name?: string;
@@ -33,18 +34,11 @@ const Profile: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const fetchUserData = async () => {
-    const token = localStorage.getItem('token');
-    if (!token && !isOwnProfile) {
-      router.push('/login');
-      return;
-    }
-
     try {
-      const response = await fetch(
+      const response = await fetchClient(
         `${process.env.NEXT_PUBLIC_API_URL}/api/users/${profileUrl}`,
         {
           headers: {
-            Authorization: token ? `Token ${token}` : '',
             'Content-Type': 'application/json',
           },
         },
@@ -70,13 +64,11 @@ const Profile: React.FC = () => {
   const handleUpdateBio = async (newBio: string) => {
     if (isOwnProfile) {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(
+        const response = await fetchClient(
           `${process.env.NEXT_PUBLIC_API_URL}/api/users/profile/`,
           {
             method: 'PATCH',
             headers: {
-              Authorization: `Token ${token}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({ bio: newBio }),
@@ -100,16 +92,14 @@ const Profile: React.FC = () => {
   const handleUpdateHashtags = async (newHashtags: string[]) => {
     if (isOwnProfile) {
       try {
-        const token = localStorage.getItem('token');
         const currentHashtags = userData?.hashtags || [];
 
         // Remove hashtags
         for (const hashtag of currentHashtags) {
           if (!newHashtags.includes(hashtag)) {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`, {
+            await fetchClient(`${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`, {
               method: 'DELETE',
               headers: {
-                Authorization: `Token ${token}`,
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({ hashtag }),
@@ -120,10 +110,9 @@ const Profile: React.FC = () => {
         // Add new hashtags
         for (const hashtag of newHashtags) {
           if (!currentHashtags.includes(hashtag)) {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`, {
+            await fetchClient(`${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`, {
               method: 'POST',
               headers: {
-                Authorization: `Token ${token}`,
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({ hashtag }),

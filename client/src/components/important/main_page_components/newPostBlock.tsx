@@ -4,6 +4,7 @@ import { FileContainer, FileType, Post, UserData } from '@/components/not_compon
 import { motion } from 'framer-motion';
 import { useError } from '@/context/ErrorContext';
 import MicroPost from '@/components/MicroPost';
+import fetchClient from '@/other/fetchClient';
 
 interface CompInterface {
   userData: UserData | null;
@@ -44,8 +45,6 @@ const NewPostBlock = ({ userData, onPostCreated, showAddFile, addFileStorage, re
   };
 
   const handleClick = async () => {
-    const token = localStorage.getItem('token');
-
     if (content.length <= 5 || content.trim().length <= 3) {
       showError("Довжина вмісту поста занадто коротка!", "error");
       return;
@@ -66,10 +65,7 @@ const NewPostBlock = ({ userData, onPostCreated, showAddFile, addFileStorage, re
       addFileStorage.videos.forEach((element : File) => formData.append("videos", element))
       addFileStorage.audios.forEach((element : File) => formData.append("audios", element))
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/`, {
-        headers: {
-          Authorization: `Token ${token}`,
-        },
+      const response = await fetchClient(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/`, {
         method: 'POST',
         body: formData,
       });

@@ -6,6 +6,7 @@ import MiniPlayer from '@/components/MiniPlayer';
 import { useError } from '@/context/ErrorContext';
 import MicroPost from '@/components/MicroPost';
 import VideoEmbed from '@/components/VideoEmbed';
+import fetchClient from '@/other/fetchClient';
 
 
 export const PostBlock = ({
@@ -23,22 +24,19 @@ export const PostBlock = ({
   const [commentList, setCommentList] = useState([]);
   const {showError} = useError();
 
-  const token = localStorage.getItem('token');
-
   useEffect(() => {
-    if (post.original_post && token) {
+    if (post.original_post) {
       loadRepostedPost(post.original_post);
     }
   },[post])
 
   const loadRepostedPost = async (id : number) => {
     try {
-      const dataResponse = await fetch(
+      const dataResponse = await fetchClient(
         `${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/${id}/`,
         {
           method: 'GET',
           headers: {
-            Authorization: `Token ${token}`,
             'Content-Type': 'application/json',
           },
         },
@@ -57,11 +55,10 @@ export const PostBlock = ({
 
   const updateListOfComments = async (commentsAdd?: boolean) => {
     try {
-      const dataResponse = await fetch(
+      const dataResponse = await fetchClient(
         `${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/${post.id}/comments/`,
         {
           headers: {
-            Authorization: `Token ${token}`,
             'Content-Type': 'application/json',
           },
         },
@@ -91,12 +88,11 @@ export const PostBlock = ({
 
   const performLikeButton = async () => {
     try {
-      const dataResponse = await fetch(
+      const dataResponse = await fetchClient(
         `${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/${post.id}/like/`,
         {
           method: 'POST',
           headers: {
-            Authorization: `Token ${token}`,
             'Content-Type': 'application/json',
           },
         },

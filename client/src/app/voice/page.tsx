@@ -14,6 +14,7 @@ import {
   PlusIcon,
   HashtagIcon,
 } from '@heroicons/react/24/solid';
+import fetchClient from '@/other/fetchClient';
 
 type UserData = {
   id: number;
@@ -52,24 +53,14 @@ export default function VoiceChatPage() {
     { id: 4, name: 'Марія Гонзалез', speaking: true, muted: false },
   ]);
 
-  const getAuthHeaders = useCallback(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return null;
-    }
-    return {
-      Authorization: `Token ${token}`,
-      'Content-Type': 'application/json',
-    };
-  }, [router]);
-
   const apiRequest = useCallback(
     async (endpoint: string, method: string = 'GET', body?: any) => {
-      const headers = getAuthHeaders();
+      const headers = {
+      'Content-Type': 'application/json',
+      };
       if (!headers) return null;
       try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        const response = await fetchClient(`${API_BASE_URL}${endpoint}`, {
           method,
           headers,
           ...(body && { body: JSON.stringify(body) }),
@@ -82,7 +73,7 @@ export default function VoiceChatPage() {
         console.error(`Запит не вдався: ${err}`);
       }
     },
-    [getAuthHeaders],
+    [],
   );
 
   useEffect(() => {

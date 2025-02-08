@@ -20,7 +20,7 @@ const Home: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('refresh-token');
     if (token) router.push('/home');
   }, []);
 
@@ -39,7 +39,8 @@ const Home: React.FC = () => {
 
       if (response.ok) {
         setMessage(`Вітаємо, ${data.display_name}!`);
-        localStorage.setItem('token', data.token);
+        localStorage.setItem('access_token', data.tokens.access);
+        localStorage.setItem('refresh_token', data.tokens.refresh);
         setIsSignInOpen(false);
         router.push('/home');
       } else {

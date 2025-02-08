@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '@/components/Modal';
 import DropzoneUploader from '@/components/DropzoneUploader';
 import { useError } from '@/context/ErrorContext';
+import fetchClient from '@/other/fetchClient';
 
 export default function Home() {
   const router = useRouter();
@@ -102,19 +103,8 @@ export default function Home() {
   };
 
   const fetchData = async (url: string) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/');
-      return;
-    }
-
     try {
-      const dataResponse = await fetch(url, {
-        headers: {
-          Authorization: `Token ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const dataResponse = await fetchClient(url);
 
       if (!dataResponse.ok) {
         throw new Error(`HTTP error! status: ${dataResponse.status}`);
@@ -124,7 +114,6 @@ export default function Home() {
     } catch (err) {
       setError(`Не вдалося отримати дані за "${url}": ${err}`);
       if (err instanceof Error && err.message.includes('401')) {
-        localStorage.removeItem('token');
         router.push('/');
       }
     }

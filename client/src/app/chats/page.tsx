@@ -10,6 +10,7 @@ import Topbar from '@/components/surrounding/topbar';
 import AsidePanelLeft from '@/components/surrounding/asideLeft';
 import { AsidePanelRight } from '@/components/surrounding/asideRight';
 import MusicPlayer from '@/components/surrounding/player';
+import fetchClient from '@/other/fetchClient';
 
 const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api`;
 const WS_BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace("http","ws");
@@ -72,14 +73,7 @@ export default function ChatPage() {
   }, []);
 
   const getAuthHeaders = useCallback(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      showError(ErrorMessages.AUTH_REQUIRED, 'error');
-      router.push('/login');
-      return null;
-    }
     return {
-      Authorization: `Token ${token}`,
       'Content-Type': 'application/json',
     };
   }, [router, showError]);
@@ -94,7 +88,7 @@ export default function ChatPage() {
       if (!headers) return null;
 
       try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        const response = await fetchClient(`${API_BASE_URL}${endpoint}`, {
           method,
           headers,
           ...(body && { body: JSON.stringify(body) }),
