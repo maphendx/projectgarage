@@ -1,5 +1,19 @@
 from django.urls import path
-from .views import TokenRefreshView, UserRegistrationView, UserLoginView, UserProfileView, UserLogoutView, UserDeleteView, HashtagView, SubscriptionsView, UserSubscriptionsView, RecommendationView, UserProfileDetailView, SearchView, GoogleAuthView
+from .views import (
+                    TokenRefreshView, 
+                    UserRegistrationView, 
+                    UserLoginView, 
+                    UserProfileView, 
+                    UserLogoutView, 
+                    UserDeleteView, 
+                    HashtagView, 
+                    SubscriptionsView, 
+                    UserSubscriptionsView, 
+                    RecommendationView, 
+                    UserProfileDetailView, 
+                    SearchView, 
+                    GoogleAuthView
+                    )
 from django.conf import settings
 from django.conf.urls.static import static
 

@@ -1,5 +1,15 @@
 from django.urls import path
-from .views import PostListView, PostDetailView, CommentListView, CommentDetailView, RecommendedPostsView, RecentLikesView, LikeView, MarkNotificationAsReadView, MarkAllNotificationsAsReadView
+from .views import (
+                    PostListView, 
+                    PostDetailView, 
+                    CommentListView, 
+                    CommentDetailView, 
+                    RecommendedPostsView, 
+                    RecentLikesView, 
+                    LikeView, 
+                    MarkNotificationAsReadView, 
+                    MarkAllNotificationsAsReadView
+                )
 from django.conf import settings
 from django.conf.urls.static import static
 from ai.views import RecommendationView

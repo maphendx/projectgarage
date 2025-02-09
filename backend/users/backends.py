@@ -1,10 +1,5 @@
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth import get_user_model
-import nltk
-from nltk.metrics import jaccard_distance
-from django.db.models import Q
-from users.models import CustomUser
-
 User = get_user_model()
 
 class EmailBackend(BaseBackend):

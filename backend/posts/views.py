@@ -1,18 +1,16 @@
 from rest_framework import views
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
-from .models import Post, Comment, Like, Hashtag, PostImage, PostVideo, PostAudio, Notification
+from .models import Post, Comment, Like, PostImage, PostVideo, PostAudio, Notification
 from rest_framework import status
 from .serializers import PostSerializer, CommentSerializer
-from django.db.models import Q, Count 
+from django.db.models import Count 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from datetime import timedelta
 from django.utils.timezone import now
-from users.models import CustomUser
 from django.db import transaction
 from django.core.files.base import ContentFile
 import os

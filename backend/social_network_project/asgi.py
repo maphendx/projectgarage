@@ -8,20 +8,22 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 
 import os
+import django
+
+# Встановлюємо змінну середовища для налаштувань Django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'social_network_project.settings')
+django.setup()  # Ініціалізація Django (завантаження додатків)
+
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.auth import AuthMiddlewareStack
+from .jwt_auth import JWTAuthMiddleware  # замініть шлях на відповідний
 import messaging.routing
 import posts.routing
 
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'social_network_project.settings')
-
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
-    "websocket": AuthMiddlewareStack(
+    "websocket": JWTAuthMiddleware(
         URLRouter(
-            messaging.routing.websocket_urlpatterns,
             messaging.routing.websocket_urlpatterns + posts.routing.websocket_urlpatterns
         )
     ),

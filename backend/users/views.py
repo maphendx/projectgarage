@@ -1,7 +1,4 @@
 import logging
-from django.http import JsonResponse
-import json
-from django.views import View 
 from rest_framework import generics, status, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,8 +6,6 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import CustomUser
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, SubscribeSerializer, GoogleAuthResponseSerializer
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
 from nltk.metrics import jaccard_distance
 from django.db.models import Q
 from users.models import CustomUser
@@ -346,7 +341,7 @@ def create_display_name(email):
     raise Exception("Перевищено кількість спроб створити унікальний display_name.")
 
 
-class MyTokenRefreshView(generics.GenericAPIView):
+class TokenRefreshView(generics.GenericAPIView):
     serializer_class = TokenRefreshSerializer
     permission_classes = [AllowAny]  # Дозволяємо доступ без автентифікації
 
