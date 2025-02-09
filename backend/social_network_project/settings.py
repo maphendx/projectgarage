@@ -162,13 +162,19 @@ AUTHENTICATION_BACKENDS = [
 
 CORS_ALLOW_ALL_ORIGINS = True # Увага мля це тимчасова позиція тому що, Це небезпечно для продакшну, оскільки будь-хто може надсилати запити до вашого API, а оскільки ми стараємось робити максимально наближене до справжнього повноціного проекту а потім це помінятью
 
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             "hosts": [('127.0.0.1', 6379)],
+#         },
+#     },
+# }
+
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
-        },
-    },
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"  # Тимчасове сховище (пізніше можна підключити Redis)
+    }
 }
 
 import os
