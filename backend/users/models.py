@@ -1,10 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.hashers import make_password, check_password
-from django.core.exceptions import ValidationError
 import os
 import random
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 def get_random_avatar():
     """Повертає випадкову аватарку з папки default_avatar"""
@@ -150,10 +150,10 @@ class CustomUser(models.Model):
         verbose_name_plural = 'Користувачі'
 
     def clean(self):
-        # """Перевірка на кількість хештегів."""
-        # if not (5 <= self.hashtags.count() <= 30):
-        #     raise ValidationError("Кількість хештегів має бути в межах від 5 до 30.")
-        pass
+        """Перевірка на кількість хештегів."""
+        if not (5 <= self.hashtags.count() <= 30):
+            raise ValidationError("Кількість хештегів має бути в межах від 5 до 30.")
+
 
     def save(self, *args, **kwargs):
         """Перевіряємо обмеження перед збереженням."""
