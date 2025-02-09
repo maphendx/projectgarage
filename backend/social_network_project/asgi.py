@@ -19,12 +19,13 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from .jwt_auth import JWTAuthMiddleware  # замініть шлях на відповідний
 import messaging.routing
 import posts.routing
+import voice_channels.routing
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": JWTAuthMiddleware(
         URLRouter(
-            messaging.routing.websocket_urlpatterns + posts.routing.websocket_urlpatterns
+            messaging.routing.websocket_urlpatterns + posts.routing.websocket_urlpatterns + voice_channels.routing.websocket_urlpatterns
         )
     ),
 })
