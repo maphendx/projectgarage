@@ -8,7 +8,6 @@ import MicroPost from '@/components/MicroPost';
 import VideoEmbed from '@/components/VideoEmbed';
 import fetchClient from '@/other/fetchClient';
 
-
 export const PostBlock = ({
   getPost,
   getUser,
@@ -16,21 +15,21 @@ export const PostBlock = ({
 }: {
   getPost: Post;
   getUser: UserData | null;
-  getRepostHandler: (post : Post) => void;
+  getRepostHandler: (post: Post) => void;
 }) => {
   const [showComments, setShowComments] = useState<boolean>(false);
   const [post, setPost] = useState<Post>(getPost);
   const [repostedPost, setRepostedPost] = useState<Post | null>(null);
   const [commentList, setCommentList] = useState([]);
-  const {showError} = useError();
+  const { showError } = useError();
 
   useEffect(() => {
     if (post.original_post) {
       loadRepostedPost(post.original_post);
     }
-  },[post])
+  }, [post]);
 
-  const loadRepostedPost = async (id : number) => {
+  const loadRepostedPost = async (id: number) => {
     try {
       const dataResponse = await fetchClient(
         `${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/${id}/`,
@@ -46,12 +45,12 @@ export const PostBlock = ({
       if (!dataResponse.ok) {
         throw new Error(`Помилка: ${JSON.stringify(data)}`);
       }
-      
+
       setRepostedPost(data);
     } catch (error) {
-      showError(`${error}`,"error");
+      showError(`${error}`, 'error');
     }
-  }
+  };
 
   const updateListOfComments = async (commentsAdd?: boolean) => {
     try {
@@ -104,13 +103,20 @@ export const PostBlock = ({
       }
       const data = await dataResponse.json();
       if (!post.is_liked) {
-        setPost({ ...post, likes: [...post.likes, post.author.id], is_liked: !post.is_liked });
-      }
-      else {
-        setPost({ ...post, likes: post.likes.filter(i => i !== post.author.id), is_liked: !post.is_liked });
+        setPost({
+          ...post,
+          likes: [...post.likes, post.author.id],
+          is_liked: !post.is_liked,
+        });
+      } else {
+        setPost({
+          ...post,
+          likes: post.likes.filter((i) => i !== post.author.id),
+          is_liked: !post.is_liked,
+        });
       }
     } catch (error) {
-      showError(`${error}`, "error");
+      showError(`${error}`, 'error');
     }
   };
 
@@ -133,7 +139,7 @@ export const PostBlock = ({
             alt='User'
           />
           <div className='ml-3'>
-            <p className='text-sm font-medium text-white'>
+            <p className='cursor-pointer text-sm font-medium text-white hover:underline'>
               {post.author?.display_name}
             </p>
             <p className='text-sm text-gray-400'>
@@ -145,45 +151,62 @@ export const PostBlock = ({
           {/* {post.content} */}
           {post.content && <VideoEmbed content={post.content} />}
         </p>
-        <div className='flex flex-col items-start justify-start mb-4'>
+        <div className='mb-4 flex flex-col items-start justify-start'>
           {/* Блок фотографій */}
           <div className='flex'>
-            {post.images.length > 0 && 
-            <img
-            className='m-3 min-h-[200px] min-w-[200px] rounded shadow-[0_3px_5px_2px_#101010] duration-300 hover:shadow-[0_1px_5px_2px_#000000]'
-            src={post.images[0].image}
-            />}
-
-            {post.images.length > 1 && <div className='flex flex-wrap justify-center'>
-              {post.images.slice(1).map((element, key) => 
-            <img
-            key={key}
-            className='m-1 max-h-[200px] max-w-[200px] rounded shadow-[0_3px_5px_2px_#101010] duration-300 hover:shadow-[0_1px_5px_2px_#000000]'
-            src={element.image}
-            />
+            {post.images.length > 0 && (
+              <img
+                className='m-3 min-h-[200px] min-w-[200px] rounded shadow-[0_3px_5px_2px_#101010] duration-300 hover:shadow-[0_1px_5px_2px_#000000]'
+                src={post.images[0].image}
+              />
             )}
-          </div>}
+
+            {post.images.length > 1 && (
+              <div className='flex flex-wrap justify-center'>
+                {post.images.slice(1).map((element, key) => (
+                  <img
+                    key={key}
+                    className='m-1 max-h-[200px] max-w-[200px] rounded shadow-[0_3px_5px_2px_#101010] duration-300 hover:shadow-[0_1px_5px_2px_#000000]'
+                    src={element.image}
+                  />
+                ))}
+              </div>
+            )}
           </div>
           {/* Блок аудіо */}
-          {post.audios.length > 0 && post.audios.map((element, key) => (<MiniPlayer key={key} audioSrc={element.audio} />))}
-          {/* Блок відео */}
-          {post.videos.length > 0 && post.videos.map((element, key) => (<div key={key} 
-            className='mt-2 shadow-[0_3px_5px_2px_#101010] duration-300 hover:shadow-[0_1px_5px_2px_#000000] rounded-xl'>
-            <video controls className='rounded-xl'>
-              <source src={element.video} ></source>
-            </video>
-          </div>)) }
-          {post.hashtag_objects.length > 0 ? 
-          <div className='flex flex-wrap'>
-            {post.hashtag_objects.map((element, key) => (
-            <div key={key} className='flex mr-2 mt-2 bg-[#ffffff0f] p-1 rounded-md'>
-              <p>{element.name}</p>
-            </div>
+          {post.audios.length > 0 &&
+            post.audios.map((element, key) => (
+              <MiniPlayer key={key} audioSrc={element.audio} />
             ))}
-          </div> : <></>}
+          {/* Блок відео */}
+          {post.videos.length > 0 &&
+            post.videos.map((element, key) => (
+              <div
+                key={key}
+                className='mt-2 rounded-xl shadow-[0_3px_5px_2px_#101010] duration-300 hover:shadow-[0_1px_5px_2px_#000000]'
+              >
+                <video controls className='rounded-xl'>
+                  <source src={element.video}></source>
+                </video>
+              </div>
+            ))}
+          {post.hashtag_objects.length > 0 ? (
+            <div className='flex flex-wrap'>
+              {post.hashtag_objects.map((element, key) => (
+                <div
+                  key={key}
+                  className='mr-2 mt-2 flex rounded-md bg-[#ffffff0f] p-1'
+                >
+                  <p>{element.name}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <></>
+          )}
         </div>
         {/* Блок репосту */}
-        {repostedPost && (<MicroPost post={repostedPost} />)}
+        {repostedPost && <MicroPost post={repostedPost} />}
         {/* Блок з кнопками */}
         <div className='mt-4 flex items-center space-x-4'>
           <motion.div

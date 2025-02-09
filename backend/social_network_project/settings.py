@@ -88,9 +88,9 @@ WSGI_APPLICATION = 'social_network_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'social_network_db_2',    # Назва бази даних   (треба створити вручну в постгрес)
+        'NAME': 'social_network_db',    # Назва бази даних   (треба створити вручну в постгрес)
         'USER': 'postgres',             # Ім'я користувача   (скоріш за все в вас так і залишиться postgres)
-        'PASSWORD': 'Shift2201',          # Пароль користувача (тут все зрозуміло) 
+        'PASSWORD': '4839150',          # Пароль користувача (тут все зрозуміло) 
         'HOST': 'localhost',            # Ім'я хоста         (ті дані які ви вказали в постгрес)
         'PORT': '5432',                 # Порт бази даних    (дивись вище)
     }
@@ -151,6 +151,7 @@ CORS_ALLOWED_ORIGINS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
 
@@ -159,15 +160,21 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # Залиште дефолтний бекенд для інших випадків
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = True # Увага мля це тимчасова позиція тому що, Це небезпечно для продакшну, оскільки будь-хто може надсилати запити до вашого API, а оскільки ми стараємось робити максимально наближене до справжнього повноціного проекту а потім це помінятью
+
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             "hosts": [('127.0.0.1', 6379)],
+#         },
+#     },
+# }
 
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
-        },
-    },
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"  # Тимчасове сховище (пізніше можна підключити Redis)
+    }
 }
 
 import os
@@ -188,3 +195,14 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days= 1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
+
+GOOGLE_CLIENT_ID = "787039931575-u6m6gef67qnirlrn4icoonfedbgoigmi.apps.googleusercontent.com"

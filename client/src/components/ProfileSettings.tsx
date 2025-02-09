@@ -45,15 +45,11 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     onClose();
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    router.push('/');
-  };
-
   const handleDeleteProfile = async () => {
     try {
-      const response = await fetchClient('/api/users/delete', { method: 'DELETE' });
+      const response = await fetchClient('/api/users/delete', {
+        method: 'DELETE',
+      });
       if (response.ok) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
@@ -133,15 +129,6 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       </div>
 
       <div className='mt-4 flex space-x-4'>
-        <motion.button
-          onClick={handleLogout}
-          className='w-full rounded-[20px] bg-red-600 px-4 py-2 text-white hover:bg-red-500'
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-        >
-          Покинути обліковий запис
-        </motion.button>
         <motion.button
           onClick={handleDeleteProfile}
           className='w-full rounded-[20px] bg-red-800 px-4 py-2 text-white hover:bg-red-700'

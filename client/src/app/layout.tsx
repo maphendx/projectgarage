@@ -22,8 +22,8 @@ export default function RootLayout({
   modal: React.ReactNode;
 }>) {
   return (
-    <html lang='en' className={inter.className}>
-      <body>
+    <html lang='en'>
+      <body className={inter.className}>
         <ErrorProvider>{children}</ErrorProvider>
       </body>
     </html>

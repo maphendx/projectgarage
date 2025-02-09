@@ -34,15 +34,17 @@ const AsideListComponent: React.FC<CompInterface> = ({
   return (
     <motion.div
       className='relative'
-      whileHover={{ scale: 1.1 }}
+      whileHover={{ scale: 1.05 }}
       transition={{ duration: 0.2 }}
     >
       <Link href={href} passHref>
-        <div
+        <motion.div
           data-tooltip-id={text ? `tooltip-${text}` : undefined}
-          className={`relative my-1 flex items-center justify-center rounded-lg p-3 transition-all duration-300 ease-in-out ${
-            isActive ? 'text-white' : ''
-          }`}
+          className={`relative my-1 flex items-center justify-center rounded-lg p-3 transition-all ${isActive ? 'text-white' : 'hover:text-[#7289DA]'}`}
+          whileHover={{
+            backgroundColor: 'rgba(114, 137, 218, 0.05)',
+            transition: { duration: 0 },
+          }}
         >
           {isActive && (
             <motion.div
@@ -50,10 +52,16 @@ const AsideListComponent: React.FC<CompInterface> = ({
               className='absolute left-0 h-8 w-1 -translate-y-1/2 transform rounded-full bg-[#7289DA]'
             />
           )}
-          <Icon
-            className={`text-xl ${isActive ? 'text-white opacity-100' : 'text-gray-300 opacity-90'}`}
-          />
-        </div>
+          <motion.div>
+            <Icon
+              className={`text-xl transition-colors ${
+                isActive
+                  ? 'text-white opacity-100'
+                  : 'text-gray-300 opacity-90 hover:opacity-100'
+              }`}
+            />
+          </motion.div>
+        </motion.div>
       </Link>
       {text && (
         <Tooltip
@@ -81,14 +89,14 @@ const AsidePanelLeft: React.FC = () => {
       className='fixed left-0 z-10 ml-3 bg-[#1C1C1F]'
       initial={{ x: -100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: 'easeInOut' }}
+      transition={{ duration: 0.4, ease: 'easeInOut' }}
     >
       <div
         className='m-1 flex w-[62px] flex-col rounded-[20px] border-[1px] border-white border-opacity-10 bg-[#FFFFFF1A] shadow-lg'
         style={{ boxShadow: '0 3px 3px rgba(216, 180, 255, 0.60)' }}
       >
         <div className='mt-2'>
-          <AsideListComponent href='/home' icon={FaHome} text='Головна' />
+          <AsideListComponent href='/' icon={FaHome} text='Головна' />
           <AsideListComponent href='/servers' icon={FaServer} text='Сервери' />
           <AsideListComponent href='/chats' icon={FaComments} text='Чати' />
           <AsideListComponent

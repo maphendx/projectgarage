@@ -33,6 +33,12 @@ const Profile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    router.push('/');
+  };
+
   const fetchUserData = async () => {
     try {
       const response = await fetchClient(
@@ -97,26 +103,32 @@ const Profile: React.FC = () => {
         // Remove hashtags
         for (const hashtag of currentHashtags) {
           if (!newHashtags.includes(hashtag)) {
-            await fetchClient(`${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`, {
-              method: 'DELETE',
-              headers: {
-                'Content-Type': 'application/json',
+            await fetchClient(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`,
+              {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ hashtag }),
               },
-              body: JSON.stringify({ hashtag }),
-            });
+            );
           }
         }
 
         // Add new hashtags
         for (const hashtag of newHashtags) {
           if (!currentHashtags.includes(hashtag)) {
-            await fetchClient(`${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
+            await fetchClient(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ hashtag }),
               },
-              body: JSON.stringify({ hashtag }),
-            });
+            );
           }
         }
 
@@ -194,16 +206,27 @@ const Profile: React.FC = () => {
             {isOwnProfile && (
               <motion.button
                 onClick={() => setIsSettingsOpen(true)}
-                className='h-12 rounded-[20px] bg-[#6374B6] px-4 py-2 text-white'
-                whileHover={{ scale: 1.1 }}
+                className='mr-4 h-12 rounded-[20px] bg-[#5B6EAE] px-4 py-2 text-white hover:bg-[#6374B6]'
+                whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.9 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               >
                 Редагувати профіль
               </motion.button>
             )}
+            {isOwnProfile && (
+              <motion.button
+                onClick={handleLogout}
+                className='h-12 rounded-[20px] bg-red-600 px-4 py-2 text-white hover:bg-red-500'
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              >
+                Покинути обліковий запис
+              </motion.button>
+            )}
             <div className='mx-auto min-h-[85vh] w-[100%] max-w-[100%] rounded-[30px] border-[1px] border-white border-opacity-10 bg-opacity-70 bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-xl'>
-              <h4 className='text-lg font-semibold mb-3'>Публікації</h4>
+              <h4 className='mb-3 text-lg font-semibold'>Публікації</h4>
               {userData.posts && userData.posts.length > 0 ? (
                 <div className='space-y-4'>
                   {userData.posts.toReversed().map((post, key) => (

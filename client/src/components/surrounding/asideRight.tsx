@@ -6,7 +6,7 @@ export function AsidePanelRight() {
   return (
     <aside className='fixed right-0 z-10'>
       <div
-        className='m-1 flex w-80 flex-col overflow-hidden rounded-[20px] border-[1px] border-white border-opacity-10 bg-[#FFFFFF1A]'
+        className='m-1 mr-4 flex w-[300px] flex-col overflow-hidden rounded-[20px] border-[1px] border-white border-opacity-10 bg-[#FFFFFF1A]'
         style={{ boxShadow: '0 4px 4px rgba(216, 180, 255, 0.60)' }}
       >
         <div className='ml-5 mr-3'>

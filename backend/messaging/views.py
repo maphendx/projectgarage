@@ -7,12 +7,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from .models import ChatRoom, Message, Reaction
-from .serializers import (
-    ChatRoomSerializer,
-    MessageSerializer,
-    ChatRoomAvatarSerializer,
-    ReactionSerializer
-)
+from .serializers import ChatRoomSerializer, MessageSerializer, ChatRoomAvatarSerializer, ReactionSerializer
 from rest_framework.permissions import IsAuthenticated
 
 class ChatRoomView(APIView):
@@ -22,10 +17,30 @@ class ChatRoomView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = ChatRoomSerializer(data=request.data)
+        data = request.data.copy()
+        # Якщо передано список учасників за допомогою display_name
+        display_names = data.pop('participants_display_names', None)
+        User = get_user_model()
+        if display_names:
+            if not isinstance(display_names, list):
+                display_names = [display_names]
+            users = User.objects.filter(display_name__in=display_names)
+            if not users.exists():
+                return Response({'error': 'Користувач(і) не знайдені.'}, status=status.HTTP_404_NOT_FOUND)
+            # Заповнюємо поле participants із id користувачів
+            data['participants'] = list(users.values_list('id', flat=True))
+
+        serializer = ChatRoomSerializer(data=data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            chat_room = serializer.save()
+            # Якщо display_names були передані, переконуємось, що учасники додані
+            if display_names:
+                chat_room.participants.set(users)
+            # Автоматично додаємо творця чату, якщо він автентифікований
+            if request.user.is_authenticated:
+                chat_room.participants.add(request.user)
+            final_serializer = ChatRoomSerializer(chat_room)
+            return Response(final_serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class AddParticipantView(APIView):
@@ -35,17 +50,18 @@ class AddParticipantView(APIView):
         except ChatRoom.DoesNotExist:
             return Response({'error': 'Чат не знайдено.'}, status=status.HTTP_404_NOT_FOUND)
 
-        user_ids = request.data.get('user_ids')
-        if not user_ids:
-            user_id = request.data.get('user_id')
-            if not user_id:
-                return Response({'error': 'Не вказано ідентифікатор користувача.'}, status=status.HTTP_400_BAD_REQUEST)
-            user_ids = [user_id]
-        if not isinstance(user_ids, list):
-            user_ids = [user_ids]
+        # Отримуємо display_name користувача або список display_name
+        display_names = request.data.get('user_display_names')
+        if not display_names:
+            single_display_name = request.data.get('user_display_name')
+            if not single_display_name:
+                return Response({'error': 'Не вказано display_name користувача.'}, status=status.HTTP_400_BAD_REQUEST)
+            display_names = [single_display_name]
+        if not isinstance(display_names, list):
+            display_names = [display_names]
 
         User = get_user_model()
-        participants = User.objects.filter(id__in=user_ids)
+        participants = User.objects.filter(display_name__in=display_names)
         if not participants.exists():
             return Response({'error': 'Користувача не знайдено.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -58,6 +74,7 @@ class AddParticipantView(APIView):
 
 class ChatRoomAvatarView(APIView):
     parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [IsAuthenticated]  # Переконайтесь, що користувач автентифікований
 
     def patch(self, request, room_id):
         try:
@@ -65,24 +82,34 @@ class ChatRoomAvatarView(APIView):
         except ChatRoom.DoesNotExist:
             return Response({'error': 'Чат не знайдено.'}, status=status.HTTP_404_NOT_FOUND)
 
+        # Перевірка: чи є запитувач учасником даного чату
+        if not chat_room.participants.filter(pk=request.user.pk).exists():
+            return Response({'error': 'Ви не є учасником цього чату.'}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = ChatRoomAvatarSerializer(chat_room, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class MessageView(APIView):
-    permission_classes = [IsAuthenticated]
+    def get(self, room_id):
+        try:
+            chat_room = ChatRoom.objects.get(pk=room_id)
+        except ChatRoom.DoesNotExist:
+            return Response({'error': 'Чат не знайдено.'}, status=status.HTTP_404_NOT_FOUND)
 
+        serializer = ChatRoomAvatarSerializer(chat_room)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class MessageView(APIView):
     def get(self, request, room_id):
-        messages = Message.objects.filter(chat_id=room_id)
+        messages = Message.objects.filter(chat_id=room_id).order_by('timestamp')
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
 
-    def post(self, request, room_id=None):
+    def post(self, request, room_id):
         data = request.data.copy()
-        data['sender'] = request.user.id
-        
+        data['chat'] = room_id
         serializer = MessageSerializer(data=data)
         if serializer.is_valid():
             serializer.save()

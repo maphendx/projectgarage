@@ -1,10 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.hashers import make_password, check_password
-from django.core.exceptions import ValidationError
 import os
 import random
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 def get_random_avatar():
     """Повертає випадкову аватарку з папки default_avatar"""
@@ -59,7 +59,7 @@ class CustomUser(models.Model):
     bio = models.TextField(blank=True, null=True)  # Коротке біо
     hashtags = models.ManyToManyField(UserHashtag, blank=False)  # Хештеги користувача
     objects = CustomUserManager()  # Використовуємо кастомний менеджер для створення користувачів
-    subscriptions = models.ManyToManyField("self", symmetrical=False, blank=True, related_name="subscribers")
+    subscriptions = models.ManyToManyField("self", symmetrical=False, blank=True, related_name="subscribers") # 
 
     REQUIRED_FIELDS = ['display_name', 'password']  # Вказуємо обов'язкові поля
     USERNAME_FIELD = 'email'  # Використовуємо email для автентифікації користувачів
@@ -90,6 +90,16 @@ class CustomUser(models.Model):
     def check_password(self, raw_password):
         """Перевірка паролю."""
         return check_password(raw_password, self.password)
+
+    @property
+    def subscriptions_count(self):
+        """Повертає кількість користувачів, на яких підписаний даний користувач."""
+        return self.subscriptions.count()
+
+    @property
+    def subscribers_count(self):
+        """Повертає кількість користувачів, які підписані на даного користувача."""
+        return self.subscribers.count()
 
     @property
     def hashtagClass(self):
@@ -139,11 +149,11 @@ class CustomUser(models.Model):
         verbose_name = 'Користувач'
         verbose_name_plural = 'Користувачі'
 
-    def clean(self):
-        # """Перевірка на кількість хештегів."""
-        # if not (5 <= self.hashtags.count() <= 30):
-        #     raise ValidationError("Кількість хештегів має бути в межах від 5 до 30.")
-        pass
+    # def clean(self):
+    #     """Перевірка на кількість хештегів."""
+    #     if not (5 <= self.hashtags.count() <= 30):
+    #         raise ValidationError("Кількість хештегів має бути в межах від 5 до 30.")
+
 
     def save(self, *args, **kwargs):
         """Перевіряємо обмеження перед збереженням."""

@@ -3,6 +3,7 @@ from users.models import CustomUser
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 import os
+from django.conf import settings
 
 # Модель для хештегів
 class Hashtag(models.Model):
@@ -107,3 +108,29 @@ class Like(models.Model):
 
     class Meta:
         unique_together = ('user', 'post')
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = (
+        ('new_post', 'Новий пост'),
+        ('new_subscription', 'Нова підписка'),
+        ('post_like', 'Пост лайкнуто'),
+        ('post_repost', 'Пост репостнуто'),
+        ('new_comment', 'Новий коментар'),
+    )
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='notifications'
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='notifications_from'
+    )
+    notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
+    post = models.ForeignKey('posts.Post', on_delete=models.CASCADE, null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Notification ({self.notification_type}): {self.actor} -> {self.recipient}"

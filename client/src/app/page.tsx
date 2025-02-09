@@ -1,296 +1,247 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import Head from 'next/head';
-import Image from 'next/image';
-import Modal from '@/components/Modal';
+import MainContent from '@/components/important/main_page_content';
+import {
+  FileContainer,
+  FileType,
+  Post,
+  UserData,
+} from '@/components/not_components';
+import AsidePanelLeft from '@/components/surrounding/asideLeft';
+import { AsidePanelRight } from '@/components/surrounding/asideRight';
+import MusicPlayer from '@/components/surrounding/player';
+import Topbar from '@/components/surrounding/topbar';
 import { useRouter } from 'next/navigation';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Modal from '@/components/Modal';
+import DropzoneUploader from '@/components/DropzoneUploader';
+import { useError } from '@/context/ErrorContext';
+import fetchClient from '@/other/fetchClient';
 
-const Home: React.FC = () => {
-  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
-  const [isSignInOpen, setIsSignInOpen] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [password2, setPassword2] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [message, setMessage] = useState('');
+export default function Home() {
   const router = useRouter();
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [postsListToShow, setPostsListToShow] = useState<Post[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { showError } = useError();
+  const [addFileWindow, setAddFileWindow] = useState<boolean>(false); // 4 чела для загрузки файлів
+  const [addFileType, setAddfileType] = useState<FileType>(FileType.Audio);
+  const [addFilesLoaded, setAddFilesLoaded] = useState<File[]>([]);
+  const [addFileStorage, setAddFileStorage] = useState<FileContainer>({
+    photos: [],
+    videos: [],
+    audios: [],
+  });
 
   useEffect(() => {
-    const token = localStorage.getItem('refresh-token');
-    if (token) router.push('/home');
-  }, []);
+    error && showError(error, 'error');
+  }, [error]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage('Входимо до облікового запису...');
+  const handleAddFile = (fileType: FileType) => {
+    setAddFileWindow(true);
+    setAddfileType(fileType);
+  };
 
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/login/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage(`Вітаємо, ${data.display_name}!`);
-        localStorage.setItem('access_token', data.tokens.access);
-        localStorage.setItem('refresh_token', data.tokens.refresh);
-        setIsSignInOpen(false);
-        router.push('/home');
-      } else {
-        setMessage(`Помилка: ${JSON.stringify(data)}`);
+  const handleConfirmFile = () => {
+    if (addFilesLoaded.length > 0) {
+      switch (addFileType) {
+        case FileType.Audio: {
+          setAddFileStorage((prevState) => ({
+            ...prevState,
+            audios: [...addFilesLoaded],
+          }));
+          break;
+        }
+        case FileType.Video: {
+          setAddFileStorage((prevState) => ({
+            ...prevState,
+            videos: [...addFilesLoaded],
+          }));
+          break;
+        }
+        case FileType.Photo: {
+          setAddFileStorage((prevState) => ({
+            ...prevState,
+            photos: [...addFilesLoaded],
+          }));
+          break;
+        }
       }
-    } catch (error) {
-      setMessage(`Помилка: ${(error as Error).message}`);
+      setAddFileWindow(false);
+      setAddFilesLoaded([]);
+    } else {
+      showError('Ви не додали жодного файлу!', 'warning');
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage('Реєстрація...');
+  const resetAddFileStorage = (fileType: FileType) => {
+    switch (fileType) {
+      case FileType.Photo: {
+        setAddFileStorage((prevState) => ({
+          ...prevState,
+          photos: [],
+        }));
+        break;
+      }
+      case FileType.Audio: {
+        setAddFileStorage((prevState) => ({
+          ...prevState,
+          audios: [],
+        }));
+        break;
+      }
+      case FileType.Video: {
+        setAddFileStorage((prevState) => ({
+          ...prevState,
+          videos: [],
+        }));
+        break;
+      }
+    }
+  };
 
+  const fetchData = async (url: string) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/users/register/`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            password,
-            password2,
-            display_name: displayName,
-          }),
-        },
+      const dataResponse = await fetchClient(url);
+
+      if (!dataResponse.ok) {
+        throw new Error(`HTTP error! status: ${dataResponse.status}`);
+      }
+
+      return await dataResponse.json();
+    } catch (err) {
+      setError(`Не вдалося отримати дані за "${url}": ${err}`);
+      if (err instanceof Error && err.message.includes('401')) {
+        router.push('/');
+      }
+    }
+  };
+
+  const handlePostsListTrigger = async () => {
+    const postsListResponse: Post[] = await fetchData(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/`,
+    );
+    if (postsListResponse) {
+      setPostsListToShow(postsListResponse.reverse());
+      setTimeout(() => {
+        window.scrollBy(0, 1); // Примусовий скрол (на 1 піксель вниз)
+        window.scrollBy(0, -1); // Повернення назад
+      }, 50);
+    }
+  };
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      const userDataResponse = await fetchData(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/profile/`,
       );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage('Реєстрація, успішна!');
-        setIsSignUpOpen(false);
-      } else {
-        setMessage(`Error: ${JSON.stringify(data)}`);
+      if (userDataResponse) {
+        setUserData(userDataResponse);
       }
-    } catch (error) {
-      setMessage(`Error: ${(error as Error).message}`);
-    }
-  };
+    };
+    const loadPosts = async () => {
+      await handlePostsListTrigger();
+      setIsLoading(false);
+    };
+    loadUserData();
+    loadPosts();
+  }, [router]);
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-[#B5BFE7] to-[#B5D6E7] text-[#2B2D31]'>
-      <Head>
-        <title>Do Re Do - Your Musical Journey Begins</title>
-        <meta
-          name='description'
-          content='Приєднуйтесь до великої музичної спільноти Do Re Do вже сьогодні та розпочніть свою музичну подорож!'
-        />
-        <link rel='icon' href='/favicon.ico' />
-      </Head>
+    <motion.div
+      className='flex min-h-screen flex-col bg-[#1C1C1F] text-white'
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      {isLoading ? (
+        <div className='flex h-screen items-center justify-center'>
+          <motion.div
+            className='text-lg font-semibold text-gray-300'
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.8, 1, 0.8],
+            }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            Завантаження...
+          </motion.div>
+        </div>
+      ) : (
+        <>
+          {/* Topbar */}
+          <motion.header
+            className='sticky top-0 z-30 h-[92px] bg-[#1C1C1F]'
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 100 }}
+          >
+            <Topbar paramUserData={userData} />
+          </motion.header>
 
-      <motion.main
-        className='flex min-h-screen flex-col md:flex-row'
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <motion.div
-          className='flex flex-1 items-center justify-center p-8'
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Image
-            src='/logo.svg'
-            alt='Do Re Do Logo'
-            width={320}
-            height={320}
-            className='hidden w-full max-w-sm md:block'
-            priority
-          />
-        </motion.div>
+          {/* Main Layout */}
+          <div className='flex flex-1 overflow-hidden'>
+            {/* Left Sidebar */}
+            <aside className='sticky top-0 z-20 h-screen w-20 flex-shrink-0 bg-[#1C1C1F]'>
+              <AsidePanelLeft />
+            </aside>
 
-        <motion.div
-          className='flex flex-1 items-center justify-center px-6'
-          initial={{ x: 100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className='w-full max-w-md'>
-            <div className='mb-6'>
-              <h2 className='text-4xl font-bold text-[#1C1C1F]'>Do Re Do</h2>
-              <p className='mt-2 text-xl text-[#3C4B84]'>
-                Знаходь спільні музичні інтереси та ділися своєю музикою з
-                іншими.
-              </p>
-              <p className='mt-1 text-base text-[#444C6C]'>
-                Почни свою музичну подорож вже сьогодні!
-              </p>
-            </div>
+            {/* Main Content */}
+            <main className='overflow-y flex-1 px-4 pb-4'>
+              <AnimatePresence>
+                <motion.div
+                  className='space-y-4'
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <MainContent
+                    userData={userData}
+                    postsList={postsListToShow}
+                    handlePostsListTrigger={handlePostsListTrigger}
+                    showAddFile={handleAddFile}
+                    addFileStorage={addFileStorage}
+                    resetAddFileStorage={resetAddFileStorage}
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </main>
 
-            <div className='space-y-3'>
-              <motion.button
-                className='flex w-full transform items-center justify-center space-x-2 rounded-full bg-[#B5BFE7] py-3 text-[#1C1C1F] shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-[#6374B6]'
-                onClick={() => true}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <span>Увійти з Google</span>
-              </motion.button>
-
-              <motion.button
-                className='w-full transform rounded-full bg-[#3C4B84] py-3 text-[#B5D6E7] shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-[#444C6C]'
-                onClick={() => setIsSignUpOpen(true)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Створити обліковий запис
-              </motion.button>
-
-              <div className='relative py-2'>
-                <div className='absolute inset-0 flex items-center'>
-                  <div className='w-full border-t border-[#444C6C]'></div>
-                </div>
-                <div className='relative flex justify-center'>
-                  <span className='bg-[#B5BFE7] px-4 text-[#3C4B84]'>або</span>
-                </div>
-              </div>
-
-              <motion.button
-                className='w-full transform rounded-full bg-[#B5D6E7]/80 py-3 text-[#1C1C1F] shadow-md backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] hover:bg-[#B5D6E7]/90'
-                onClick={() => setIsSignInOpen(true)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Увійти до облікового запису
-              </motion.button>
-            </div>
+            {/* Right Sidebar */}
+            <aside className='sticky top-0 hidden h-screen w-80 flex-shrink-0 bg-[#1C1C1F] lg:block'>
+              <AsidePanelRight />
+            </aside>
           </div>
-        </motion.div>
-      </motion.main>
 
-      <Modal isOpen={isSignUpOpen} onClose={() => setIsSignUpOpen(false)}>
-        <form onSubmit={handleSignUp}>
-          <h2 className='mb-4 text-xl font-bold text-[#B5D6E7]'>
-            Створити обліковий запис
-          </h2>
-          <div className='space-y-4'>
-            <input
-              type='text'
-              placeholder="Ім'я користувача"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              required
-              className='w-full rounded-lg bg-[#1C1C1F] px-4 py-3 text-[#B5D6E7]'
-            />
-            <input
-              type='email'
-              placeholder='Email'
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className='w-full rounded-lg bg-[#1C1C1F] px-4 py-3 text-[#B5D6E7]'
-            />
-            <div className='relative'>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder='Пароль'
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className='w-full rounded-lg bg-[#1C1C1F] px-4 py-3 pr-10 text-[#B5D6E7]'
-              />
-              <button
-                type='button'
-                onClick={() => setShowPassword(!showPassword)}
-                className='absolute right-3 top-3 text-[#B5BFE7] hover:text-[#6374B6]'
-                aria-label='Toggle Password Visibility'
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-            </div>
-            <div className='relative'>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder='Підтвердіть пароль'
-                value={password2}
-                onChange={(e) => setPassword2(e.target.value)}
-                required
-                className='w-full rounded-lg bg-[#1C1C1F] px-4 py-3 pr-10 text-[#B5D6E7]'
-              />
-              <button
-                type='button'
-                onClick={() => setShowPassword(!showPassword)}
-                className='absolute right-3 top-3 text-[#B5BFE7] hover:text-[#6374B6]'
-                aria-label='Toggle Password Visibility'
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-            </div>
-            <button className='w-full rounded-full bg-[#3C4B84] py-3 text-[#B5D6E7] hover:bg-[#444C6C]'>
-              Зареєструватися
-            </button>
-          </div>
-        </form>
-      </Modal>
+          {/* Footer: Music Player */}
+          <footer className='fixed bottom-0 left-0 right-0 bg-[#1C1C1F] shadow-md'>
+            <MusicPlayer />
+          </footer>
 
-      <Modal isOpen={isSignInOpen} onClose={() => setIsSignInOpen(false)}>
-        <form onSubmit={handleLogin}>
-          <h2 className='mb-4 text-xl font-bold text-[#B5D6E7]'>
-            Увійти в Do Re Do
-          </h2>
-          <div className='space-y-4'>
-            <input
-              type='email'
-              placeholder='Email'
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className='w-full rounded-lg bg-[#1C1C1F] px-4 py-3 text-[#B5D6E7]'
-            />
-            <div className='relative'>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder='Пароль'
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className='w-full rounded-lg bg-[#1C1C1F] px-4 py-3 pr-10 text-[#B5D6E7]'
+          <Modal onClose={() => setAddFileWindow(false)} isOpen={addFileWindow}>
+            <div className='flex flex-col'>
+              <h2 className='mb-3 text-center text-lg'>Додати файли</h2>
+              <DropzoneUploader
+                setFiles={setAddFilesLoaded}
+                fileType={addFileType}
               />
-              <button
-                type='button'
-                onClick={() => setShowPassword(!showPassword)}
-                className='absolute right-3 top-3 text-[#B5BFE7] hover:text-[#6374B6]'
-                aria-label='Toggle Password Visibility'
+              <motion.button
+                className='mt-3 rounded-lg bg-pink-800 p-2 transition-colors duration-300 ease-out hover:bg-pink-400'
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                onClick={handleConfirmFile}
               >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
+                Підтвердити
+              </motion.button>
             </div>
-            <button className='w-full rounded-full bg-[#3C4B84] py-3 text-[#B5D6E7] hover:bg-[#444C6C]'>
-              Увійти
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {message && (
-        <motion.div
-          className='absolute bottom-4 left-1/2 -translate-x-1/2 transform rounded-lg bg-[#2B2D31] p-4 text-[#B5D6E7] shadow-lg'
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          {message}
-        </motion.div>
+          </Modal>
+        </>
       )}
-    </div>
+    </motion.div>
   );
-};
-
-export default Home;
+}
