@@ -9,16 +9,25 @@ from django.contrib.auth import get_user_model
 from .models import ChatRoom, Message, Reaction
 from .serializers import ChatRoomSerializer, MessageSerializer, ChatRoomAvatarSerializer, ReactionSerializer
 from rest_framework.permissions import IsAuthenticated
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 class ChatRoomView(APIView):
+    permission_classes = [IsAuthenticated]  # Доступ лише для автентифікованих користувачів
+
     def get(self, request):
-        rooms = ChatRoom.objects.all()
+        # Повертаємо лише ті чати, у яких поточний користувач є учасником
+        rooms = ChatRoom.objects.filter(participants=request.user)
         serializer = ChatRoomSerializer(rooms, many=True)
         return Response(serializer.data)
 
     def post(self, request):
         data = request.data.copy()
-        # Якщо передано список учасників за допомогою display_name
+
+        # Вилучаємо поле "participants", яке є обов'язковим у запиті, але не використовується
+        data.pop('participants', None)
+        
+        # Обробка користувачів за display_name
         display_names = data.pop('participants_display_names', None)
         User = get_user_model()
         if display_names:
@@ -50,20 +59,22 @@ class AddParticipantView(APIView):
         except ChatRoom.DoesNotExist:
             return Response({'error': 'Чат не знайдено.'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Отримуємо display_name користувача або список display_name
+        # Очікуємо, що користувач завжди передасть масив через ключ 'user_display_names'
         display_names = request.data.get('user_display_names')
         if not display_names:
-            single_display_name = request.data.get('user_display_name')
-            if not single_display_name:
-                return Response({'error': 'Не вказано display_name користувача.'}, status=status.HTTP_400_BAD_REQUEST)
-            display_names = [single_display_name]
+            return Response({'error': 'Не вказано user_display_names.'}, status=status.HTTP_400_BAD_REQUEST)
         if not isinstance(display_names, list):
             display_names = [display_names]
 
         User = get_user_model()
         participants = User.objects.filter(display_name__in=display_names)
-        if not participants.exists():
-            return Response({'error': 'Користувача не знайдено.'}, status=status.HTTP_404_NOT_FOUND)
+        found_display_names = {user.display_name for user in participants}
+        missing = [name for name in display_names if name not in found_display_names]
+        if missing:
+            return Response(
+                {'error': f'Не знайдено користувача(ів) з user_display_names: {", ".join(missing)}.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         for user in participants:
             chat_room.participants.add(user)
@@ -74,7 +85,7 @@ class AddParticipantView(APIView):
 
 class ChatRoomAvatarView(APIView):
     parser_classes = [MultiPartParser, FormParser]
-    permission_classes = [IsAuthenticated]  # Переконайтесь, що користувач автентифікований
+    permission_classes = [IsAuthenticated]  # Доступ лише для автентифікованих користувачів
 
     def patch(self, request, room_id):
         try:
@@ -92,7 +103,7 @@ class ChatRoomAvatarView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def get(self, room_id):
+    def get(self, request, room_id):
         try:
             chat_room = ChatRoom.objects.get(pk=room_id)
         except ChatRoom.DoesNotExist:
@@ -102,17 +113,48 @@ class ChatRoomAvatarView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class MessageView(APIView):
+    permission_classes = [IsAuthenticated]  # Захищаємо шлях для автентифікованих користувачів
+
     def get(self, request, room_id):
         messages = Message.objects.filter(chat_id=room_id).order_by('timestamp')
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
 
     def post(self, request, room_id):
+        try:
+            chat_room = ChatRoom.objects.get(pk=room_id)
+        except ChatRoom.DoesNotExist:
+            return Response({'error': 'Чат не знайдено.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Перевірка: користувач має бути учасником даного чату
+        if not chat_room.participants.filter(pk=request.user.pk).exists():
+            return Response({'error': 'Ви не є учасником цього чату.'}, status=status.HTTP_403_FORBIDDEN)
+        
         data = request.data.copy()
         data['chat'] = room_id
+        # Виключаємо поле "sender" із запиту та привʼязуємо повідомлення до request.user 
+        data['sender'] = request.user.pk
+        
         serializer = MessageSerializer(data=data)
         if serializer.is_valid():
-            serializer.save()
+            message_obj = serializer.save()
+            
+            # Надсилання створеного повідомлення через веб-сокети.
+            # Для цього використовуємо channel layer
+            channel_layer = get_channel_layer()
+            
+            # Формуємо назву групи для даного чатруму. 
+            # Якщо при встановленні WebSocket зʼєднання використовується маршрут 'ws/chat/<str:room_name>/'
+            group_name = f"chat_{chat_room.pk}"
+            
+            async_to_sync(channel_layer.group_send)(
+                group_name,
+                {
+                    'type': 'chat_message',
+                    'message': message_obj.content,
+                    'sender': request.user.display_name,
+                }
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -137,8 +179,15 @@ class ReactionView(APIView):
             return Response({'error': 'Повідомлення не знайдено.'}, status=status.HTTP_404_NOT_FOUND)
         
         reaction_value = request.data.get('reaction')
-        if not reaction_value:
-            return Response({'error': 'Не вказано реакцію.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not reaction_value or not reaction_value.strip():
+            return Response({'error': 'Поле "reaction" є обов\'язковим.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        valid_reactions = ["like", "love", "laugh", "wow", "sad", "angry"]
+        if reaction_value not in valid_reactions:
+            return Response(
+                {'error': f'Невірна реакція. Допустимі значення: {", ".join(valid_reactions)}.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         user = request.user
         reaction, created = Reaction.objects.update_or_create(
