@@ -1,129 +1,189 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 
-const GRID_SIZE = 20;
-const INIT_SNAKE = [{ x: 5, y: 5 }];
-const INIT_DIRECTION = { x: 1, y: 0 };
-const INIT_FOOD = { x: 10, y: 10 };
-const GAME_SPEED = 150;
+interface Position {
+  x: number;
+  y: number;
+}
+
+const GRID_SIZE = 30;
+const BLOCK_SIZE = 14;
+const GAME_SPEED = 70;
+const INITIAL_SNAKE_SIZE = 6;
 
 export default function SnakeGame() {
-  const [snake, setSnake] = useState(INIT_SNAKE);
-  const [direction, setDirection] = useState(INIT_DIRECTION);
-  const [food, setFood] = useState(INIT_FOOD);
-  const [isGameOver, setIsGameOver] = useState(false);
-  const [points, setPoints] = useState(0);
+  const [snake, setSnake] = useState<Position[]>([]);
+  const [apple, setApple] = useState<Position>({ x: 0, y: 0 });
+  const [direction, setDirection] = useState<string>('right');
+  const [isGameOver, setIsGameOver] = useState<boolean>(false);
+  const [score, setScore] = useState<number>(0);
+  const [highScore, setHighScore] = useState<number>(
+    Number(localStorage.getItem('snakeHighScore')) || 0,
+  );
+
+  const generateApple = useCallback((): Position => {
+    const newApple = {
+      x: Math.floor(Math.random() * GRID_SIZE),
+      y: Math.floor(Math.random() * GRID_SIZE),
+    };
+    return newApple;
+  }, []);
+
+  const initGame = useCallback(() => {
+    const initialSnake: Position[] = [];
+    let xPos = Math.floor(GRID_SIZE / 2);
+    const yPos = Math.floor(GRID_SIZE / 2);
+
+    for (let i = 0; i < INITIAL_SNAKE_SIZE; i++) {
+      initialSnake.push({ x: xPos - i, y: yPos });
+    }
+
+    setSnake(initialSnake);
+    setApple(generateApple());
+    setDirection('right');
+    setScore(0);
+    setIsGameOver(false);
+  }, [generateApple]);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const keyDirections: { [key: string]: { x: number; y: number } } = {
-        ArrowUp: { x: 0, y: -1 },
-        ArrowDown: { x: 0, y: 1 },
-        ArrowLeft: { x: -1, y: 0 },
-        ArrowRight: { x: 1, y: 0 },
-      };
+    initGame();
+  }, [initGame]);
 
-      const newDirection = keyDirections[e.key];
+  const moveSnake = useCallback(() => {
+    setSnake((prevSnake) => {
+      const newSnake = [...prevSnake];
+      const head = { ...newSnake[0] };
 
-      if (newDirection) {
-        const isOppositeDirection =
-          (direction.x === -newDirection.x && direction.y === 0) ||
-          (direction.y === -newDirection.y && direction.x === 0);
-
-        if (!isOppositeDirection) {
-          setDirection(newDirection);
-        }
+      switch (direction) {
+        case 'left':
+          head.x = head.x <= 0 ? GRID_SIZE - 1 : head.x - 1;
+          break;
+        case 'up':
+          head.y = head.y <= 0 ? GRID_SIZE - 1 : head.y - 1;
+          break;
+        case 'right':
+          head.x = head.x >= GRID_SIZE - 1 ? 0 : head.x + 1;
+          break;
+        case 'down':
+          head.y = head.y >= GRID_SIZE - 1 ? 0 : head.y + 1;
+          break;
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [direction]);
+
+      if (newSnake.some((part) => part.x === head.x && part.y === head.y)) {
+        setIsGameOver(true);
+        return prevSnake;
+      }
+
+      newSnake.unshift(head);
+
+      if (head.x === apple.x && head.y === apple.y) {
+        setScore((prev) => {
+          const newScore = prev + 1;
+          if (newScore > highScore) {
+            setHighScore(newScore);
+            localStorage.setItem('snakeHighScore', newScore.toString());
+          }
+          return newScore;
+        });
+        setApple(generateApple());
+      } else {
+        newSnake.pop();
+      }
+
+      return newSnake;
+    });
+  }, [direction, apple, highScore, generateApple]);
 
   useEffect(() => {
     if (isGameOver) return;
 
-    const interval = setInterval(() => {
-      setSnake((prevSnake) => {
-        const newHead = {
-          x: prevSnake[0].x + direction.x,
-          y: prevSnake[0].y + direction.y,
+    const gameLoop = setInterval(moveSnake, GAME_SPEED);
+    return () => clearInterval(gameLoop);
+  }, [isGameOver, moveSnake]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isGameOver && e.code === 'Space') {
+        initGame();
+        return;
+      }
+
+      const keyDirections: { [key: string]: string } = {
+        ArrowLeft: 'left',
+        ArrowUp: 'up',
+        ArrowRight: 'right',
+        ArrowDown: 'down',
+        KeyA: 'left',
+        KeyW: 'up',
+        KeyD: 'right',
+        KeyS: 'down',
+      };
+
+      const newDirection = keyDirections[e.code];
+      if (newDirection) {
+        const oppositeDirections: Record<string, string> = {
+          left: 'right',
+          right: 'left',
+          up: 'down',
+          down: 'up',
         };
 
-        if (
-          newHead.x < 0 ||
-          newHead.x >= GRID_SIZE ||
-          newHead.y < 0 ||
-          newHead.y >= GRID_SIZE ||
-          prevSnake.some(
-            (segment) => segment.x === newHead.x && segment.y === newHead.y,
-          )
-        ) {
-          setIsGameOver(true);
-          return prevSnake;
+        if (oppositeDirections[newDirection] !== direction) {
+          setDirection(newDirection);
         }
+      }
+    };
 
-        const newSnake = [newHead, ...prevSnake];
-        if (newHead.x === food.x && newHead.y === food.y) {
-          setPoints((prev) => prev + 10);
-          setFood({
-            x: Math.floor(Math.random() * GRID_SIZE),
-            y: Math.floor(Math.random() * GRID_SIZE),
-          });
-        } else {
-          newSnake.pop();
-        }
-        return newSnake;
-      });
-    }, 150);
-    return () => clearInterval(interval);
-  }, [direction, food, isGameOver]);
-
-  const handleRestart = () => {
-    setSnake(INIT_SNAKE);
-    setDirection(INIT_DIRECTION);
-    setFood(INIT_FOOD);
-    setIsGameOver(false);
-    setPoints(0);
-  };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [direction, isGameOver, initGame]);
 
   return (
     <div className='flex flex-col items-center justify-center p-4'>
-      <div className='mb-4 text-2xl font-bold text-[#B5D6E7]'>
-        Нажрав: {points}
+      <div className='mb-4 text-2xl'>
+        <span>НАЙБІЛЬШЕ: {highScore}</span>
+        <span className='ml-8'>ЗАХАВАВ: {score}</span>
       </div>
-      <div className='relative h-[400px] w-[400px] overflow-hidden rounded-lg border-2 border-[#6374B6] bg-[#1C1C1F]'>
+      <div
+        className='relative border-2 border-gray-600 bg-black'
+        style={{
+          width: GRID_SIZE * BLOCK_SIZE,
+          height: GRID_SIZE * BLOCK_SIZE,
+        }}
+      >
         {isGameOver && (
           <div className='absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm'>
-            <p className='mb-4 text-2xl text-white'>Вмер, йоуу!</p>
-            <p className='mb-4 text-xl text-white'>Нахавав: {points}</p>
+            <p className='mb-4 text-2xl text-white'>Вмер, йобабоба!</p>
+            <p className='mb-4 text-xl text-white'>Захавав: {score}</p>
             <button
-              onClick={handleRestart}
-              className='rounded bg-green-500 px-4 py-2 text-white transition hover:bg-green-600'
+              onClick={initGame}
+              className='rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600'
             >
-              Похавати знову
+              Похавати ще раз (Space)
             </button>
           </div>
         )}
         {snake.map((segment, i) => (
           <motion.div
             key={i}
-            className='absolute h-5 w-5 rounded bg-green-500'
-            animate={{ x: segment.x * 20, y: segment.y * 20 }}
-            transition={{
-              type: 'tween',
-              duration: GAME_SPEED / 1000,
-              ease: 'linear',
+            className='absolute bg-green-500'
+            style={{
+              width: BLOCK_SIZE,
+              height: BLOCK_SIZE,
+              x: segment.x * BLOCK_SIZE,
+              y: segment.y * BLOCK_SIZE,
             }}
           />
         ))}
         <motion.div
-          className='absolute h-5 w-5 rounded bg-red-500'
-          animate={{ x: food.x * 20, y: food.y * 20 }}
-          transition={{
-            type: 'tween',
-            duration: 0.2,
+          className='absolute bg-red-500'
+          style={{
+            width: BLOCK_SIZE,
+            height: BLOCK_SIZE,
+            x: apple.x * BLOCK_SIZE,
+            y: apple.y * BLOCK_SIZE,
           }}
         />
       </div>
