@@ -2,18 +2,23 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 interface Position {
   x: number;
   y: number;
 }
-
+interface SnakeGameProps {
+  userPhoto?: string;
+}
 const GRID_SIZE = 30;
 const BLOCK_SIZE = 14;
 const GAME_SPEED = 70;
 const INITIAL_SNAKE_SIZE = 6;
 
-export default function SnakeGame() {
+export default function SnakeGame({
+  userPhoto = '/default-profile.jpg',
+}: SnakeGameProps) {
   const [snake, setSnake] = useState<Position[]>([]);
   const [apple, setApple] = useState<Position>({ x: 0, y: 0 });
   const [direction, setDirection] = useState<string>('right');
@@ -147,7 +152,7 @@ export default function SnakeGame() {
         <span className='ml-8'>ЗАХАВАВ: {score}</span>
       </div>
       <div
-        className='relative border-2 border-gray-600 bg-black'
+        className='relative border-2 border-gray-600 bg-[#393950]'
         style={{
           width: GRID_SIZE * BLOCK_SIZE,
           height: GRID_SIZE * BLOCK_SIZE,
@@ -168,14 +173,27 @@ export default function SnakeGame() {
         {snake.map((segment, i) => (
           <motion.div
             key={i}
-            className='absolute bg-green-500'
+            className='absolute'
             style={{
               width: BLOCK_SIZE,
               height: BLOCK_SIZE,
               x: segment.x * BLOCK_SIZE,
               y: segment.y * BLOCK_SIZE,
             }}
-          />
+          >
+            {i === 0 ? (
+              <Image
+                src={userPhoto}
+                alt='Snake head'
+                width={BLOCK_SIZE}
+                height={BLOCK_SIZE}
+                className='rounded-full'
+                priority
+              />
+            ) : (
+              <div className='h-full w-full bg-green-500' />
+            )}
+          </motion.div>
         ))}
         <motion.div
           className='absolute bg-red-500'

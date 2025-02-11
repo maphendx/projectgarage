@@ -266,7 +266,7 @@ const Profile: React.FC = () => {
             >
               <div className='min-h-[600px] w-full text-center'>
                 <h2 className='mb-4 text-xl font-bold'>Ура змійкаааа! 🎮</h2>
-                <EasterEggGame />
+                <EasterEggGame userPhoto={userData?.photo} />
               </div>
             </Modal>
           </div>
