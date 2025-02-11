@@ -36,10 +36,10 @@ export default function Topbar({
           {/* User Information */}
           <div className='mr-4 mt-5 flex items-center'>
             <div
-              className='flex h-[52px] w-[300px] items-center gap-2.5 rounded-[16px] bg-[#2B2D31] p-1 pl-1 text-[#A1A1A1] duration-300'
-              style={{
-                boxShadow: '0 0 5px rgba(216, 180, 255, 0.6)',
-              }}
+              className='flex h-[52px] w-[300px] items-center gap-2.5 rounded-[16px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-[#2B2D31] p-1 pl-1 text-[#A1A1A1] duration-300'
+              // style={{
+              //   boxShadow: '0 0 5px rgba(216, 180, 255, 0.6)',
+              // }}
             >
               {/* Notification and Message Icons - Only show when user is logged in */}
               {userData && (

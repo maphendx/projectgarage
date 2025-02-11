@@ -96,7 +96,7 @@ const CommentBlock = ({
               ></textarea>
             </div>
             <button
-              className='flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#6374B6] text-white'
+              className='ml-2 flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#6374B6] text-white'
               onClick={handleClick}
             >
               <i className='fa fa-paper-plane'></i>

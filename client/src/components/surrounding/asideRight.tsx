@@ -6,13 +6,13 @@ export function AsidePanelRight() {
   return (
     <aside className='fixed right-0 z-10'>
       <div
-        className='m-1 mr-4 flex w-[300px] flex-col overflow-hidden rounded-[20px] border-[1px] border-white border-opacity-10 bg-[#FFFFFF1A]'
-        style={{ boxShadow: '0 4px 4px rgba(216, 180, 255, 0.60)' }}
+        className='m-1 mr-4 flex w-[300px] flex-col overflow-hidden rounded-[20px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-[#FFFFFF1A]'
+        // style={{ boxShadow: '0 4px 4px rgba(216, 180, 255, 0.60)' }}
       >
         <div className='ml-5 mr-3'>
           <nav className='z-10 mt-5 px-2'>
             <div
-              className='mb-5 rounded-[20px] border-[1px] border-white border-opacity-10 bg-[#FFFFFF1A]'
+              className='mb-5 rounded-[20px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-[#FFFFFF1A]'
               style={{ boxShadow: '0 4px 4px rgba(0, 0, 0, 0.25)' }}
             >
               <h3 className='px-5 pt-5 text-[12px] font-semibold tracking-wider text-[#ffffff]'>
@@ -40,7 +40,7 @@ export function AsidePanelRight() {
             </div>
 
             <div
-              className='mb-5 rounded-[20px] border-[1px] border-white border-opacity-10 bg-[#FFFFFF1A] pb-5'
+              className='mb-5 rounded-[20px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-[#FFFFFF1A] pb-5'
               style={{ boxShadow: '0 4px 4px rgba(0, 0, 0, 0.25)' }}
             >
               <h3 className='px-5 pt-5 text-[12px] font-semibold tracking-wider text-[#ffffff]'>
@@ -60,7 +60,7 @@ export function AsidePanelRight() {
             </div>
 
             <div
-              className='mb-5 rounded-[20px] border-[1px] border-white border-opacity-10 bg-[#FFFFFF1A]'
+              className='mb-5 rounded-[20px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-[#FFFFFF1A]'
               style={{ boxShadow: '0 4px 4px rgba(0, 0, 0, 0.25)' }}
             >
               <h3 className='px-5 pt-5 text-[12px] font-semibold tracking-wider text-[#ffffff]'>

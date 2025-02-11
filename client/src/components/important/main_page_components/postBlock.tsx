@@ -129,12 +129,12 @@ export const PostBlock = ({
       key={post.id}
     >
       <div
-        className='mb-6 rounded-[30px] border-[1px] border-white border-opacity-10 bg-gradient-to-r from-[#2D2F3AB3] to-[#1A1A2EB3] p-6'
+        className='border-b-solid border-t-none mb-6 rounded-[30px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-gradient-to-r from-[#2D2F3AB3] to-[#1A1A2EB3] p-6'
         style={{ boxShadow: '0 4px 4px rgba(0, 0, 0, 0.25)' }}
       >
         <div className='flex'>
           <img
-            className='h-10 w-10 rounded-[14px]'
+            className='h-10 w-10 rounded-[14px] border-[1px] border-[#2d2d2d]'
             src={post.author?.photo}
             alt='User'
           />

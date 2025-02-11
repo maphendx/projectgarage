@@ -10,6 +10,8 @@ import { motion } from 'framer-motion';
 import { Post } from '@/components/not_components';
 import MicroPost from '@/components/MicroPost';
 import fetchClient from '@/other/fetchClient';
+import Modal from '@/components/Modal';
+import EasterEggGame from '@/components/Egg';
 
 interface UserData {
   display_name?: string;
@@ -32,13 +34,21 @@ const Profile: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isEasterEggOpen, setIsEasterEggOpen] = useState(false);
+  const [easterEggCounter, setEasterEggCounter] = useState(0);
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     router.push('/');
   };
-
+  const handleProfilePhotoClick = () => {
+    setEasterEggCounter((prev) => prev + 1);
+    if (easterEggCounter === 4) {
+      setIsEasterEggOpen(true);
+      setEasterEggCounter(0);
+    }
+  };
   const fetchUserData = async () => {
     try {
       const response = await fetchClient(
@@ -158,9 +168,10 @@ const Profile: React.FC = () => {
           <div className='space-y-6'>
             <div className='flex items-center space-x-5'>
               <motion.div
-                whileHover={{ scale: 1.1 }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.9 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 5 }}
+                onClick={handleProfilePhotoClick}
               >
                 <Image
                   src={userData.photo || '/default-profile.jpg'}
@@ -249,6 +260,15 @@ const Profile: React.FC = () => {
                 </div>
               </div>
             )}
+            <Modal
+              isOpen={isEasterEggOpen}
+              onClose={() => setIsEasterEggOpen(false)}
+            >
+              <div className='min-h-[600px] w-full text-center'>
+                <h2 className='mb-4 text-xl font-bold'>Ура змійкаааа! 🎮</h2>
+                <EasterEggGame />
+              </div>
+            </Modal>
           </div>
         </main>
       </div>

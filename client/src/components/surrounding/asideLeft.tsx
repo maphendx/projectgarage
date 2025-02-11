@@ -6,30 +6,42 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Tooltip } from 'react-tooltip';
 import {
-  FaHome,
-  FaServer,
-  FaComments,
-  FaMicrophone,
-  FaBlog,
-  FaHeart,
-  FaHistory,
-  FaList,
-  FaDownload,
-} from 'react-icons/fa';
+  HomeIcon as HomeSolidIcon,
+  ServerStackIcon as ServerStackSolidIcon,
+  ChatBubbleLeftRightIcon as ChatSolidIcon,
+  MicrophoneIcon as MicrophoneSolidIcon,
+  NewspaperIcon as NewsSolidIcon,
+  HeartIcon as HeartSolidIcon,
+  ClockIcon as ClockSolidIcon,
+  QueueListIcon as QueueSolidIcon,
+  ArrowDownTrayIcon as DownloadSolidIcon,
+} from '@heroicons/react/24/solid';
+
+import {
+  HomeIcon as HomeOutlineIcon,
+  ServerStackIcon as ServerStackOutlineIcon,
+  ChatBubbleLeftRightIcon as ChatOutlineIcon,
+  MicrophoneIcon as MicrophoneOutlineIcon,
+  NewspaperIcon as NewsOutlineIcon,
+  HeartIcon as HeartOutlineIcon,
+  ClockIcon as ClockOutlineIcon,
+  QueueListIcon as QueueOutlineIcon,
+  ArrowDownTrayIcon as DownloadOutlineIcon,
+} from '@heroicons/react/24/outline';
 
 interface CompInterface {
   href: string;
-  icon: React.ElementType;
+  icon: {
+    Solid: React.ElementType;
+    Outline: React.ElementType;
+  };
   text?: string;
 }
 
-const AsideListComponent: React.FC<CompInterface> = ({
-  href,
-  icon: Icon,
-  text,
-}) => {
+const AsideListComponent: React.FC<CompInterface> = ({ href, icon, text }) => {
   const pathname = usePathname();
   const isActive = pathname === href;
+  const IconComponent = isActive ? icon.Solid : icon.Outline;
 
   return (
     <motion.div
@@ -53,8 +65,8 @@ const AsideListComponent: React.FC<CompInterface> = ({
             />
           )}
           <motion.div>
-            <Icon
-              className={`text-xl transition-colors ${
+            <IconComponent
+              className={`h-5 w-5 transition-colors ${
                 isActive
                   ? 'text-white opacity-100'
                   : 'text-gray-300 opacity-90 hover:opacity-100'
@@ -91,36 +103,59 @@ const AsidePanelLeft: React.FC = () => {
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: 'easeInOut' }}
     >
-      <div
-        className='m-1 flex w-[62px] flex-col rounded-[20px] border-[1px] border-white border-opacity-10 bg-[#FFFFFF1A] shadow-lg'
-        style={{ boxShadow: '0 3px 3px rgba(216, 180, 255, 0.60)' }}
-      >
+      <div className='m-1 flex w-[62px] flex-col rounded-[20px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-[#FFFFFF1A] shadow-lg'>
         <div className='mt-2'>
-          <AsideListComponent href='/' icon={FaHome} text='Головна' />
-          <AsideListComponent href='/servers' icon={FaServer} text='Сервери' />
-          <AsideListComponent href='/chats' icon={FaComments} text='Чати' />
+          <AsideListComponent
+            href='/'
+            icon={{ Solid: HomeSolidIcon, Outline: HomeOutlineIcon }}
+            text='Головна'
+          />
+          <AsideListComponent
+            href='/servers'
+            icon={{
+              Solid: ServerStackSolidIcon,
+              Outline: ServerStackOutlineIcon,
+            }}
+            text='Сервери'
+          />
+          <AsideListComponent
+            href='/chats'
+            icon={{ Solid: ChatSolidIcon, Outline: ChatOutlineIcon }}
+            text='Чати'
+          />
           <AsideListComponent
             href='/voice'
-            icon={FaMicrophone}
+            icon={{
+              Solid: MicrophoneSolidIcon,
+              Outline: MicrophoneOutlineIcon,
+            }}
             text='Голосові канали'
           />
-          <AsideListComponent href='/blogs' icon={FaBlog} text='Блоги' />
+          <AsideListComponent
+            href='/blogs'
+            icon={{ Solid: NewsSolidIcon, Outline: NewsOutlineIcon }}
+            text='Блоги'
+          />
         </div>
         <div className='mb-96 mt-5 border-t border-gray-700 pt-2'>
           <AsideListComponent
             href='/favorites'
-            icon={FaHeart}
+            icon={{ Solid: HeartSolidIcon, Outline: HeartOutlineIcon }}
             text='Вподобане'
           />
-          <AsideListComponent href='/history' icon={FaHistory} text='Історія' />
+          <AsideListComponent
+            href='/history'
+            icon={{ Solid: ClockSolidIcon, Outline: ClockOutlineIcon }}
+            text='Історія'
+          />
           <AsideListComponent
             href='/playlists'
-            icon={FaList}
+            icon={{ Solid: QueueSolidIcon, Outline: QueueOutlineIcon }}
             text='Плейлисти'
           />
           <AsideListComponent
             href='/downloads'
-            icon={FaDownload}
+            icon={{ Solid: DownloadSolidIcon, Outline: DownloadOutlineIcon }}
             text='Завантаження'
           />
         </div>
