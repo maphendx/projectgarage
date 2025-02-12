@@ -150,9 +150,10 @@ class CustomUser(models.Model):
         verbose_name_plural = 'Користувачі'
 
     def clean(self):
-        """Перевірка на кількість хештегів."""
-        if not (5 <= self.hashtags.count() <= 30):
-            raise ValidationError("Кількість хештегів має бути в межах від 5 до 30.")
+        # """Перевірка на кількість хештегів."""
+        # if not (5 <= self.hashtags.count() <= 30):
+        #     raise ValidationError("Кількість хештегів має бути в межах від 5 до 30.")
+        pass
 
 
     def save(self, *args, **kwargs):
