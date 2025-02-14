@@ -117,6 +117,7 @@ class Notification(models.Model):
         ('post_repost', 'Пост репостнуто'),
         ('new_comment', 'Новий коментар'),
         ('voice_invite','Запрошення в голосовий канал'),
+        ('chat_message','Повідомлення в чаті')
     )
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, 

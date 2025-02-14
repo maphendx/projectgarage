@@ -52,7 +52,9 @@ class ChatRoomView(APIView):
             return Response(final_serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class AddParticipantView(APIView):
+class AddParticipantView(APIView): 
+    permission_classes = [IsAuthenticated]  # Додано перевірку автентифікації
+
     def post(self, request, room_id):
         try:
             chat_room = ChatRoom.objects.get(pk=room_id)
@@ -85,7 +87,7 @@ class AddParticipantView(APIView):
 
 class ChatRoomAvatarView(APIView):
     parser_classes = [MultiPartParser, FormParser]
-    permission_classes = [IsAuthenticated]  # Доступ лише для автентифікованих користувачів
+    permission_classes = [IsAuthenticated]
 
     def patch(self, request, room_id):
         try:
@@ -139,12 +141,16 @@ class MessageView(APIView):
         if serializer.is_valid():
             message_obj = serializer.save()
             
-            # Надсилання створеного повідомлення через веб-сокети.
-            # Для цього використовуємо channel layer
-            channel_layer = get_channel_layer()
+            #ЦЕ ДЛЯ БЕКЕНДЕРОВ
+            # Підрахунок кількості непрочитаних повідомлень.
+            # Поточна реалізація рахує всі повідомлення в чаті,
+            # окрім повідомлень, надісланих поточним користувачем.
+            # При необхідності, варто імплементувати механізм відстеження прочитаних повідомлень.
+            unread_count = Message.objects.filter(chat=chat_room).exclude(sender=request.user).count()
             
-            # Формуємо назву групи для даного чатруму. 
-            # Якщо при встановленні WebSocket зʼєднання використовується маршрут 'ws/chat/<str:room_name>/'
+            # Надсилання створеного повідомлення через веб-сокети.
+            # Використовуємо channel layer і групу з іменем "chat_<room_id>".
+            channel_layer = get_channel_layer()
             group_name = f"chat_{chat_room.pk}"
             
             async_to_sync(channel_layer.group_send)(
@@ -153,12 +159,14 @@ class MessageView(APIView):
                     'type': 'chat_message',
                     'message': message_obj.content,
                     'sender': request.user.display_name,
+                    'unread_count': unread_count,
                 }
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ReactionView(APIView):
+    permission_classes = [IsAuthenticated]  # Додано перевірку автентифікації
     """
     GET: Повертає всі реакції для заданого повідомлення.
     POST: Додає або оновлює реакцію поточного користувача.

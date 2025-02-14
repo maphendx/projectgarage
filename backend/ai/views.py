@@ -9,9 +9,9 @@ from rest_framework import status
 
 logger = logging.getLogger(__name__)
 
-# Використання налаштувань із файлу settings.py
-MODEL_API_URL = getattr(settings, 'MODEL_API_URL', "https://api-inference.huggingface.co/models/your-model-id")
-HF_API_TOKEN = getattr(settings, 'HF_API_TOKEN', "YOUR_HF_API_TOKEN")
+# Використовуємо значення з налаштувань
+MODEL_API_URL = settings.MODEL_API_URL
+HF_API_TOKEN = settings.HF_API_TOKEN
 API_HEADERS = {"Authorization": f"Bearer {HF_API_TOKEN}"}
 
 class UploadMusicView(APIView):
@@ -36,7 +36,8 @@ class UploadMusicView(APIView):
                 response = requests.post(MODEL_API_URL, headers=API_HEADERS, files=files, timeout=30)
         except Exception as e:
             logger.error("Помилка при виклику нейромережевого API: %s", str(e))
-            return Response({'error': 'Помилка при виклику нейромережевого API', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': 'Помилка при виклику нейромережевого API', 'details': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         finally:
             # Видаляємо тимчасово збережений файл
             default_storage.delete(file_path)
@@ -63,7 +64,8 @@ class ModifyMusicView(APIView):
         instruction = request.data.get('instruction')
         
         if not music_url or not instruction:
-            return Response({'error': 'Параметри music_url та instruction є обов’язковими'},status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Параметри music_url та instruction є обов’язковими'},
+                            status=status.HTTP_400_BAD_REQUEST)
         
         payload = {
             "music_url": music_url,
@@ -74,10 +76,12 @@ class ModifyMusicView(APIView):
             response = requests.post(MODEL_API_URL, headers=API_HEADERS, json=payload, timeout=30)
         except Exception as e:
             logger.error("Помилка при виклику нейромережевого API: %s", str(e))
-            return Response({'error': 'Помилка при виклику нейромережевого API', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': 'Помилка при виклику нейромережевого API', 'details': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         if response.status_code != 200:
             logger.error("Нейромережеве API повернуло помилку: %s", response.text)
-            return Response({'error': 'Нейромережеве API повернуло помилку', 'details': response.text}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': 'Нейромережеве API повернуло помилку', 'details': response.text},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         return Response({'result': response.json()}, status=status.HTTP_200_OK)
