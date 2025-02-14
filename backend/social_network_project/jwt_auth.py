@@ -8,12 +8,15 @@ from django.contrib.auth import get_user_model
 
 @database_sync_to_async
 def get_user_from_token(token):
+    print(token)
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         user_id = payload.get("user_id")
         User = get_user_model()
+        print("USER ID MADAFAJA", user_id)
         return User.objects.get(id=user_id)
     except Exception:
+        print("FUCK")
         return AnonymousUser()
 
 class JWTAuthMiddleware(BaseMiddleware):
@@ -22,7 +25,8 @@ class JWTAuthMiddleware(BaseMiddleware):
     Очікує, що JWT-токен буде переданий як параметр URL, наприклад:
     ws://example.com/ws/some_endpoint/?token=your_jwt_token
     """
-    async def call(self, scope, receive, send):
+    async def __call__(self, scope, receive, send):
+        print("YA ZIVIIIIII")
         # Приклад отримання токена з заголовка sec-websocket-protocol
         token = None
 
@@ -34,4 +38,4 @@ class JWTAuthMiddleware(BaseMiddleware):
             scope["user"] = await get_user_from_token(token)
         else:
             scope["user"] = AnonymousUser()
-        return await super().call(scope, receive, send)
+        return await super().__call__(scope, receive, send)

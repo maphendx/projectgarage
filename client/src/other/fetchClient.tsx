@@ -1,34 +1,34 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Отримання токенів
-const getAccessToken = () => localStorage.getItem("access_token");
-const getRefreshToken = () => localStorage.getItem("refresh_token");
+const getAccessToken = () => localStorage.getItem('access_token');
+const getRefreshToken = () => localStorage.getItem('refresh_token');
 
 // Функція для оновлення `access`-токена
 const refreshAccessToken = async () => {
   const refreshToken = getRefreshToken();
 
   if (!refreshToken) {
-    throw new Error("No refresh token available");
+    throw new Error('No refresh token available');
   }
 
   const response = await fetch(`${API_BASE_URL}/api/users/token/refresh/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refresh: refreshToken }),
   });
 
   if (!response.ok) {
-    throw new Error("Failed to refresh token");
+    throw new Error('Failed to refresh token');
   }
 
   const data = await response.json();
-  localStorage.setItem("access_token", data.access);
+  localStorage.setItem('access_token', data.access);
   return data.access;
 };
 
 // Головна `fetch`-функція
-const fetchClient = async (url : string, options? : any) => {
+const fetchClient = async (url: string, options?: any) => {
   const accessToken = getAccessToken();
 
   // Додаємо токен в заголовки
@@ -47,8 +47,8 @@ const fetchClient = async (url : string, options? : any) => {
 
       response = await fetch(`${url}`, { ...options, headers });
     } catch (error) {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
     }
   }
 
@@ -56,3 +56,5 @@ const fetchClient = async (url : string, options? : any) => {
 };
 
 export default fetchClient;
+
+export { refreshAccessToken };

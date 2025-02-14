@@ -5,15 +5,17 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Users, Plus, Send } from 'lucide-react';
 import { useError } from '@/context/ErrorContext';
+import fetchClient from '@/other/fetchClient';
 
 import Topbar from '@/components/surrounding/topbar';
 import AsidePanelLeft from '@/components/surrounding/asideLeft';
 import { AsidePanelRight } from '@/components/surrounding/asideRight';
 import MusicPlayer from '@/components/surrounding/player';
-import fetchClient from '@/other/fetchClient';
 
 const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api`;
-const WS_BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace("http","ws");
+const WS_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+  ? process.env.NEXT_PUBLIC_API_URL.replace(/^http/, 'ws')
+  : 'ws://localhost:8000';
 
 const ErrorMessages = {
   AUTH_REQUIRED: "Авторизація обов'язкова",
@@ -29,29 +31,55 @@ interface ChatRoom {
   id: number;
   name: string;
   created_at: string;
-  participants: number[];
+  participants: UserData[];
+}
+
+interface Reaction {
+  id: number;
+  user: number;
+  reaction: string;
+  created_at: string;
 }
 
 interface Message {
   id: number;
   chat: number;
   sender: string;
+  sender_id: number;
   sender_name?: string;
   sender_avatar?: string;
   content: string;
   timestamp: string;
+  temporary?: boolean;
+  reactions?: Reaction[];
 }
 
 interface UserData {
   id: number;
-  username: string;
-  display_name?: string;
+  display_name: string;
   email: string;
 }
+
+const messageVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring', stiffness: 300, damping: 20 },
+  },
+  exit: { opacity: 0, y: 20, transition: { duration: 0.3 } },
+};
 
 export default function ChatPage() {
   const router = useRouter();
   const { showError } = useError();
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      router.push('/auth');
+    }
+  }, [router]);
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
@@ -72,8 +100,20 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
+  // Auto-scroll when messages update
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
   const getAuthHeaders = useCallback(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      showError(ErrorMessages.AUTH_REQUIRED, 'error');
+      router.push('/auth');
+      return null;
+    }
     return {
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     };
   }, [router, showError]);
@@ -120,7 +160,12 @@ export default function ChatPage() {
         ]);
 
         if (userProfile) setUserData(userProfile);
-        if (rooms) setChatRooms(rooms);
+        if (rooms) {
+          setChatRooms(rooms);
+          if (rooms.length > 0 && !selectedRoom) {
+            setSelectedRoom(rooms[0]);
+          }
+        }
       } catch (error) {
         showError(ErrorMessages.FETCH_ERROR, 'error');
       } finally {
@@ -132,7 +177,7 @@ export default function ChatPage() {
   }, [apiRequest, showError]);
 
   useEffect(() => {
-    if (!selectedRoom || isLoading) return;
+    if (!selectedRoom) return;
 
     const fetchMessages = async () => {
       const msgs = await apiRequest<Message[]>(
@@ -145,7 +190,9 @@ export default function ChatPage() {
     };
     fetchMessages();
 
-    const ws = new WebSocket(`${WS_BASE_URL}/ws/chat/${selectedRoom.id}/`);
+    const ws = new WebSocket(
+      `${WS_BASE_URL}/ws/chat/${encodeURIComponent(selectedRoom.name)}/`,
+    );
 
     ws.onopen = () => {
       console.log('WebSocket Connected');
@@ -160,6 +207,7 @@ export default function ChatPage() {
             id: Date.now(),
             chat: selectedRoom.id,
             sender: data.sender,
+            sender_id: data.sender_id,
             sender_name: data.sender_name,
             content: data.message,
             timestamp: new Date().toISOString(),
@@ -178,7 +226,7 @@ export default function ChatPage() {
         ws.close();
       }
     };
-  }, [selectedRoom, apiRequest, isLoading]);
+  }, [selectedRoom]);
 
   const handleSendMessage = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -193,7 +241,7 @@ export default function ChatPage() {
       };
 
       const response = await apiRequest<Message>(
-        `/messaging/messages/${selectedRoom.id}/send/`,
+        `/messaging/messages/${selectedRoom.id}/`,
         'POST',
         messageData,
       );
@@ -203,8 +251,9 @@ export default function ChatPage() {
       const tempMessage: Message = {
         id: response.id,
         chat: selectedRoom.id,
-        sender: userData.username,
-        sender_name: userData.display_name || userData.username,
+        sender: userData.display_name,
+        sender_id: userData.id,
+        sender_name: userData.display_name,
         content: newMessage.trim(),
         timestamp: new Date().toISOString(),
       };
@@ -218,8 +267,7 @@ export default function ChatPage() {
           JSON.stringify({
             type: 'chat_message',
             message: newMessage.trim(),
-            sender: userData.username,
-            sender_name: userData.display_name || userData.username,
+            sender: userData.display_name,
           }),
         );
       }
@@ -242,17 +290,17 @@ export default function ChatPage() {
     setIsCreatingRoom(true);
 
     try {
-      const participantsArray = newRoomParticipants
+      const participantNames = newRoomParticipants
         .split(',')
-        .map((id) => parseInt(id.trim()))
-        .filter((id) => !isNaN(id));
+        .map((name) => name.trim())
+        .filter((name) => name);
 
       const response = await apiRequest<ChatRoom>(
         '/messaging/chatrooms/',
         'POST',
         {
           name: newRoomName.trim(),
-          participants: participantsArray,
+          participants_display_names: participantNames,
         },
       );
 
@@ -273,6 +321,75 @@ export default function ChatPage() {
       );
     } finally {
       setIsCreatingRoom(false);
+    }
+  };
+
+  const handleReaction = async (messageId: number, reaction: string) => {
+    try {
+      const response = await apiRequest<Reaction>(
+        `/messaging/messages/${messageId}/reaction/`,
+        'POST',
+        { reaction },
+      );
+
+      if (!response) throw new Error('Failed to add reaction');
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId
+            ? {
+                ...msg,
+                reactions: [...(msg.reactions || []), response],
+              }
+            : msg,
+        ),
+      );
+    } catch (error) {
+      showError('Failed to add reaction', 'error');
+    }
+  };
+
+  const handleRemoveReaction = async (messageId: number) => {
+    try {
+      await apiRequest(`/messaging/messages/${messageId}/reaction/`, 'DELETE');
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId
+            ? {
+                ...msg,
+                reactions: msg.reactions?.filter(
+                  (r) => r.user !== userData?.id,
+                ),
+              }
+            : msg,
+        ),
+      );
+    } catch (error) {
+      showError('помилкааа', 'error');
+    }
+  };
+
+  const handleAddParticipants = async (
+    roomId: number,
+    participantNames: string[],
+  ) => {
+    try {
+      const response = await apiRequest<ChatRoom>(
+        `/messaging/chatrooms/${roomId}/add_user/`,
+        'POST',
+        { user_display_names: participantNames },
+      );
+
+      if (!response) throw new Error('Failed to add participants');
+
+      setChatRooms((prev) =>
+        prev.map((room) => (room.id === roomId ? response : room)),
+      );
+
+      showError('Учасників успішно додано', 'success');
+    } catch (error) {
+      showError('Failed to add participants', 'error');
     }
   };
 
@@ -311,11 +428,11 @@ export default function ChatPage() {
               <AsidePanelLeft />
             </aside>
 
-            <main className='flex-1 overflow-y-auto px-4 py-4'>
-              <div className='min-h-[70vh] rounded-[30px] bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-lg'>
+            <main className='overflow-y flex-1 px-4 pb-4'>
+              <div className='fixed min-h-[80vh] w-[1280px] rounded-[30px] bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-lg'>
                 <div className='flex flex-row gap-6'>
                   {/* Chat Rooms List */}
-                  <motion.div className='w-full md:w-1/3 lg:w-1/4'>
+                  <motion.div className='w-60'>
                     <div className='mb-6 flex items-center justify-between'>
                       <h2 className='flex items-center text-xl font-bold text-white'>
                         <MessageCircle className='mr-2 text-[#6374B6]' />
@@ -365,57 +482,53 @@ export default function ChatPage() {
                             <h3 className='text-lg font-semibold text-white'>
                               {selectedRoom.name}
                             </h3>
-                            <span className='text-sm text-gray-400'>
+                            <span className='text-sm text-white'>
                               {selectedRoom.participants.length} учасників
                             </span>
                           </div>
 
-                          <div className='h-[50vh] overflow-y-auto'>
+                          <div
+                            className='no-scrollbar h-[70vh] overflow-y-auto'
+                            style={{
+                              scrollbarWidth: 'none',
+                              msOverflowStyle: 'none',
+                            }}
+                          >
                             <AnimatePresence>
-                              {messages.map((msg) => (
+                              {messages.map((msg, index) => (
                                 <motion.div
                                   key={msg.id}
-                                  initial={{ opacity: 0, y: 20 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  exit={{ opacity: 0, y: 20 }}
+                                  variants={messageVariants}
+                                  initial='hidden'
+                                  animate='visible'
+                                  exit='exit'
+                                  transition={{ delay: index * 0.05 }}
                                   className={`mb-4 max-w-[80%] ${
-                                    msg.sender === userData?.username
+                                    msg.sender_id === userData?.id
                                       ? 'ml-auto'
                                       : 'mr-auto'
                                   }`}
                                 >
+                                  {/* Only display sender name if message is not from current user */}
+                                  {msg.sender_id !== userData?.id && (
+                                    <p className='mb-1 text-xs font-bold text-gray-300'>
+                                      {msg.sender_name}
+                                    </p>
+                                  )}
                                   <div
                                     className={`rounded-xl p-3 ${
-                                      msg.sender === userData?.username
+                                      msg.sender_id === userData?.id
                                         ? 'bg-[#6374B6] text-white'
                                         : 'bg-white/10 text-gray-200'
-                                    }`}
+                                    } relative`}
                                   >
-                                    <div className='mb-1 flex items-center justify-between'>
-                                      <div className='flex items-center gap-2'>
-                                        <div className='flex h-6 w-6 items-center justify-center rounded-full bg-gray-600 text-xs uppercase'>
-                                          {msg.sender_name?.[0] ||
-                                            msg.sender[0]}
-                                        </div>
-                                        <span className='text-xs font-medium text-white'>
-                                          {msg.sender_name || msg.sender}
-                                        </span>
-                                      </div>
-                                      <span className='text-xs text-gray-400 opacity-70'>
-                                        {new Date(
-                                          msg.timestamp,
-                                        ).toLocaleTimeString([], {
-                                          hour: '2-digit',
-                                          minute: '2-digit',
-                                        })}
-                                      </span>
-                                    </div>
                                     <p className='text-sm text-white'>
                                       {msg.content}
                                     </p>
                                   </div>
                                 </motion.div>
                               ))}
+                              <div ref={messagesEndRef} />
                             </AnimatePresence>
                             <div ref={messagesEndRef} />
                           </div>
@@ -426,7 +539,7 @@ export default function ChatPage() {
                                 type='text'
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
-                                className='flex-1 bg-transparent p-3 text-white placeholder-gray-400 focus:outline-none'
+                                className='flex-1 bg-transparent p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6374B6]'
                                 placeholder='Напишіть повідомлення...'
                               />
                               <button
@@ -446,7 +559,7 @@ export default function ChatPage() {
               </div>
             </main>
 
-            <aside className='sticky top-0 hidden h-screen w-80 flex-shrink-0 bg-[#1C1C1F] lg:block'>
+            <aside className='sticky top-0 hidden h-screen w-80 flex-shrink-0 lg:block'>
               <AsidePanelRight />
             </aside>
           </div>
@@ -478,7 +591,8 @@ export default function ChatPage() {
                   value={newRoomParticipants}
                   onChange={(e) => setNewRoomParticipants(e.target.value)}
                   className='mb-4 w-full rounded-lg bg-white/10 p-3 text-white placeholder-gray-400 focus:outline-none'
-                  placeholder='ID учасників (через кому, напр.: 1,2,3)...'
+                  placeholder='ID учасників (через кому, напр.: 1,2,3)'
+                  title='Введіть ID учасників через кому'
                 />
                 <div className='flex justify-end gap-2'>
                   <button

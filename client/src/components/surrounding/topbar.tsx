@@ -20,6 +20,10 @@ export default function Topbar({
     router.push('/profile');
   };
 
+  const handleNotificationsNavigation = () => {
+    router.push('/notifications');
+  };
+
   return (
     <nav className='fixed-topbar'>
       <div className='max-w-8xl mx-auto'>
@@ -41,10 +45,13 @@ export default function Topbar({
               //   boxShadow: '0 0 5px rgba(216, 180, 255, 0.6)',
               // }}
             >
-              {/* Notification and Message Icons - Only show when user is logged in */}
+              {/* Notification and Message Icons*/}
               {userData && (
                 <>
-                  <TopbarButton iconClass='fas fa-bell text-gray-300' />
+                  <TopbarButton
+                    onClick={handleNotificationsNavigation}
+                    iconClass='fas fa-bell text-gray-300'
+                  />
                   <TopbarButton iconClass='fas fa-envelope text-gray-300' />
                 </>
               )}
