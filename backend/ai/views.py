@@ -1,92 +1,83 @@
-# ai/views.py
-
-import json
-from rest_framework import generics, status
+import os
+import logging
+import requests
+from django.conf import settings
+from django.core.files.storage import default_storage
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .models import Recommendation, TrainingData
-from .serializers import RecommendationSerializer, TrainingDataSerializer
-from users.models import CustomUser
-from django.utils import timezone
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-from .recommendation_model import RecommendationModel
+from rest_framework import status
 
-class RecommendationListView(generics.ListAPIView):
-    serializer_class = RecommendationSerializer
-    permission_classes = [IsAuthenticated]
+logger = logging.getLogger(__name__)
 
-    def get_queryset(self):
-        user = self.request.user
-        return Recommendation.objects.filter(user=user)
+# Використання налаштувань із файлу settings.py
+MODEL_API_URL = getattr(settings, 'MODEL_API_URL', "https://api-inference.huggingface.co/models/your-model-id")
+HF_API_TOKEN = getattr(settings, 'HF_API_TOKEN', "YOUR_HF_API_TOKEN")
+API_HEADERS = {"Authorization": f"Bearer {HF_API_TOKEN}"}
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class UploadMusicView(APIView):
+    """
+    Ендпоінт для завантаження музичного файлу.
+    Файл зберігається тимчасово і надсилається до API нейромережі для обробки.
+    """
 
-    def post(self, request, *args, **kwargs):
-        user = request.user
-        recommendations = self.generate_recommendations(user)
-        serializer = self.get_serializer(recommendations, many=True)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    def post(self, request, format=None):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response({'error': 'Файл не надіслано'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Збереження файлу тимчасово
+        file_path = default_storage.save(file_obj.name, file_obj)
+        file_full_path = os.path.join(default_storage.location, file_path)
 
-    def generate_recommendations(self, user):
-        # Отримати дані для тренування
-        training_data = TrainingData.objects.filter(user=user).last()
-        if not training_data:
-            return []
+        try:
+            with open(file_full_path, "rb") as f:
+                files = {"file": f}
+                # Додавання timeout для запиту (наприклад, 30 секунд)
+                response = requests.post(MODEL_API_URL, headers=API_HEADERS, files=files, timeout=30)
+        except Exception as e:
+            logger.error("Помилка при виклику нейромережевого API: %s", str(e))
+            return Response({'error': 'Помилка при виклику нейромережевого API', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        finally:
+            # Видаляємо тимчасово збережений файл
+            default_storage.delete(file_path)
+        
+        if response.status_code != 200:
+            logger.error("Нейромережеве API повернуло помилку: %s", response.text)
+            return Response({'error': 'Нейромережеве API повернуло помилку', 'details': response.text},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Повертаємо отриманий результат від нейромережі
+        return Response({'result': response.json()}, status=status.HTTP_200_OK)
 
-        data = json.loads(training_data.data)
-        labels = json.loads(training_data.labels)
 
-        # Тренувати модель
-        model = RecommendationModel()
-        model.train(data, labels)
+class ModifyMusicView(APIView):
+    """
+    Ендпоінт для модифікації вже завантаженої музики.
+    Приймає JSON з параметрами:
+        - music_url: URL завантаженого музичного файлу (можна зберігати його в базі або на файловому сервері)
+        - instruction: інструкція для нейромережі (наприклад, "додати барабани", "змінити мелодію" тощо)
+    """
 
-        # Генерувати рекомендації
-        user_data = np.array(data[-1]).reshape(1, -1)
-        predictions = model.predict(user_data)
-
-        # Створити рекомендації
-        recommendations = []
-        for score in predictions:
-            recommended_user = CustomUser.objects.order_by('?').first()  # Випадковий користувач для прикладу
-            recommendations.append(Recommendation(user=user, recommended_user=recommended_user, score=score))
-
-        # Зберегти рекомендації
-        Recommendation.objects.bulk_create(recommendations, ignore_conflicts=True)
-
-        return recommendations
-
-class TrainingDataView(generics.CreateAPIView):
-    serializer_class = TrainingDataSerializer
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, *args, **kwargs):
-        user = request.user
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class RecommendationView(generics.ListAPIView):
-    serializer_class = RecommendationSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        """
-        Повертає список рекомендацій для поточного користувача.
-        """
-        user = self.request.user
-        return Recommendation.objects.filter(user=user).select_related('recommended_user')
-
-    def list(self, request, *args, **kwargs):
-        """
-        Обробляє GET-запит для отримання списку рекомендацій.
-        """
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def post(self, request, format=None):
+        music_url = request.data.get('music_url')
+        instruction = request.data.get('instruction')
+        
+        if not music_url or not instruction:
+            return Response({'error': 'Параметри music_url та instruction є обов’язковими'},status=status.HTTP_400_BAD_REQUEST)
+        
+        payload = {
+            "music_url": music_url,
+            "instruction": instruction
+        }
+        
+        try:
+            response = requests.post(MODEL_API_URL, headers=API_HEADERS, json=payload, timeout=30)
+        except Exception as e:
+            logger.error("Помилка при виклику нейромережевого API: %s", str(e))
+            return Response({'error': 'Помилка при виклику нейромережевого API', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        if response.status_code != 200:
+            logger.error("Нейромережеве API повернуло помилку: %s", response.text)
+            return Response({'error': 'Нейромережеве API повернуло помилку', 'details': response.text}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        return Response({'result': response.json()}, status=status.HTTP_200_OK)

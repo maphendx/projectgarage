@@ -1,5 +1,6 @@
 from django.shortcuts import render
-
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from rest_framework.response import Response
 from voice_channels.models import VoiceChannel
 from voice_channels.serializers import InvitationSerializer, VoiceChannelSerializer
@@ -32,9 +33,9 @@ class voice_channelView(GenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
-        list = VoiceChannel.objects.all()
-        jsoned = VoiceChannelSerializer(list, many=True).data
-        return Response(jsoned)
+        channels = VoiceChannel.objects.all()
+        channels_data = VoiceChannelSerializer(channels, many=True).data
+        return Response(channels_data)
     
 class voice_inviteView(GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -45,17 +46,18 @@ class voice_inviteView(GenericAPIView):
             invitation = serializer.save(sender=request.user)
 
             channel_layer = get_channel_layer()
-                async_to_sync(channel_layer.group_send)(
-                    f"notifications_{post.author.id}",
-                    {
-                        "type": "send_notification",
-                        "notification": {
-                            "type": "post_like",
-                            "message": f"{request.user.display_name} лайкнув ваш пост",
-                            "post_id": post.id,
-                        }
+            async_to_sync(channel_layer.group_send)(
+                f"notifications_{invitation.recipient.id}",
+                {
+                    "type": "send_notification",
+                    "notification": {
+                        "type": "voice_invite",
+                        "message": f"{invitation.sender.display_name} запрошує вас в голосовий канал",
+                        "invitation_id": invitation.id,
+                        "channel_id": invitation.voice_channel.id
                     }
-                )
+                }
+            )
 
             return Response(InvitationSerializer(invitation).data, status=status.HTTP_201_CREATED)
         else:

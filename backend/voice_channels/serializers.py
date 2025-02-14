@@ -32,18 +32,9 @@ class VoiceChannelSerializer(serializers.ModelSerializer):
 
 class InvitationSerializer(serializers.ModelSerializer):
     sender = UserDataSerializer(read_only=True)
-    sender_id = serializers.PrimaryKeyRelatedField(
-        queryset=CustomUser.objects.all(),  # Приймає ID при створенні
-        source='sender',  
-        write_only=True,  # Тільки для запису
-        required=False,  # ✅ Поле не обов'язкове
-        allow_null=True  # ✅ Дозволяє null
-    )
-    addressee = UserDataSerializer(read_only=True)
-    addressee_id = serializers.PrimaryKeyRelatedField(
-        queryset=CustomUser.objects.all(),  # Приймає ID при створенні
-        source='addressee',  
-        write_only=True  # Тільки для запису
+    recipient = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(), 
+        source='addressee'
     )
     voice_channel = VoiceChannelSerializer(read_only=True)
     voice_channel_id = serializers.PrimaryKeyRelatedField(
@@ -53,7 +44,7 @@ class InvitationSerializer(serializers.ModelSerializer):
     )
     class Meta:
         model = Invitation
-        fields = '__all__'
+        fields = ['id', 'sender', 'recipient', 'voice_channel', 'created_at']
 
 
 
