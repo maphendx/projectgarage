@@ -90,7 +90,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'social_network_db_2',    # Назва бази даних   (треба створити вручну в постгрес)
         'USER': 'postgres',             # Ім'я користувача   (скоріш за все в вас так і залишиться postgres)
-        'PASSWORD': 'maks31231781',          # Пароль користувача (тут все зрозуміло) 
+        'PASSWORD': '4839150',          # Пароль користувача (тут все зрозуміло) 
         'HOST': 'localhost',            # Ім'я хоста         (ті дані які ви вказали в постгрес)
         'PORT': '5432',                 # Порт бази даних    (дивись вище)
     }
@@ -212,3 +212,5 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 HF_API_TOKEN = os.getenv("DUDOS")
+
+TEST_RUNNER = 'social_network_project.realdb_test_runner.RealDBTestRunner'

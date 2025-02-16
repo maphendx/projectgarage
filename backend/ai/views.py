@@ -3,8 +3,6 @@ import os
 import uuid
 import requests
 from django.shortcuts import render
-from django.http import JsonResponse
-from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -57,6 +55,11 @@ def generate_audio(request):  # Відправка запиту на генер�
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def extend_audio(request):  # Відправка запиту на розширення аудіо
+    """
+    Відправляє запит на розширення аудіо на Suno API, використовуючи передані дані.
+    :param request: запит з даними для розширення (audioId, prompt, style, title, continueAt)
+    :return: відповідь Suno API
+    """
     payload = request.data
     resp = requests.post(f"{SUNO_BASE_URL}/api/v1/generate/extend", json=payload, headers=HEADERS)
     return Response(resp.json(), status=resp.status_code)
