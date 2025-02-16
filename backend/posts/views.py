@@ -48,7 +48,7 @@ class PostListView(views.APIView):
             if 'original_post' in data:
                 try:
                     original_post_object = Post.objects.get(pk=data['original_post'])  # Зберігаємо оригінальний пост
-                    data['content'] = data.get('content', '') + f'\n\nReposted from: {original_post_object.content}'
+                    data['content'] = data.get('content', '') + f'\n\n{original_post_object.content}'
                     if original_post_object.original_post is not None:
                         return Response(
                             {"detail": "Reposting a repost is not allowed."},

@@ -1,0 +1,132 @@
+[
+    {
+        "email": "frank11@example.org",
+        "display_name": "william65",
+        "full_name": "Oscar Evans",
+        "password": "TestPassword123!",
+        "hashtags": [
+            "#allow",
+            "#ever",
+            "#they",
+            "#six",
+            "#people"
+        ]
+    },
+    {
+        "email": "nicholas80@example.net",
+        "display_name": "nancy87",
+        "full_name": "Kathleen Taylor",
+        "password": "TestPassword123!",
+        "hashtags": [
+            "#continue",
+            "#ago",
+            "#kitchen",
+            "#always",
+            "#box"
+        ]
+    },
+    {
+        "email": "kfrancis@example.org",
+        "display_name": "rachelmiller",
+        "full_name": "Lucas Padilla",
+        "password": "TestPassword123!",
+        "hashtags": [
+            "#direction",
+            "#conference",
+            "#top",
+            "#customer",
+            "#others"
+        ]
+    },
+    {
+        "email": "vmiller@example.org",
+        "display_name": "mitchelleric",
+        "full_name": "Ashley Roberts",
+        "password": "TestPassword123!",
+        "hashtags": [
+            "#follow",
+            "#my",
+            "#within",
+            "#ask",
+            "#time"
+        ]
+    },
+    {
+        "email": "melissa27@example.com",
+        "display_name": "wilsondominic",
+        "full_name": "Casey Cabrera",
+        "password": "TestPassword123!",
+        "hashtags": [
+            "#fast",
+            "#often",
+            "#time",
+            "#sort",
+            "#himself"
+        ]
+    },
+    {
+        "email": "sallison@example.net",
+        "display_name": "thompsonmelissa",
+        "full_name": "Tanya Hayden",
+        "password": "TestPassword123!",
+        "hashtags": [
+            "#school",
+            "#evening",
+            "#thing",
+            "#say",
+            "#visit"
+        ]
+    },
+    {
+        "email": "ernest20@example.org",
+        "display_name": "padillajames",
+        "full_name": "Joseph Ballard",
+        "password": "TestPassword123!",
+        "hashtags": [
+            "#office",
+            "#series",
+            "#night",
+            "#I",
+            "#spend"
+        ]
+    },
+    {
+        "email": "wrightmaria@example.net",
+        "display_name": "halljeffrey",
+        "full_name": "Jessica Hansen",
+        "password": "TestPassword123!",
+        "hashtags": [
+            "#serve",
+            "#agency",
+            "#draw",
+            "#effect",
+            "#produce"
+        ]
+    },
+    {
+        "email": "jonathanstewart@example.net",
+        "display_name": "jeankennedy",
+        "full_name": "Darlene Rhodes",
+        "password": "TestPassword123!",
+        "hashtags": [
+            "#hold",
+            "#live",
+            "#benefit",
+            "#world",
+            "#partner"
+        ]
+    },
+    {
+        "email": "fhess@example.com",
+        "display_name": "smallronald",
+        "full_name": "Ashley Ruiz",
+        "password": "TestPassword123!",
+        "hashtags": [
+            "#finally",
+            "#year",
+            "#pass",
+            "#attack",
+            "#church"
+        ]
+    }
+]

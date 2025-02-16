@@ -12,14 +12,12 @@ from .views import (
                 )
 from django.conf import settings
 from django.conf.urls.static import static
-from ai.views import RecommendationView
 
 urlpatterns = [
     # Шляхи для постів
     path('posts/', PostListView.as_view(), name='post-list'),  # Список всіх постів
     path('posts/<int:pk>/', PostDetailView.as_view(), name='post-detail'),  # Деталі поста
     path('posts/recomendations/post/', RecommendedPostsView.as_view(), name='post-recommendation'),  # Рекомендації
-    path('posts/recomendations/user/', RecommendationView.as_view(), name='user-recommendations'),  # Ендпоінт для рекомендацій
 
     # Шляхи для коментарів
     path('posts/<int:post_id>/comments/', CommentListView.as_view(), name='comment-list'),  # Список всіх коментарів

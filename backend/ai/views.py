@@ -1,92 +1,242 @@
-# ai/views.py
-
 import json
-from rest_framework import generics, status
-from rest_framework.response import Response
+import os
+import uuid
+import requests
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+
+from .models import Song, MusicStyle, GenerationTask
+
+# Імпортуємо необхідні модулі DRF
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from .models import Recommendation, TrainingData
-from .serializers import RecommendationSerializer, TrainingDataSerializer
-from users.models import CustomUser
-from django.utils import timezone
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-from .recommendation_model import RecommendationModel
+from rest_framework.response import Response
 
-class RecommendationListView(generics.ListAPIView):
-    serializer_class = RecommendationSerializer
-    permission_classes = [IsAuthenticated]
+# Для home view – якщо хочемо обмежити доступ лише для зареєстрованих користувачів
+from django.contrib.auth.decorators import login_required
 
-    def get_queryset(self):
-        user = self.request.user
-        return Recommendation.objects.filter(user=user)
+# Конфігурація для Suno API
+SUNO_API_KEY = os.environ.get("SUNO_API_KEY")
+SUNO_BASE_URL = "https://apibox.erweima.ai"
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+HEADERS = {
+    "Authorization": f"Bearer {SUNO_API_KEY}",
+    "Content-Type": "application/json"
+}
 
-    def post(self, request, *args, **kwargs):
-        user = request.user
-        recommendations = self.generate_recommendations(user)
-        serializer = self.get_serializer(recommendations, many=True)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+def download_file(url, folder, prefix):
+    """
+    Завантажує файл з URL та зберігає його у вказану папку (відносно MEDIA_ROOT).
+    Повертає шлях до збереженого файлу.
+    """
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            ext = os.path.splitext(url)[1] or ''
+            filename = f"{prefix}_{uuid.uuid4().hex}{ext}"
+            file_path = os.path.join(folder, filename)
+            # Зберігаємо через систему сховища Django
+            saved_path = default_storage.save(file_path, ContentFile(response.content))
+            return saved_path
+    except Exception as e:
+        print("Помилка при завантаженні файлу:", e)
+    return ""
 
-    def generate_recommendations(self, user):
-        # Отримати дані для тренування
-        training_data = TrainingData.objects.filter(user=user).last()
-        if not training_data:
-            return []
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_audio(request):
+    """
+    Ендпоінт для створення завдання генерації аудіо.
+    Записує id користувача та example (якщо передано), створює запис GenerationTask,
+    пересилає запит до Suno API та оновлює task_id після отримання відповіді.
+    """
+    payload = request.data
+    example = payload.get("example", "")
+    # Зберігаємо дані запиту із id користувача і example
+    task_record = GenerationTask.objects.create(user=request.user, request_type="audio", example=example, status="pending")
+    resp = requests.post(f"{SUNO_BASE_URL}/api/v1/generate", json=payload, headers=HEADERS)
+    response_data = resp.json()
+    # Оновлюємо запис завдання, якщо отримано taskId
+    if resp.status_code == 200:
+        task_id = response_data.get("data", {}).get("taskId")
+        if task_id:
+            task_record.task_id = task_id
+            task_record.save()
+    return Response(response_data, status=resp.status_code)
 
-        data = json.loads(training_data.data)
-        labels = json.loads(training_data.labels)
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def extend_audio(request):
+    """
+    Ендпоінт для розширення аудіо.
+    Записує id користувача та example, створює запис GenerationTask типу extend,
+    пересилає запит до Suno API та оновлює task_id після отримання відповіді.
+    """
+    payload = request.data
+    example = payload.get("example", "")
+    task_record = GenerationTask.objects.create(user=request.user, request_type="extend", example=example, status="pending")
+    resp = requests.post(f"{SUNO_BASE_URL}/api/v1/generate/extend", json=payload, headers=HEADERS)
+    response_data = resp.json()
+    if resp.status_code == 200:
+        task_id = response_data.get("data", {}).get("taskId")
+        if task_id:
+            task_record.task_id = task_id
+            task_record.save()
+    return Response(response_data, status=resp.status_code)
 
-        # Тренувати модель
-        model = RecommendationModel()
-        model.train(data, labels)
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_lyrics(request):
+    """
+    Ендпоінт для генерації тексту (lyrics).
+    Записує id користувача та example, створює запис GenerationTask типу lyrics,
+    пересилає запит до Suno API та оновлює task_id після отримання відповіді.
+    """
+    payload = request.data
+    example = payload.get("example", "")
+    task_record = GenerationTask.objects.create(user=request.user, request_type="lyrics", example=example, status="pending")
+    resp = requests.post(f"{SUNO_BASE_URL}/api/v1/lyrics", json=payload, headers=HEADERS)
+    response_data = resp.json()
+    if resp.status_code == 200:
+        task_id = response_data.get("data", {}).get("taskId")
+        if task_id:
+            task_record.task_id = task_id
+            task_record.save()
+    return Response(response_data, status=resp.status_code)
 
-        # Генерувати рекомендації
-        user_data = np.array(data[-1]).reshape(1, -1)
-        predictions = model.predict(user_data)
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_wav(request):
+    """
+    Ендпоінт для генерації аудіо у WAV форматі.
+    Записує id користувача та example, створює запис GenerationTask типу wav,
+    пересилає запит до Suno API та оновлює task_id після отримання відповіді.
+    """
+    payload = request.data
+    example = payload.get("example", "")
+    task_record = GenerationTask.objects.create(user=request.user, request_type="wav", example=example, status="pending")
+    resp = requests.post(f"{SUNO_BASE_URL}/api/v1/wav/generate", json=payload, headers=HEADERS)
+    response_data = resp.json()
+    if resp.status_code == 200:
+        task_id = response_data.get("data", {}).get("taskId")
+        if task_id:
+            task_record.task_id = task_id
+            task_record.save()
+    return Response(response_data, status=resp.status_code)
 
-        # Створити рекомендації
-        recommendations = []
-        for score in predictions:
-            recommended_user = CustomUser.objects.order_by('?').first()  # Випадковий користувач для прикладу
-            recommendations.append(Recommendation(user=user, recommended_user=recommended_user, score=score))
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([])  # Відключаємо перевірку автентифікації для callback
+def callback(request):
+    """
+    Загальний callback для обробки відповідей від Suno API.
+    Залежно від типу завдання (audio/extend, lyrics, wav):
+    - Для аудіо (audio/extend) завантажуються аудіо та зображення, створюється запис Song.
+    - Для lyrics оновлюється запис GenerationTask з отриманими текстовими даними.
+    - Для wav завантажується WAV файл та оновлюється GenerationTask.
+    """
+    try:
+        data = request.data
+    except Exception:
+        return Response({"msg": "Невірний формат JSON"}, status=400)
 
-        # Зберегти рекомендації
-        Recommendation.objects.bulk_create(recommendations, ignore_conflicts=True)
+    # Запис логів callback
+    with open("callback_log.json", "a", encoding="utf-8") as f:
+        f.write(json.dumps(data, ensure_ascii=False, indent=4) + "\n")
 
-        return recommendations
+    if data.get("code") != 200:
+        return Response({"msg": "Callback з помилкою"}, status=400)
 
-class TrainingDataView(generics.CreateAPIView):
-    serializer_class = TrainingDataSerializer
-    permission_classes = [IsAuthenticated]
+    callback_data = data.get("data", {})
+    task_id = callback_data.get("task_id") or callback_data.get("taskId")
+    if not task_id:
+        return Response({"msg": "task_id відсутній"}, status=400)
 
-    def post(self, request, *args, **kwargs):
-        user = request.user
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # Спроба отримати запис завдання
+    try:
+        task_record = GenerationTask.objects.get(task_id=task_id)
+    except GenerationTask.DoesNotExist:
+        task_record = None
 
-class RecommendationView(generics.ListAPIView):
-    serializer_class = RecommendationSerializer
-    permission_classes = [IsAuthenticated]
+    songs_list = []
 
-    def get_queryset(self):
-        """
-        Повертає список рекомендацій для поточного користувача.
-        """
-        user = self.request.user
-        return Recommendation.objects.filter(user=user).select_related('recommended_user')
+    # Обробка callback залежно від структури даних
+    if "lyricsData" in callback_data:
+        # Callback для генерації тексту (lyrics)
+        lyrics_data = callback_data.get("lyricsData", [])
+        if task_record:
+            task_record.status = "completed"
+            task_record.result = {"lyricsData": lyrics_data}
+            task_record.save()
+        # Можна повернути дані або повідомлення про успішну генерацію
+    elif "audio_wav_url" in callback_data:
+        # Callback для генерації WAV файлу
+        audio_wav_url = callback_data.get("audio_wav_url")
+        wav_file_path = download_file(audio_wav_url, "ai/wav", task_id)
+        if task_record:
+            task_record.status = "completed"
+            task_record.result = {"audio_wav_file": wav_file_path}
+            task_record.save()
+    else:
+        # Callback для аудіо генерації (як для generate_audio, так і extend_audio)
+        track_list = callback_data.get("data", [])
+        for track in track_list:
+            audio_url = track.get("audio_url")
+            image_url = track.get("image_url")
+            title = track.get("title")
+            model_name = track.get("model_name")
+            tags = track.get("tags", "")
+            audio_file_path = download_file(audio_url, "ai/music", task_id)
+            photo_file_path = download_file(image_url, "ai/photo", task_id)
+            style_names = [s.strip() for s in tags.split(",") if s.strip()]
+            # Створення запису Song із прив'язкою до користувача (якщо є)
+            song = Song.objects.create(user=task_record.user if task_record else None, task_id=task_id, model_name=model_name, title=title, audio_file=audio_file_path, photo_file=photo_file_path, example=task_record.example if task_record else "")
+            for style_name in style_names:
+                style_obj, _ = MusicStyle.objects.get_or_create(name=style_name)
+                song.styles.add(style_obj)
+            
+            songs_list.append({
+                "audio_file": audio_file_path,
+                "photo_file": photo_file_path,
+                "tags": style_names,
+                "model_name": model_name,
+                "title": title
+            })
+        if task_record:
+            task_record.status = "completed"
+            task_record.result = {"songs": songs_list}
+            task_record.save()
+    return Response({"songs": songs_list}, status=200)
 
-    def list(self, request, *args, **kwargs):
-        """
-        Обробляє GET-запит для отримання списку рекомендацій.
-        """
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+@login_required
+def home(request):
+    return render(request, 'index.html')
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_user_songs(request):
+    """
+    Ендпоінт для отримання всіх пісень, згенерованих поточним користувачем.
+    Повертає JSON-список з даними про пісні, включаючи id, назву, модель, шляхи до аудіо та фото файлів,
+    example і список стилів.
+    """
+    songs = Song.objects.filter(user=request.user)
+    songs_list = []
+    for song in songs:
+        songs_list.append({
+            "id": song.id,
+            "title": song.title,
+            "model_name": song.model_name,
+            "audio_file": song.audio_file,
+            "photo_file": song.photo_file,
+            "example": song.example,
+            "styles": [style.name for style in song.styles.all()],
+            "created_at": song.created_at
+        })
+    return Response({"songs": songs_list}, status=200)

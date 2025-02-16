@@ -2,58 +2,70 @@ from rest_framework import serializers
 
 from users.models import CustomUser
 from users.serializers import UserProfileSerializer
-from voice_channels.models import Invitation, VoiceChannel, VoiceParticipant
+from voice_channels.models import Invitation, VoiceChannel
 
 class UserDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'display_name']
 
-class VoiceParticipantSerializer(serializers.ModelSerializer):
-    subject = UserDataSerializer(read_only=True)
-    subject_id = serializers.PrimaryKeyRelatedField(
-        queryset=VoiceParticipant.objects.all(),  # Приймає ID при створенні
-        source='subject',  
-        write_only=True  # Тільки для запису
-    )
 
+class MicroUser(serializers.ModelSerializer):
     class Meta:
-        model = VoiceParticipant
-        fields = '__all__'
+        model = CustomUser
+        fields = ["display_name"]
 
+class DisplayNameRelatedField(serializers.PrimaryKeyRelatedField): # говнокод
+    def get_queryset(self): # говнокод
+        return CustomUser.objects.all() # говнокод
+
+    def to_internal_value(self, data): # говнокод
+        try: # говнокод
+            user = CustomUser.objects.get(display_name=data) # говнокод
+            return user # говнокод
+        except CustomUser.DoesNotExist: # говнокод
+            raise serializers.ValidationError(f"Користувач з display_name '{data}' не знайдений.") # говнокод
 
 class VoiceChannelSerializer(serializers.ModelSerializer):
     creator = UserDataSerializer(read_only=True)
-    participants = VoiceParticipantSerializer(many=True, read_only=True)
+    participants = DisplayNameRelatedField(queryset=CustomUser.objects.all(), many=True, required=False, write_only=True)
+    participants_list = MicroUser(read_only=True, many=True)
 
     class Meta:
         model = VoiceChannel
-        fields = '__all__'
+        #fields = '__all__'
+        fields = ['id', 'creator', 'participants', 'participants_list', 'name', 'created_at'] 
+
+    def create(self, validated_data): # говнокод
+        participants_data = validated_data.pop('participants', []) # говнокод
+        channel = VoiceChannel.objects.create(**validated_data) # говнокод
+
+        if participants_data: # говнокод
+            channel.participants.add(*participants_data) # говнокод
+
+        return channel # говнокод
+    
+    def to_representation(self, instance): # говнокод
+        """ # говнокод
+        Цей метод змінює представлення даних для коректного виведення списку учасників. # говнокод
+        """ 
+        representation = super().to_representation(instance) # говнокод
+        
+        # Додаємо participants_list в представлення # говнокод
+        representation['participants_list'] = MicroUser(instance.participants.all(), many=True).data # говнокод
+        
+        return representation # говнокод
+
 
 class InvitationSerializer(serializers.ModelSerializer):
     sender = UserDataSerializer(read_only=True)
-    sender_id = serializers.PrimaryKeyRelatedField(
-        queryset=CustomUser.objects.all(),  # Приймає ID при створенні
-        source='sender',  
-        write_only=True,  # Тільки для запису
-        required=False,  # ✅ Поле не обов'язкове
-        allow_null=True  # ✅ Дозволяє null
-    )
-    addressee = UserDataSerializer(read_only=True)
-    addressee_id = serializers.PrimaryKeyRelatedField(
-        queryset=CustomUser.objects.all(),  # Приймає ID при створенні
-        source='addressee',  
-        write_only=True  # Тільки для запису
+    recipient = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(), 
+        source='addressee'
     )
     voice_channel = VoiceChannelSerializer(read_only=True)
-    voice_channel_id = serializers.PrimaryKeyRelatedField(
-        queryset=VoiceChannel.objects.all(),  # Приймає ID при створенні
-        source='voice_channel',  
-        write_only=True  # Тільки для запису
-    )
+
     class Meta:
         model = Invitation
-        fields = '__all__'
-
-
+        fields = ['id', 'sender', 'recipient', 'voice_channel', 'created_at']
 

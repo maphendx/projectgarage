@@ -9,7 +9,6 @@ from .views import (
                     HashtagView, 
                     SubscriptionsView, 
                     UserSubscriptionsView, 
-                    RecommendationView, 
                     UserProfileDetailView, 
                     SearchView, 
                     GoogleAuthView
@@ -27,7 +26,6 @@ urlpatterns = [
     path('hashtags/', HashtagView.as_view(), name='hashtag-view'),
     path('subscriptions/<int:user_id>', SubscriptionsView.as_view(), name='subscribe-view'),
     path('subscriptions/<int:user_id>/list/', UserSubscriptionsView.as_view(), name='user-subscribers-view'),
-    path('recommendations/', RecommendationView.as_view(), name='user-recommendations'),
     path('search/', SearchView.as_view(), name='search'),
     path('search/users/', SearchView.as_view(), name='search-users'),
     path('search/posts/', SearchView.as_view(), name='search-posts'),

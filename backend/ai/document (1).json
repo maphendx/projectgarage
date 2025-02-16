@@ -1,0 +1,1387 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "x-logo": {
+      "altText": "Home",
+      "href": "/",
+      "url": "/logo.png"
+    },
+    "title": "SUNO API Documentation",
+    "description": "API documentation for audio generation services",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Technical Support support@sunoapi.org",
+      "email": "support@sunoapi.org"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://apibox.erweima.ai",
+      "description": "API Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API Key",
+        "description": "<div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0;'><h3 style='color: #0d6efd; margin-top: 0;'>🔑 API Authentication</h3><p>All endpoints require authentication using Bearer Token.</p><h4 style='color: #198754;'>Get API Key</h4><p>1. Visit the <a href='https://sunoapi.org/api-key' target='_blank'>API Key Management Page</a> to obtain your API Key</p><h4 style='color: #198754;'>Usage</h4><p>Add to request headers:</p><pre style='background-color: #e9ecef; padding: 10px; border-radius: 4px;'><code>Authorization: Bearer YOUR_API_KEY</code></pre><div style='background-color: #fff3cd; padding: 10px; border-radius: 4px; margin-top: 10px;'><strong>⚠️ Note:</strong><ul style='margin-bottom: 0;'><li>Keep your API Key secure and do not share it with others</li><li>If you suspect your API Key has been compromised, reset it immediately from the management page</li></ul></div></div>"
+      }
+    },
+    "schemas": {
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "<h2>Status Codes</h2>\n<div style=\"margin: 10px 0\">\n<div style=\"background-color: #f8f9fa; padding: 10px; border-radius: 5px\"><span style=\"color: #28a745\">✅ 200 - Request successful</span>\n</div>\n<div style=\"background-color: #f8f9fa; padding: 10px; border-radius: 5px\"><span style=\"color: #ffc107\">⚠️ 400 - Invalid parameters</span>\n</div>\n<div style=\"background-color: #f8f9fa; padding: 10px; border-radius: 5px\"><span style=\"color: #ffc107\">⚠️ 401 - Unauthorized access</span>\n</div>\n<div style=\"background-color: #f8f9fa; padding: 10px; border-radius: 5px\"><span style=\"color: #ffc107\">⚠️ 404 - Invalid request method or path</span>\n</div>\n<div style=\"background-color: #f8f9fa; padding: 10px; border-radius: 5px\"><span style=\"color: #ffc107\">⚠️ 405 - Rate limit exceeded</span>\n</div>\n<div style=\"background-color: #f8f9fa; padding: 10px; border-radius: 5px\"><span style=\"color: #ffc107\">⚠️ 413 - Theme or prompt too long</span>\n</div>\n<div style=\"background-color: #f8f9fa; padding: 10px; border-radius: 5px\"><span style=\"color: #ffc107\">⚠️ 429 - Insufficient credits</span>\n</div>\n<div style=\"background-color: #f8f9fa; padding: 10px; border-radius: 5px\"><span style=\"color: #ffc107\">⚠️ 455 - System maintenance</span>\n</div>\n<div style=\"background-color: #f8f9fa; padding: 10px; border-radius: 5px\"><span style=\"color: #dc3545\">❌ 500 - Server error</span>\n</div></div>",
+            "example": 200,
+            "enum": [
+              200,
+              400,
+              401,
+              404,
+              405,
+              413,
+              429,
+              455,
+              500
+            ]
+          },
+          "msg": {
+            "type": "string",
+            "description": "Error message when code != 200",
+            "example": "success"
+          }
+        }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Server error"
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/v1/generate": {
+      "post": {
+        "summary": "Create Audio Generation Task",
+        "description": "Create a new audio generation task. This endpoint supports both custom and non-custom modes, capable of generating instrumental music or music with lyrics.\n\n### Credit Consumption\n- V3.5 Model: 7 credits per generation\n- V4 Model: 10 credits per generation\n\n### Parameter Details\n- When customMode is true (Custom Mode):\n  - If instrumental is true: style and title are required\n  - If instrumental is false: style, prompt, and title are required\n  - prompt length limit: 3000 characters\n  - style length limit: 200 characters\n  - title length limit: 80 characters\n\n- When customMode is false (Non-custom Mode):\n  - Only prompt is required regardless of instrumental setting\n  - prompt length limit: 400 characters\n  - Other parameters should be left empty\n\n### Important Notes\n1. Generated files are retained for 15 days\n2. Callback process has three stages: text (text generation), first (first track complete), complete (all tracks complete)\n3. In some cases, the system may skip text and first stages and directly return complete",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "customMode",
+                  "instrumental",
+                  "callBackUrl",
+                  "model"
+                ],
+                "properties": {
+                  "prompt": {
+                    "type": "string",
+                    "description": "Audio generation prompt describing the desired audio content",
+                    "example": "A calm and relaxing piano track with soft melodies"
+                  },
+                  "style": {
+                    "type": "string",
+                    "description": "Music style, e.g., Jazz, Classical, Electronic",
+                    "example": "Classical"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Music title",
+                    "example": "Peaceful Piano Meditation"
+                  },
+                  "customMode": {
+                    "type": "boolean",
+                    "description": "Enable custom mode",
+                    "example": true
+                  },
+                  "instrumental": {
+                    "type": "boolean",
+                    "description": "Generate instrumental music (no lyrics)",
+                    "example": true
+                  },
+                  "model": {
+                    "type": "string",
+                    "description": "Model version to use, either V3_5 or V4",
+                    "enum": [
+                      "V3_5",
+                      "V4"
+                    ],
+                    "example": "V3_5"
+                  },
+                  "callBackUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Callback URL for task completion. See [callback example](#/paths/api-v1-generate/post#callback-key)",
+                    "example": "https://api.example.com/callback"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "taskId": {
+                              "type": "string",
+                              "description": "Task ID for tracking task status",
+                              "example": "5c79****be8e"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "callbacks": {
+          "audioGenerated": {
+            "{request.body#/callBackUrl}": {
+              "post": {
+                "description": "System will call this callback when audio generation is complete.\n\n### Callback Example\n```json\n{\n  \"code\": 200,\n  \"msg\": \"All generated successfully.\",\n  \"data\": {\n    \"callbackType\": \"complete\",\n    \"task_id\": \"2fac****9f72\",\n    \"data\": [\n      {\n        \"id\": \"8551****662c\",\n        \"audio_url\": \"https://example.cn/****.mp3\",\n        \"source_audio_url\": \"https://example.cn/****.mp3\",\n        \"stream_audio_url\": \"https://example.cn/****\",\n        \"source_stream_audio_url\": \"https://example.cn/****\",\n        \"image_url\": \"https://example.cn/****.jpeg\",\n        \"source_image_url\": \"https://example.cn/****.jpeg\",\n        \"prompt\": \"[Verse] Night city lights shining bright\",\n        \"model_name\": \"chirp-v3-5\",\n        \"title\": \"Iron Man\",\n        \"tags\": \"electrifying, rock\",\n        \"createTime\": \"2025-01-01 00:00:00\",\n        \"duration\": 198.44\n      },\n      {\n        \"id\": \"bd15****1873\",\n        \"audio_url\": \"https://example.cn/****.mp3\",\n        \"source_audio_url\": \"https://example.cn/****.mp3\",\n        \"stream_audio_url\": \"https://example.cn/****\",\n        \"source_stream_audio_url\": \"https://example.cn/****\",\n        \"image_url\": \"https://example.cn/****.jpeg\",\n        \"source_image_url\": \"https://example.cn/****.jpeg\",\n        \"prompt\": \"[Verse] Night city lights shining bright\",\n        \"model_name\": \"chirp-v3-5\",\n        \"title\": \"Iron Man\",\n        \"tags\": \"electrifying, rock\",\n        \"createTime\": \"2025-01-01 00:00:00\",\n        \"duration\": 228.28\n      }\n    ]\n  }\n}\n```",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "integer",
+                            "description": "Status code",
+                            "example": 200
+                          },
+                          "msg": {
+                            "type": "string",
+                            "description": "Response message",
+                            "example": "All generated successfully"
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {
+                              "callbackType": {
+                                "type": "string",
+                                "description": "Callback type: text (text generation complete), first (first track complete), complete (all tracks complete)",
+                                "enum": [
+                                  "text",
+                                  "first",
+                                  "complete"
+                                ]
+                              },
+                              "task_id": {
+                                "type": "string",
+                                "description": "Task ID"
+                              },
+                              "data": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "description": "Audio unique identifier"
+                                    },
+                                    "audio_url": {
+                                      "type": "string",
+                                      "description": "Audio file URL"
+                                    },
+                                    "source_audio_url": {
+                                      "type": "string",
+                                      "description": "Original audio file URL"
+                                    },
+                                    "stream_audio_url": {
+                                      "type": "string",
+                                      "description": "Streaming audio URL"
+                                    },
+                                    "source_stream_audio_url": {
+                                      "type": "string",
+                                      "description": "Original streaming audio URL"
+                                    },
+                                    "image_url": {
+                                      "type": "string",
+                                      "description": "Cover image URL"
+                                    },
+                                    "source_image_url": {
+                                      "type": "string",
+                                      "description": "Original cover image URL"
+                                    },
+                                    "prompt": {
+                                      "type": "string",
+                                      "description": "Generation prompt/lyrics"
+                                    },
+                                    "model_name": {
+                                      "type": "string",
+                                      "description": "Model name used"
+                                    },
+                                    "title": {
+                                      "type": "string",
+                                      "description": "Music title"
+                                    },
+                                    "tags": {
+                                      "type": "string",
+                                      "description": "Music tags"
+                                    },
+                                    "createTime": {
+                                      "type": "string",
+                                      "description": "Creation time",
+                                      "format": "date-time"
+                                    },
+                                    "duration": {
+                                      "type": "number",
+                                      "description": "Audio duration (seconds)"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Callback received successfully"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/generate/extend": {
+      "post": {
+        "summary": "Create Audio Extension Generation Task",
+        "description": "Create an extension generation task based on existing audio, capable of extending or modifying existing music.\n\n### Credit Consumption\n- 10 credits per call\n\n### Parameter Details\n- When defaultParamFlag is true (Custom Parameters):\n  - prompt, style, and title are required\n  - prompt length limit: 3000 characters\n  - style length limit: 200 characters\n  - title length limit: 80 characters\n\n- When defaultParamFlag is false (Use Default Parameters):\n  - Only audioId is required\n  - Other parameters will use the original audio's parameters\n\n### Important Notes\n1. Generated files are retained for 15 days\n2. Model version of extended music must be consistent with the source music\n3. Callback process is the same as the audio generation endpoint",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "defaultParamFlag",
+                  "audioId",
+                  "callBackUrl",
+                  "model"
+                ],
+                "properties": {
+                  "defaultParamFlag": {
+                    "type": "boolean",
+                    "description": "Use custom parameters, true indicates using custom parameters, false indicates using original audio parameters.⚠️ When this field is true, continueAt is required",
+                    "example": true
+                  },
+                  "audioId": {
+                    "type": "string",
+                    "description": "Audio ID to extend",
+                    "example": "5c79****be8e"
+                  },
+                  "prompt": {
+                    "type": "string",
+                    "description": "Audio generation prompt describing the desired extended audio content",
+                    "example": "Extend the music with more relaxing notes"
+                  },
+                  "style": {
+                    "type": "string",
+                    "description": "Music style, e.g., Jazz, Classical, Electronic",
+                    "example": "Classical"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Music title",
+                    "example": "Peaceful Piano Extended"
+                  },
+                  "continueAt": {
+                    "type": "number",
+                    "description": "Start extending from which time point (seconds).⚠️ When defaultParamFlag is true, this field is required",
+                    "example": 0
+                  },
+                  "model": {
+                    "type": "string",
+                    "description": "Model version to use, must be consistent with the source audio",
+                    "enum": [
+                      "V3_5",
+                      "V4"
+                    ],
+                    "example": "V3_5"
+                  },
+                  "callBackUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Callback URL for task completion. See [callback example](#/paths/api-v1-generate-extend/post#callback-key)",
+                    "example": "https://api.example.com/callback"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "taskId": {
+                              "type": "string",
+                              "description": "Task ID for tracking task status",
+                              "example": "5c79****be8e"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "callbacks": {
+          "audioExtend": {
+            "{$request.body#/callBackUrl}": {
+              "post": {
+                "description": "System will call this callback when audio generation is complete.\n\n### Callback Example\n```json\n{\n  \"code\": 200,\n  \"msg\": \"All generated successfully.\",\n  \"data\": {\n    \"callbackType\": \"complete\",\n    \"task_id\": \"2fac****9f72\",\n    \"data\": [\n      {\n        \"id\": \"8551****662c\",\n        \"audio_url\": \"https://example.cn/****.mp3\",\n        \"source_audio_url\": \"https://example.cn/****.mp3\",\n        \"stream_audio_url\": \"https://example.cn/****\",\n        \"source_stream_audio_url\": \"https://example.cn/****\",\n        \"image_url\": \"https://example.cn/****.jpeg\",\n        \"source_image_url\": \"https://example.cn/****.jpeg\",\n        \"prompt\": \"[Verse] Night city lights shining bright\",\n        \"model_name\": \"chirp-v3-5\",\n        \"title\": \"Iron Man\",\n        \"tags\": \"electrifying, rock\",\n        \"createTime\": \"2025-01-01 00:00:00\",\n        \"duration\": 198.44\n      }\n    ]\n  }\n}\n```",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "integer",
+                            "description": "Status code",
+                            "example": 200
+                          },
+                          "msg": {
+                            "type": "string",
+                            "description": "Response message",
+                            "example": "All generated successfully"
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {
+                              "callbackType": {
+                                "type": "string",
+                                "description": "Callback type: text (text generation complete), first (first track complete), complete (all tracks complete)",
+                                "enum": [
+                                  "text",
+                                  "first",
+                                  "complete"
+                                ]
+                              },
+                              "task_id": {
+                                "type": "string",
+                                "description": "Task ID"
+                              },
+                              "data": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "description": "Audio unique identifier"
+                                    },
+                                    "audio_url": {
+                                      "type": "string",
+                                      "description": "Audio file URL"
+                                    },
+                                    "source_audio_url": {
+                                      "type": "string",
+                                      "description": "Original audio file URL"
+                                    },
+                                    "stream_audio_url": {
+                                      "type": "string",
+                                      "description": "Streaming audio URL"
+                                    },
+                                    "source_stream_audio_url": {
+                                      "type": "string",
+                                      "description": "Original streaming audio URL"
+                                    },
+                                    "image_url": {
+                                      "type": "string",
+                                      "description": "Cover image URL"
+                                    },
+                                    "source_image_url": {
+                                      "type": "string",
+                                      "description": "Original cover image URL"
+                                    },
+                                    "prompt": {
+                                      "type": "string",
+                                      "description": "Generation prompt/lyrics"
+                                    },
+                                    "model_name": {
+                                      "type": "string",
+                                      "description": "Model name used"
+                                    },
+                                    "title": {
+                                      "type": "string",
+                                      "description": "Music title"
+                                    },
+                                    "tags": {
+                                      "type": "string",
+                                      "description": "Music tags"
+                                    },
+                                    "createTime": {
+                                      "type": "string",
+                                      "description": "Creation time",
+                                      "format": "date-time"
+                                    },
+                                    "duration": {
+                                      "type": "number",
+                                      "description": "Audio duration (seconds)"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Callback received successfully"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/generate/record-info": {
+      "get": {
+        "summary": "Query Audio Generation Task Details",
+        "description": "Query detailed information about an audio generation task, including task status, parameters, and results.\n\n### Status Description\n- PENDING: Pending execution\n- TEXT_SUCCESS: Text generation successful\n- FIRST_SUCCESS: First song generation successful\n- SUCCESS: Generation successful\n- CREATE_TASK_FAILED: Task creation failed\n- GENERATE_AUDIO_FAILED: Song generation failed\n- CALLBACK_EXCEPTION: Callback exception\n- SENSITIVE_WORD_ERROR: Sensitive word error",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "taskId",
+            "description": "Task ID",
+            "required": true,
+            "example": "5c79****be8e",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "taskId": {
+                              "type": "string",
+                              "description": "Task ID"
+                            },
+                            "parentMusicId": {
+                              "type": "string",
+                              "description": "Parent music ID (only valid when extending music)"
+                            },
+                            "param": {
+                              "type": "string",
+                              "description": "Parameter information for task generation"
+                            },
+                            "response": {
+                              "type": "object",
+                              "properties": {
+                                "taskId": {
+                                  "type": "string",
+                                  "description": "Task ID"
+                                },
+                                "sunoData": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "description": "Audio unique identifier"
+                                      },
+                                      "audioUrl": {
+                                        "type": "string",
+                                        "description": "Audio file URL"
+                                      },
+                                      "streamAudioUrl": {
+                                        "type": "string",
+                                        "description": "Streaming audio URL"
+                                      },
+                                      "imageUrl": {
+                                        "type": "string",
+                                        "description": "Cover image URL"
+                                      },
+                                      "prompt": {
+                                        "type": "string",
+                                        "description": "Generation prompt/lyrics"
+                                      },
+                                      "modelName": {
+                                        "type": "string",
+                                        "description": "Model name used"
+                                      },
+                                      "title": {
+                                        "type": "string",
+                                        "description": "Music title"
+                                      },
+                                      "tags": {
+                                        "type": "string",
+                                        "description": "Music tags"
+                                      },
+                                      "createTime": {
+                                        "type": "string",
+                                        "description": "Creation time",
+                                        "format": "date-time"
+                                      },
+                                      "duration": {
+                                        "type": "number",
+                                        "description": "Audio duration (seconds)"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "status": {
+                              "type": "string",
+                              "description": "Task status",
+                              "enum": [
+                                "PENDING",
+                                "TEXT_SUCCESS",
+                                "FIRST_SUCCESS",
+                                "SUCCESS",
+                                "CREATE_TASK_FAILED",
+                                "GENERATE_AUDIO_FAILED",
+                                "CALLBACK_EXCEPTION",
+                                "SENSITIVE_WORD_ERROR"
+                              ]
+                            },
+                            "type": {
+                              "type": "string",
+                              "description": "Task type"
+                            },
+                            "errorCode": {
+                              "type": "number",
+                              "description": "Error code, valid when task fails"
+                            },
+                            "errorMessage": {
+                              "type": "string",
+                              "description": "Error message, valid when task fails"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "success",
+                  "data": {
+                    "taskId": "5c79****be8e",
+                    "parentMusicId": "",
+                    "param": "{\"prompt\":\"A calm piano track\",\"style\":\"Classical\",\"title\":\"Peaceful Piano\",\"customMode\":true,\"instrumental\":true,\"model\":\"V3_5\"}",
+                    "response": {
+                      "taskId": "5c79****be8e",
+                      "sunoData": [
+                        {
+                          "id": "8551****662c",
+                          "audioUrl": "https://example.cn/****.mp3",
+                          "streamAudioUrl": "https://example.cn/****",
+                          "imageUrl": "https://example.cn/****.jpeg",
+                          "prompt": "[Verse] 夜晚城市 灯火辉煌",
+                          "modelName": "chirp-v3-5",
+                          "title": "钢铁侠",
+                          "tags": "electrifying, rock",
+                          "createTime": "2025-01-01 00:00:00",
+                          "duration": 198.44
+                        }
+                      ]
+                    },
+                    "status": "SUCCESS",
+                    "type": "GENERATE",
+                    "errorCode": null,
+                    "errorMessage": null
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/v1/generate/credit": {
+      "get": {
+        "summary": "Query Remaining Credits",
+        "description": "Query the remaining credits for the current account.\n\n### Credit Consumption Description\n- Create audio generation task:\n  - V3.5 Model: 7 credits per generation\n  - V4 Model: 10 credits per generation\n- Create audio extension generation task: 10 credits per call\n- Get audio with timestamped lyrics: 0.5 credits per call\n- Create audio lyrics generation task: 0.4 credits per call\n- Create WAV format audio generation task: 0.4 credits per call\n\n### Important Notes\n- If credits are insufficient, you will not be able to continue using generation services",
+        "responses": {
+          "200": {
+            "description": "Request successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "integer",
+                          "description": "Remaining credit quantity",
+                          "example": 100
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "success",
+                  "data": 100
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/v1/generate/get-timestamped-lyrics": {
+      "post": {
+        "summary": "Get Audio with Timestamped Lyrics",
+        "description": "Get audio with timestamped lyrics, which can be used for lyrics synchronization display during audio playback.\n\n### Credit Consumption\n- 0.5 credits per call\n\n### Parameter Details\n1. taskId is a required parameter\n2. audioId and musicIndex matching logic:\n   - Only pass audioId: Match by audioId\n   - Only pass musicIndex: Match by index\n   - Pass both in: Priority match by audioId, if not found then match by index\n\n### Important Notes\n1. Returned timestamp unit is seconds\n2. Returned waveform data can be used for audio visualization display",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "taskId"
+                ],
+                "properties": {
+                  "taskId": {
+                    "type": "string",
+                    "description": "Task ID returned from audio generation task (required)",
+                    "example": "5c79****be8e"
+                  },
+                  "audioId": {
+                    "type": "string",
+                    "description": "Audio ID of playable music. If provided, priority will be matched by this ID",
+                    "example": "5c79****be8e"
+                  },
+                  "musicIndex": {
+                    "type": "number",
+                    "description": "Song index value, must be 0 or 1. When audioId is not provided or not matched, it will be matched by this index",
+                    "enum": [
+                      0,
+                      1
+                    ],
+                    "example": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "alignedWords": {
+                              "type": "array",
+                              "description": "List of aligned lyrics words",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "word": {
+                                    "type": "string",
+                                    "description": "Lyrics word",
+                                    "example": "[Verse]\nWaggin'"
+                                  },
+                                  "success": {
+                                    "type": "boolean",
+                                    "description": "Whether lyrics word is successfully aligned",
+                                    "example": true
+                                  },
+                                  "start_s": {
+                                    "type": "number",
+                                    "description": "Word start time (seconds)",
+                                    "example": 1.36
+                                  },
+                                  "end_s": {
+                                    "type": "number",
+                                    "description": "Word end time (seconds)",
+                                    "example": 1.79
+                                  },
+                                  "p_align": {
+                                    "type": "integer",
+                                    "description": "Alignment parameter",
+                                    "example": 0
+                                  }
+                                }
+                              }
+                            },
+                            "waveformData": {
+                              "type": "array",
+                              "description": "Waveform data, used for audio visualization",
+                              "items": {
+                                "type": "number"
+                              },
+                              "example": [
+                                0,
+                                1,
+                                0.5,
+                                0.75
+                              ]
+                            },
+                            "hootCer": {
+                              "type": "number",
+                              "description": "Lyrics alignment accuracy score",
+                              "example": 0.3803191489361702
+                            },
+                            "isStreamed": {
+                              "type": "boolean",
+                              "description": "Whether it's streaming audio",
+                              "example": false
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "success",
+                  "data": {
+                    "alignedWords": [
+                      {
+                        "word": "[Verse]\nWaggin'",
+                        "success": true,
+                        "start_s": 1.36,
+                        "end_s": 1.79,
+                        "p_align": 0
+                      }
+                    ],
+                    "waveformData": [
+                      0,
+                      1,
+                      0.5,
+                      0.75
+                    ],
+                    "hootCer": 0.3803191489361702,
+                    "isStreamed": false
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/v1/lyrics": {
+      "post": {
+        "summary": "Create Audio Lyrics Generation Task",
+        "description": "Create a new audio lyrics generation task, which can generate lyrics content based on the prompt.\n\n### Credit Consumption\n- 0.4 credits per call\n\n### Important Notes\n1. Generated lyrics are retained for 15 days\n2. Callback has only one stage: complete (generation complete)\n3. Each generation will return multiple lyrics versions for selection",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "prompt",
+                  "callBackUrl"
+                ],
+                "properties": {
+                  "prompt": {
+                    "type": "string",
+                    "description": "Lyrics generation prompt describing the desired lyrics content",
+                    "example": "A song about peaceful night in the city"
+                  },
+                  "callBackUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Callback URL for task completion. See [callback example](#/paths/api-v1-lyrics/post#callback-key)",
+                    "example": "https://api.example.com/callback"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "taskId": {
+                              "type": "string",
+                              "description": "Task ID for tracking task status",
+                              "example": "5c79****be8e"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "callbacks": {
+          "audioLyricsGenerated": {
+            "{$request.body#/callBackUrl}": {
+              "post": {
+                "description": "System will call this callback when lyrics generation is complete.\n\n### Callback Example\n```json\n{\n  \"code\": 200,\n  \"msg\": \"All generated successfully.\",\n  \"data\": {\n    \"callbackType\": \"complete\",\n    \"taskId\": \"11dc****8b0f\",\n    \"lyricsData\": [\n      {\n        \"text\": \"[Verse]\\n我穿越城市黑暗夜\\n心中燃烧梦想的烈火\",\n        \"title\": \"钢铁侠\",\n        \"status\": \"complete\",\n        \"errorMessage\": \"\"\n      },\n      {\n        \"text\": \"[Verse]\\n风在呼唤我名字\\n钢铁盔甲闪得刺眼\",\n        \"title\": \"钢铁侠\",\n        \"status\": \"complete\",\n        \"errorMessage\": \"\"\n      }\n    ]\n  }\n}\n```",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "integer",
+                            "description": "Status code",
+                            "example": 200
+                          },
+                          "msg": {
+                            "type": "string",
+                            "description": "Response message",
+                            "example": "All generated successfully"
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {
+                              "callbackType": {
+                                "type": "string",
+                                "description": "Callback type, fixed as complete",
+                                "enum": [
+                                  "complete"
+                                ],
+                                "example": "complete"
+                              },
+                              "taskId": {
+                                "type": "string",
+                                "description": "Task ID"
+                              },
+                              "lyricsData": {
+                                "type": "array",
+                                "description": "Generated lyrics list",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "text": {
+                                      "type": "string",
+                                      "description": "Lyrics content"
+                                    },
+                                    "title": {
+                                      "type": "string",
+                                      "description": "Lyrics title"
+                                    },
+                                    "status": {
+                                      "type": "string",
+                                      "description": "Generation status",
+                                      "enum": [
+                                        "complete",
+                                        "failed"
+                                      ]
+                                    },
+                                    "errorMessage": {
+                                      "type": "string",
+                                      "description": "Error message, valid when status is failed"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Callback received successfully"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lyrics/record-info": {
+      "get": {
+        "summary": "Query Lyrics Generation Task Details",
+        "description": "Query detailed information about a lyrics generation task, including task status, parameters, and results.\n\n### Status Description\n- PENDING: Pending execution\n- SUCCESS: Generation successful\n- CREATE_TASK_FAILED: Task creation failed\n- GENERATE_LYRICS_FAILED: Lyrics generation failed\n- CALLBACK_EXCEPTION: Callback exception\n- SENSITIVE_WORD_ERROR: Sensitive word error",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "taskId",
+            "description": "Task ID",
+            "required": true,
+            "example": "11dc****8b0f",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "taskId": {
+                              "type": "string",
+                              "description": "Task ID"
+                            },
+                            "param": {
+                              "type": "string",
+                              "description": "Parameter information for task generation"
+                            },
+                            "response": {
+                              "type": "object",
+                              "properties": {
+                                "taskId": {
+                                  "type": "string",
+                                  "description": "Task ID"
+                                },
+                                "lyricsData": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "text": {
+                                        "type": "string",
+                                        "description": "Lyrics content"
+                                      },
+                                      "title": {
+                                        "type": "string",
+                                        "description": "Lyrics title"
+                                      },
+                                      "status": {
+                                        "type": "string",
+                                        "description": "Generation status",
+                                        "enum": [
+                                          "complete",
+                                          "failed"
+                                        ]
+                                      },
+                                      "errorMessage": {
+                                        "type": "string",
+                                        "description": "Error message, valid when status is failed"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "status": {
+                              "type": "string",
+                              "description": "Task status",
+                              "enum": [
+                                "PENDING",
+                                "SUCCESS",
+                                "CREATE_TASK_FAILED",
+                                "GENERATE_LYRICS_FAILED",
+                                "CALLBACK_EXCEPTION",
+                                "SENSITIVE_WORD_ERROR"
+                              ]
+                            },
+                            "type": {
+                              "type": "string",
+                              "description": "Task type",
+                              "example": "LYRICS"
+                            },
+                            "errorCode": {
+                              "type": "number",
+                              "description": "Error code, valid when task fails"
+                            },
+                            "errorMessage": {
+                              "type": "string",
+                              "description": "Error message, valid when task fails"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "success",
+                  "data": {
+                    "taskId": "11dc****8b0f",
+                    "param": "{\"prompt\":\"A song about peaceful night in the city\"}",
+                    "response": {
+                      "taskId": "11dc****8b0f",
+                      "lyricsData": [
+                        {
+                          "text": "[Verse]\n我穿越城市黑暗夜\n心中燃烧梦想的烈火",
+                          "title": "钢铁侠",
+                          "status": "complete",
+                          "errorMessage": ""
+                        }
+                      ]
+                    },
+                    "status": "SUCCESS",
+                    "type": "LYRICS",
+                    "errorCode": null,
+                    "errorMessage": null
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/v1/wav/generate": {
+      "post": {
+        "summary": "Create WAV Format Audio Generation Task",
+        "description": "Create a WAV format audio generation task based on existing audio.\n\n### Credit Consumption\n- 0.4 credits per call\n\n### Parameter Details\n- Need to provide taskId or audioId\n\n### Important Notes\n1. Generated files are retained for 15 days\n2. Callback has only one stage: complete (generation complete)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "taskId",
+                  "audioId",
+                  "callBackUrl"
+                ],
+                "properties": {
+                  "taskId": {
+                    "type": "string",
+                    "description": "Task ID returned from audio generation task (required)",
+                    "example": "5c79****be8e"
+                  },
+                  "audioId": {
+                    "type": "string",
+                    "description": "Audio ID of playable music (required)",
+                    "example": "5c79****be8e"
+                  },
+                  "callBackUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Callback URL for task completion. See [callback example](#/paths/api-v1-wav-generate/post#callback-key)",
+                    "example": "https://api.example.com/callback"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "taskId": {
+                              "type": "string",
+                              "description": "Task ID for tracking task status",
+                              "example": "5c79****be8e"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "callbacks": {
+          "wavGenerated": {
+            "{$request.body#/callBackUrl}": {
+              "post": {
+                "description": "System will call this callback when WAV format audio generation is complete.\n\n### Callback Example\n```json\n{\n  \"code\": 200,\n  \"msg\": \"success\",\n  \"data\": {\n    \"audio_wav_url\": \"https://example.com/s/04e6****e727.wav\",\n    \"task_id\": \"988e****c8d3\"\n  }\n}\n```",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "integer",
+                            "description": "Status code",
+                            "example": 200
+                          },
+                          "msg": {
+                            "type": "string",
+                            "description": "Response message",
+                            "example": "success"
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {
+                              "task_id": {
+                                "type": "string",
+                                "description": "Task ID"
+                              },
+                              "audio_wav_url": {
+                                "type": "string",
+                                "description": "WAV format audio file URL"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Callback received successfully"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/wav/record-info": {
+      "get": {
+        "summary": "Query WAV Format Audio Generation Task Details",
+        "description": "Query detailed information about a WAV format audio generation task, including task status, parameters, and results.\n\n### Status Description\n- PENDING: Pending execution\n- SUCCESS: Generation successful\n- CREATE_TASK_FAILED: Task creation failed\n- GENERATE_WAV_FAILED: WAV generation failed\n- CALLBACK_EXCEPTION: Callback exception",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "taskId",
+            "description": "Task ID",
+            "required": true,
+            "example": "988e****c8d3",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "taskId": {
+                              "type": "string",
+                              "description": "Task ID"
+                            },
+                            "musicId": {
+                              "type": "string",
+                              "description": "Music ID"
+                            },
+                            "callbackUrl": {
+                              "type": "string",
+                              "description": "Callback address"
+                            },
+                            "completeTime": {
+                              "type": "string",
+                              "description": "Complete callback time",
+                              "format": "date-time"
+                            },
+                            "response": {
+                              "type": "object",
+                              "properties": {
+                                "audio_wav_url": {
+                                  "type": "string",
+                                  "description": "WAV format audio file URL"
+                                }
+                              }
+                            },
+                            "status": {
+                              "type": "string",
+                              "description": "Task status",
+                              "enum": [
+                                "PENDING",
+                                "SUCCESS",
+                                "CREATE_TASK_FAILED",
+                                "GENERATE_WAV_FAILED",
+                                "CALLBACK_EXCEPTION"
+                              ]
+                            },
+                            "createTime": {
+                              "type": "string",
+                              "description": "Creation time",
+                              "format": "date-time"
+                            },
+                            "errorCode": {
+                              "type": "number",
+                              "description": "Error code, valid when task fails"
+                            },
+                            "errorMessage": {
+                              "type": "string",
+                              "description": "Error message, valid when task fails"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "success",
+                  "data": {
+                    "taskId": "988e****c8d3",
+                    "musicId": "8551****662c",
+                    "callbackUrl": "https://api.example.com/callback",
+                    "completeTime": "2025-01-01 00:10:00",
+                    "response": {
+                      "audio_wav_url": "https://example.com/s/04e6****e727.wav"
+                    },
+                    "status": "SUCCESS",
+                    "createTime": "2025-01-01 00:00:00",
+                    "errorCode": null,
+                    "errorMessage": null
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    }
+  }
+}

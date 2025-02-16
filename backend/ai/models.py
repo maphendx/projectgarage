@@ -1,26 +1,52 @@
-# ai/models.py
-
 from django.db import models
-from users.models import CustomUser
-from django.utils import timezone
+from django.conf import settings
 
-class Recommendation(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='recommendations')
-    recommended_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='recommended_to')
-    score = models.FloatField()
-    created_at = models.DateTimeField(default=timezone.now)
+class MusicStyle(models.Model):
+    name = models.CharField(max_length=100, unique=True)
 
-    class Meta:
-        unique_together = ('user', 'recommended_user')
+    def str(self):
+        return self.name
 
-    def __str__(self):
-        return f'Recommendation for {self.user.display_name} to {self.recommended_user.display_name}'
+class GenerationTask(models.Model):
+    REQUEST_TYPES = (
+        ('audio', 'Audio Generation'),
+        ('extend', 'Audio Extension'),
+        ('lyrics', 'Lyrics Generation'),
+        ('wav', 'WAV Generation'),
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name="generation_tasks", 
+        null=True, 
+        blank=True
+    )
+    task_id = models.CharField(max_length=255, blank=True, null=True)
+    request_type = models.CharField(max_length=50, choices=REQUEST_TYPES)
+    example = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(max_length=50, default="pending")
+    result = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-class TrainingData(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='training_data')
-    data = models.TextField()  # Зберігаємо дані у текстовому форматі, можна використовувати JSON
-    labels = models.TextField()  # Те саме для міток
-    created_at = models.DateTimeField(default=timezone.now)
+    def str(self):
+        return f"Task {self.id}"
 
-    def __str__(self):
-        return f'Training data for {self.user.display_name}'
+class Song(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="songs",
+        null=True,
+        blank=True
+    )
+    task_id = models.CharField(max_length=255)
+    model_name = models.CharField(max_length=255)
+    title = models.CharField(max_length=255)
+    audio_file = models.CharField(max_length=255)
+    photo_file = models.CharField(max_length=255)
+    example = models.CharField(max_length=255, blank=True, null=True)
+    styles = models.ManyToManyField(MusicStyle, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def str(self):
+        return f"{self.title} ({self.model_name})"

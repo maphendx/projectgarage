@@ -206,3 +206,11 @@ SIMPLE_JWT = {
 }
 
 GOOGLE_CLIENT_ID = "787039931575-u6m6gef67qnirlrn4icoonfedbgoigmi.apps.googleusercontent.com"
+
+# Налаштування для API нейромережі Hugging Face
+import os
+from dotenv import load_dotenv
+load_dotenv()
+HF_API_TOKEN = os.getenv("DUDOS")
+
+TEST_RUNNER = 'social_network_project.realdb_test_runner.RealDBTestRunner'

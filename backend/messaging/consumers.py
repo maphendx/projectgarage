@@ -25,23 +25,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         message = data['message']
         sender = self.scope["user"].display_name
+        # Отримання URL фото користувача (якщо фото існує)
+        sender_photo = self.scope["user"].photo.url if self.scope["user"].photo else ""
 
-        # Відправка повідомлення в групу
+        # Відправка повідомлення в групу з фото відправника
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
                 'message': message,
-                'sender': sender
+                'sender': sender,
+                'sender_photo': sender_photo,
             }
         )
 
     async def chat_message(self, event):
         message = event['message']
         sender = event['sender']
+        sender_photo = event.get('sender_photo', "")
 
         # Відправка повідомлення у WebSocket
         await self.send(text_data=json.dumps({
             'message': message,
-            'sender': sender
+            'sender': sender,
+            'sender_photo': sender_photo,
         }))

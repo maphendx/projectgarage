@@ -11,8 +11,6 @@ from django.db.models import Q
 from users.models import CustomUser
 from posts.models import Post
 from posts.serializers import PostSerializer
-from ai.models import Recommendation  # Імпортуємо модель Recommendation
-from ai.serializers import RecommendationSerializer  # Імпортуємо серіалізатор 
 from rest_framework_simplejwt.tokens import RefreshToken  
 import random  
 import string  
@@ -71,9 +69,6 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         """
         user = self.get_object()
         serializer = self.get_serializer(user)
-        recommendations = Recommendation.objects.filter(user=user)
-        serializer_recommendations = RecommendationSerializer(recommendations, many=True)
-        serializer.data['recommendations'] = serializer_recommendations.data
         return Response(serializer.data)
 
     def perform_update(self, serializer):
@@ -250,21 +245,6 @@ class RecommendationService:
         return recommended_users
 
 
-
-class RecommendationView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        """
-        Повертає список рекомендованих користувачів для поточного користувача на основі схожості їхніх інтересів та інших факторів.
-
-        :param запит: об'єкт запиту
-        :return: Список об'єктів користувача, серіалізованих як JSON, з кодом статусу 200
-        """
-        current_user = request.user
-        recommendations = RecommendationService.recommend_users(current_user, threshold=0.7) #Якщо користувачі мають невелику кількість спільних хештегів, великий поріг може призвести до порожніх рекомендацій.
-        serializer = UserProfileSerializer(recommendations, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class SearchView(APIView):
     permission_classes = [IsAuthenticated]
