@@ -211,5 +211,4 @@ GOOGLE_CLIENT_ID = "787039931575-u6m6gef67qnirlrn4icoonfedbgoigmi.apps.googleuse
 import os
 from dotenv import load_dotenv
 load_dotenv()
-MODEL_API_URL = "https://api-inference.huggingface.co/models/skroed/audiocraft_handler"
 HF_API_TOKEN = os.getenv("DUDOS")

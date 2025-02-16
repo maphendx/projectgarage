@@ -1,87 +1,161 @@
+import json
 import os
-import logging
+import uuid
 import requests
+from django.shortcuts import render
+from django.http import JsonResponse
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from rest_framework.views import APIView
+
+from .models import Song, MusicStyle
+
+# Імпортуємо необхідні модулі DRF
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
 
-logger = logging.getLogger(__name__)
+# Для home view – якщо хочемо обмежити доступ лише для зареєстрованих користувачів
+from django.contrib.auth.decorators import login_required
 
-# Використовуємо значення з налаштувань
-MODEL_API_URL = settings.MODEL_API_URL
-HF_API_TOKEN = settings.HF_API_TOKEN
-API_HEADERS = {"Authorization": f"Bearer {HF_API_TOKEN}"}
+# Конфігурація для Suno API
+SUNO_API_KEY = os.environ.get("SUNO_API_KEY")
+SUNO_BASE_URL = "https://apibox.erweima.ai"
+HEADERS = {
+    "Authorization": f"Bearer {SUNO_API_KEY}",
+    "Content-Type": "application/json"
+}
 
-class UploadMusicView(APIView):
+def download_file(url, folder, prefix):
     """
-    Ендпоінт для завантаження музичного файлу.
-    Файл зберігається тимчасово і надсилається до API нейромережі для обробки.
+    Завантажує файл з URL та зберігає його у вказану папку (відносно MEDIA_ROOT).
+    Повертає шлях до збереженого файлу.
     """
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            ext = os.path.splitext(url)[1] or ''
+            filename = f"{prefix}_{uuid.uuid4().hex}{ext}"
+            file_path = os.path.join(folder, filename)
+            # Зберігаємо через систему сховища Django
+            saved_path = default_storage.save(file_path, ContentFile(response.content))
+            return saved_path
+    except Exception as e:
+        print("Помилка при завантаженні файлу:", e)
+    return ""
 
-    def post(self, request, format=None):
-        file_obj = request.FILES.get('file')
-        if not file_obj:
-            return Response({'error': 'Файл не надіслано'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Збереження файлу тимчасово
-        file_path = default_storage.save(file_obj.name, file_obj)
-        file_full_path = os.path.join(default_storage.location, file_path)
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_audio(request):  # Відправка запиту на генерацію аудіо
+    payload = request.data  # DRF автоматично розбирає JSON
+    resp = requests.post(f"{SUNO_BASE_URL}/api/v1/generate", json=payload, headers=HEADERS)
+    return Response(resp.json(), status=resp.status_code)
 
-        try:
-            with open(file_full_path, "rb") as f:
-                files = {"file": f}
-                # Додавання timeout для запиту (наприклад, 30 секунд)
-                response = requests.post(MODEL_API_URL, headers=API_HEADERS, files=files, timeout=30)
-        except Exception as e:
-            logger.error("Помилка при виклику нейромережевого API: %s", str(e))
-            return Response({'error': 'Помилка при виклику нейромережевого API', 'details': str(e)},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        finally:
-            # Видаляємо тимчасово збережений файл
-            default_storage.delete(file_path)
-        
-        if response.status_code != 200:
-            logger.error("Нейромережеве API повернуло помилку: %s", response.text)
-            return Response({'error': 'Нейромережеве API повернуло помилку', 'details': response.text},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        # Повертаємо отриманий результат від нейромережі
-        return Response({'result': response.json()}, status=status.HTTP_200_OK)
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def extend_audio(request):  # Відправка запиту на розширення аудіо
+    payload = request.data
+    resp = requests.post(f"{SUNO_BASE_URL}/api/v1/generate/extend", json=payload, headers=HEADERS)
+    return Response(resp.json(), status=resp.status_code)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_generate_record(request):  # Отримання інформації про запис
+    task_id = request.query_params.get('taskId')
+    if not task_id:
+        return Response({"msg": "Параметр taskId є обов'язковим"}, status=400)
+    params = {"taskId": task_id}
+    resp = requests.get(f"{SUNO_BASE_URL}/api/v1/generate/record-info", params=params, headers=HEADERS)
+    return Response(resp.json(), status=resp.status_code)
 
-class ModifyMusicView(APIView):
-    """
-    Ендпоінт для модифікації вже завантаженої музики.
-    Приймає JSON з параметрами:
-        - music_url: URL завантаженого музичного файлу (можна зберігати його в базі або на файловому сервері)
-        - instruction: інструкція для нейромережі (наприклад, "додати барабани", "змінити мелодію" тощо)
-    """
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_credit(request):
+    resp = requests.get(f"{SUNO_BASE_URL}/api/v1/generate/credit", headers=HEADERS)
+    return Response(resp.json(), status=resp.status_code)
 
-    def post(self, request, format=None):
-        music_url = request.data.get('music_url')
-        instruction = request.data.get('instruction')
-        
-        if not music_url or not instruction:
-            return Response({'error': 'Параметри music_url та instruction є обов’язковими'},
-                            status=status.HTTP_400_BAD_REQUEST)
-        
-        payload = {
-            "music_url": music_url,
-            "instruction": instruction
-        }
-        
-        try:
-            response = requests.post(MODEL_API_URL, headers=API_HEADERS, json=payload, timeout=30)
-        except Exception as e:
-            logger.error("Помилка при виклику нейромережевого API: %s", str(e))
-            return Response({'error': 'Помилка при виклику нейромережевого API', 'details': str(e)},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        if response.status_code != 200:
-            logger.error("Нейромережеве API повернуло помилку: %s", response.text)
-            return Response({'error': 'Нейромережеве API повернуло помилку', 'details': response.text},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        return Response({'result': response.json()}, status=status.HTTP_200_OK)
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_lyrics(request):   # Відправка запиту на генерацію тексту
+    payload = request.data
+    resp = requests.post(f"{SUNO_BASE_URL}/api/v1/lyrics", json=payload, headers=HEADERS)
+    return Response(resp.json(), status=resp.status_code)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_lyrics_record(request):
+    task_id = request.query_params.get('taskId')
+    if not task_id:
+        return Response({"msg": "Параметр taskId є обов'язковим"}, status=400)
+    params = {"taskId": task_id}
+    resp = requests.get(f"{SUNO_BASE_URL}/api/v1/lyrics/record-info", params=params, headers=HEADERS)
+    return Response(resp.json(), status=resp.status_code)
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_wav(request):    # Відправка запиту на генерацію WAV
+    payload = request.data
+    resp = requests.post(f"{SUNO_BASE_URL}/api/v1/wav/generate", json=payload, headers=HEADERS)
+    return Response(resp.json(), status=resp.status_code)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_wav_record(request):
+    task_id = request.query_params.get('taskId')
+    if not task_id:
+        return Response({"msg": "Параметр taskId є обов'язковим"}, status=400)
+    params = {"taskId": task_id}
+    resp = requests.get(f"{SUNO_BASE_URL}/api/v1/wav/record-info", params=params, headers=HEADERS)
+    return Response(resp.json(), status=resp.status_code)
+
+# Callback-запит від Suno API – залишаємо відкритим, бо його викликає зовнішній сервіс
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([])  # Відключаємо перевірку автентифікації для callback
+def callback(request):    # Обробка callback від Suno API
+    try:
+        data = request.data
+    except Exception:
+        return Response({"msg": "Невірний формат JSON"}, status=400)
+
+    # Запис отриманих даних у файл для логування
+    with open("callback_log.json", "a", encoding="utf-8") as f:
+        f.write(json.dumps(data, ensure_ascii=False, indent=4) + "\n")
+
+    # Обробка callback даних: якщо код успіху 200, оброблюємо отримані треки
+    if data.get("code") == 200:
+        callback_data = data.get("data", {})
+        task_id = callback_data.get("task_id") or callback_data.get("taskId")
+        track_list = callback_data.get("data", [])
+        for track in track_list:
+            audio_url = track.get("audio_url")
+            image_url = track.get("image_url")
+            title = track.get("title")
+            model_name = track.get("model_name")
+            tags = track.get("tags", "")
+            # Завантаження аудіо та фото
+            audio_file_path = download_file(audio_url, "ai/music", task_id)
+            photo_file_path = download_file(image_url, "ai/photo", task_id)
+            # Обробка стилів (розділяємо по комі)
+            style_names = [s.strip() for s in tags.split(",") if s.strip()]
+            song = Song.objects.create(
+                task_id=task_id,
+                model_name=model_name,
+                title=title,
+                audio_file=audio_file_path,
+                photo_file=photo_file_path
+            )
+            for style_name in style_names:
+                style_obj, _ = MusicStyle.objects.get_or_create(name=style_name)
+                song.styles.add(style_obj)
+    return Response({"msg": "Callback отримано успішно"}, status=200)
+
+# Якщо потрібен доступ до домашньої сторінки лише для автентифікованих користувачів
+@login_required
+def home(request):
+    return render(request, 'index.html')
