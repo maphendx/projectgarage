@@ -1,7 +1,6 @@
-from django.urls import re_path
-from .consumers import VoiceConsumer, VoiceSignalingConsumer
+from django.urls import path
+from .consumers import VoiceSignalingConsumer
 
 websocket_urlpatterns = [
-    re_path(r'ws/voice/(?P<room_name>\w+)/$', VoiceConsumer.as_asgi()),
-    re_path(r'ws/signaling/$', VoiceSignalingConsumer.as_asgi()),
+    path('ws/voice/<str:room_name>/', VoiceSignalingConsumer.as_asgi()),
 ]

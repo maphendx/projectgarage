@@ -227,3 +227,35 @@ class EmojiListView(APIView):
         except FileNotFoundError:
             return Response({'error': 'База реакцій не знайдена.'}, status=status.HTTP_404_NOT_FOUND)
         return Response(emoji_data, status=status.HTTP_200_OK)
+
+class ChatRoomDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, room_id):
+        try:
+            chat_room = ChatRoom.objects.get(pk=room_id)
+        except ChatRoom.DoesNotExist:
+            return Response({'error': 'Чат не знайдено.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Перевіряємо, чи є запитувач учасником цього чату
+        if not chat_room.participants.filter(pk=request.user.pk).exists():
+            return Response({'error': 'Ви не є учасником цього чату.'}, status=status.HTTP_403_FORBIDDEN)
+
+        chat_room.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class MessageDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, message_id):
+        try:
+            message = Message.objects.get(pk=message_id)
+        except Message.DoesNotExist:
+            return Response({'error': 'Повідомлення не знайдено.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Переконуємося, що користувач є автором повідомлення
+        if message.sender != request.user:
+            return Response({'error': 'Ви не маєте дозволу видалити це повідомлення.'}, status=status.HTTP_403_FORBIDDEN)
+
+        message.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
