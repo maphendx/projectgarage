@@ -20,7 +20,14 @@ from django.core.files.storage import default_storage
 import tempfile
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+import random
+from django.db import models
+from users.models import CustomUser
+from nltk.metrics import jaccard_distance
+import logging
+from rest_framework.generics import ListAPIView
 
+logger = logging.getLogger(__name__)
 
 # Пост: список та деталі
 class PostListView(views.APIView):
@@ -250,52 +257,63 @@ class CommentDetailView(APIView):
             return Response({"detail": "Коментар не знайдено"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class RecommendedPostsView(APIView):
+class RecommendedPostsView(ListAPIView):
     permission_classes = [IsAuthenticated]
 
-    def calculate_content_similarity(self, post_content, user_interests):
-        """Підрахунок схожості контенту постів і інтересів користувача."""
-        vectorizer = TfidfVectorizer()
-        vectors = vectorizer.fit_transform([post_content] + user_interests)
-        similarity = cosine_similarity(vectors[0:1], vectors[1:])
-        return similarity.mean()
-
-    def get(self, request):
-        """
-        Повертає список рекомендованих постів для користувача, складений з репостів від підписок,
-        популярних постів, постів з релевантними хештегами та адаптивних рекомендацій на основі текстової схожості.
-        """
-        user = request.CustomUser
-
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        
         # Отримуємо підписки користувача
         subscriptions = user.subscriptions.all()
-
-        # Репости від підписок
-        reposts_from_subscriptions = Post.objects.filter(original_post__isnull=False, author__in=subscriptions )
-
-        # Популярні пости (на основі взаємодій)
-        popular_posts = Post.objects.annotate(
-            engagement_score=(Count('likes') + Count('post_comments') * 2 + Count('original_post') * 3)
-        ).filter(engagement_score__gte=50).order_by('-engagement_score')
-
-        # Пости з релевантними хештегами
-        relevant_hashtags = user.hashtags.all()
-        posts_with_relevant_hashtags = Post.objects.filter(hashtags__in=relevant_hashtags)
-
-        # Адаптивні рекомендації на основі текстової схожості
-        user_interests = [tag.name for tag in relevant_hashtags]
-        adaptive_recommendations = []
-        for post in Post.objects.all():
-            similarity_score = self.calculate_content_similarity(post.content, user_interests)
-            if similarity_score > 0.3:  # Поріг схожості (бажано ставити більше, але поки це тестова система буде така)
-                adaptive_recommendations.append(post)
-
-        # Об'єднання всіх рекомендацій
-        recommended_posts = (reposts_from_subscriptions | popular_posts | posts_with_relevant_hashtags | Post.objects.filter(id__in=[post.id for post in adaptive_recommendations])).distinct()
-
-        # Сериалізація та повернення результату
-        serializer = PostSerializer(recommended_posts, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK) 
+        
+        # Збираємо нові пости від підписаних користувачів
+        new_posts = Post.objects.filter(author__in=subscriptions).order_by('-created_at')
+        
+        # Отримуємо хештеги користувача
+        user_hashtags = set(user.hashtags.values_list('name', flat=True))
+        
+        # Перевірка наявності хештегів
+        if not user_hashtags:
+            logger.warning(f"User {user.id} has no hashtags.")
+            return Response({"message": "У вас немає хештегів для рекомендацій."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Збираємо рекомендовані пости
+        recommended_posts = set()  # Використовуємо множину для унікалізації
+        
+        # Додаємо нові пости до рекомендованих
+        recommended_posts.update(new_posts)
+        
+        # Пошук постів, які не в підписках, але мають спільні хештеги
+        other_posts = Post.objects.exclude(author__in=subscriptions)
+        
+        for post in other_posts:
+            post_hashtags = set(post.hashtags.values_list('name', flat=True))
+            # Перевіряємо наявність спільних хештегів за допомогою Jaccard distance
+            similarity = jaccard_distance(user_hashtags, post_hashtags)
+            if similarity < 0.5:  # Поріг схожості
+                recommended_posts.add(post)  # Додаємо лише ті пости, які відповідають порогу
+        
+        # Додаємо популярні пости (з найбільшою кількістю лайків)
+        popular_posts = Post.objects.annotate(likes_count=models.Count('likes')).order_by('-likes_count')[:5]
+        recommended_posts.update(popular_posts)
+        
+        # Додаємо нещодавні пости (наприклад, за останні 7 днів)
+        recent_posts = Post.objects.filter(created_at__gte=now() - timedelta(days=7)).exclude(author__in=subscriptions)
+        recommended_posts.update(recent_posts)
+        
+        # Додаємо випадковий пост, якщо є доступні пости
+        all_posts = Post.objects.all()
+        if all_posts.exists():
+            random_post = random.choice(all_posts)
+            recommended_posts.add(random_post)
+        
+        # Перетворюємо множину назад у список для серіалізації
+        recommended_posts = list(recommended_posts)
+        
+        # Серіалізуємо дані постів
+        serializer = PostSerializer(recommended_posts, many=True, context={'request': request})
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class RecentLikesView(APIView):

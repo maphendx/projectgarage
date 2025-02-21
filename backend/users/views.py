@@ -84,14 +84,15 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         serializer.save()
 
 
-class UserProfileDetailView(generics.ListAPIView):
-    serializer_class = PostSerializer
+class UserProfileDetailView(generics.GenericAPIView):
+    serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
+    def get(self, request, pk):
         """Отримання постів для конкретного користувача за його ID."""
-        user_id = self.kwargs['user_id']
-        return Post.objects.filter(author__id=user_id).order_by('-created_at')
+        #user_id = self.kwargs['user_id']
+        serializer = self.get_serializer(CustomUser.objects.get(pk=pk))
+        return Response(serializer.data)
 
 
 # Вихід з акаунту (інвалідизація токену)
@@ -165,9 +166,9 @@ class SubscriptionsView(APIView):
 
     def post(self, request, user_id):
         try:
-            user_to_follow = CustomUser.objects.get(id = user_id)
+            user_to_follow = CustomUser.objects.get(id=user_id)
             request.user.subscribe(user_to_follow)
-            return Response({"message": f"Ви підписались на {user_to_follow.username}"}, status=status.HTTP_200_OK)
+            return Response({"message": f"Ви підписались на {user_to_follow.display_name}"}, status=status.HTTP_200_OK)
         except CustomUser.DoesNotExist:
             return Response({"message": "Користувача не знайдено"}, status=status.HTTP_404_NOT_FOUND)
 

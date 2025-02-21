@@ -28,7 +28,7 @@ class VoiceSignalingConsumer(AsyncWebsocketConsumer):
         else:
             print("X")
             await self.close()
- 
+
     async def disconnect(self, close_code):
         # При відключенні видаляємо користувача зі списку
         if self.my_id is not None:
@@ -43,6 +43,7 @@ class VoiceSignalingConsumer(AsyncWebsocketConsumer):
         msg_type = data.get("type")
         
         print("ПЕРЕСИЛКА ЛИСТА", text_data)
+        #print("ПОТОЧНА БАЗА БАЗОВАНА: ", connected_peers)
 
         if msg_type == "join":
             # Якщо користувач вже приєднався, ігноруємо повторне приєднання
@@ -60,13 +61,17 @@ class VoiceSignalingConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps(response))
             print(f"Користувач {self.my_id} приєднався. Інші користувачі: {user_list}")
             
-        elif msg_type in ("offer", "answer", "candidate"):
+        elif msg_type in ("offer", "answer", "candidate", "leave"):
             # Обробка сигналізаційних повідомлень: offer, answer, candidate
             target_id = data.get("to")
             if target_id is None:
                 # Якщо не зазначено отримувача, ігноруємо повідомлення
                 return
-            target_channel = connected_peers[self.room_group_name].get(target_id)
+            # ########
+            # print("ПОТОЧНА БАЗА БАЗОВАНА: ", connected_peers[self.room_group_name])
+            # print(f"🔎 Шукаємо {target_id} серед {connected_peers[self.room_group_name].keys()}")
+            # print(f"📊 Тип target_id: {type(target_id)}")
+            target_channel = connected_peers[self.room_group_name].get(int(target_id))
             if target_channel:
                 # Додаємо інформацію про відправника
                 data["from"] = self.my_id

@@ -17,6 +17,7 @@ urlpatterns = [
     # Шляхи для постів
     path('posts/', PostListView.as_view(), name='post-list'),  # Список всіх постів
     path('posts/<int:pk>/', PostDetailView.as_view(), name='post-detail'),  # Деталі поста
+    
     path('posts/recomendations/post/', RecommendedPostsView.as_view(), name='post-recommendation'),  # Рекомендації
 
     # Шляхи для коментарів

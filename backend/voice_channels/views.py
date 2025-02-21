@@ -18,14 +18,28 @@ class oneVoice_channelView(GenericAPIView):
             return Response(ret.data)
         except VoiceChannel.DoesNotExist:
             return Response({"detail": "Голосовий канал не знайдено, або вас до нього не додано"}, status=status.HTTP_404_NOT_FOUND)
-        
+
     def delete(self, request, pk):
         try:
             channel = request.user.voice_chats.get(pk=pk)
-            request.user.voice_chats.remove(channel)
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            if channel.creator == request.user:
+                channel.delete()
+                return Response({"message": "Голосовий канал успішно видалено!"})
+            else:
+                raise VoiceChannel.DoesNotExist
         except VoiceChannel.DoesNotExist:
             return Response({"detail": "Голосовий канал не знайдено, або у вас недостатньо прав для цієї дії"}, status=status.HTTP_404_NOT_FOUND)
+
+class myVoicesView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            voices = request.user.voice_chats.all()
+            voices_data = VoiceChannelSerializer(voices, many=True).data
+            return Response(voices_data)
+        except VoiceChannel.DoesNotExist:
+            return Response({"detail": "Помилка!"}, status=status.HTTP_400_BAD_REQUEST)
 
 class voice_channelView(GenericAPIView):
     permission_classes = [IsAuthenticated]

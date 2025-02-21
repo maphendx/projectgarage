@@ -240,3 +240,83 @@ def list_user_songs(request):
             "created_at": song.created_at
         })
     return Response({"songs": songs_list}, status=200)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_generate_record(request):
+    """
+    Ендпоінт для отримання інформації про завдання генерації аудіо.
+    Повертає деталі завдання, включаючи статус та результати.
+    """
+    task_id = request.query_params.get("taskId")
+    if not task_id:
+        return Response({"msg": "taskId є обов'язковим"}, status=400)
+
+    try:
+        task_record = GenerationTask.objects.get(task_id=task_id, user=request.user)
+        return Response({
+            "taskId": task_record.task_id,
+            "status": task_record.status,
+            "result": task_record.result,
+            "example": task_record.example,
+            "created_at": task_record.created_at
+        }, status=200)
+    except GenerationTask.DoesNotExist:
+        return Response({"msg": "Завдання не знайдено"}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_credit(request):
+    """
+    Ендпоінт для перевірки кількості залишкових кредитів.
+    Повертає кількість кредитів, доступних для користувача.
+    """
+    # Припустимо, що у вас є модель User з полем credits
+    credits = request.user.credits  # або інший спосіб отримання кредитів
+    return Response({"credits": credits}, status=200)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_lyrics_record(request):
+    """
+    Ендпоінт для отримання інформації про завдання генерації текстів.
+    Повертає деталі завдання, включаючи статус та результати.
+    """
+    task_id = request.query_params.get("taskId")
+    if not task_id:
+        return Response({"msg": "taskId є обов'язковим"}, status=400)
+
+    try:
+        task_record = GenerationTask.objects.get(task_id=task_id, user=request.user)
+        return Response({
+            "taskId": task_record.task_id,
+            "status": task_record.status,
+            "result": task_record.result,
+            "example": task_record.example,
+            "created_at": task_record.created_at
+        }, status=200)
+    except GenerationTask.DoesNotExist:
+        return Response({"msg": "Завдання не знайдено"}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_wav_record(request):
+    """
+    Ендпоінт для отримання інформації про завдання генерації WAV.
+    Повертає деталі завдання, включаючи статус та результати.
+    """
+    task_id = request.query_params.get("taskId")
+    if not task_id:
+        return Response({"msg": "taskId є обов'язковим"}, status=400)
+
+    try:
+        task_record = GenerationTask.objects.get(task_id=task_id, user=request.user)
+        return Response({
+            "taskId": task_record.task_id,
+            "status": task_record.status,
+            "result": task_record.result,
+            "example": task_record.example,
+            "created_at": task_record.created_at
+        }, status=200)
+    except GenerationTask.DoesNotExist:
+        return Response({"msg": "Завдання не знайдено"}, status=404)

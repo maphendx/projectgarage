@@ -70,8 +70,9 @@ class CustomUser(models.Model):
     def subscribe(self, user):
         """Підписка на користувача."""
         self.subscriptions.add(user)
-        self.subscriptions_count = self.subscriptions.count()  # оновлюємо кількість підписок
-        user.subscribers_count = user.subscribers.count()  # оновлюємо кількість підписаних
+        # Оновлюємо кількість підписок, але не присвоюємо значення властивості
+        self.subscriptions_count  # просто викликаємо, щоб оновити значення
+        user.subscribers_count  # просто викликаємо, щоб оновити значення
         self.save()
         user.save()
 

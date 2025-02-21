@@ -25,7 +25,7 @@ urlpatterns = [
     path('api/posts/', include('posts.urls')),
     path('api/messaging/', include('messaging.urls')),
     path('api/voice_channels/', include('voice_channels.urls')),
-    #path('api/ai/', include('ai.urls')),
+    path('api/ai/', include('ai.urls')),
 ]
 
 
