@@ -114,8 +114,8 @@ const Profile: React.FC = () => {
         const currentHashtags =
           userData?.hashtags?.map((tag) =>
             typeof tag === 'object' && tag !== null
-              ? (tag as { name: string }).name.replace(/^#/, '').trim()
-              : tag.replace(/^#/, '').trim(),
+              ? (tag as { name: string }).name
+              : tag,
           ) || [];
 
         // Remove hashtags one by one
@@ -150,8 +150,14 @@ const Profile: React.FC = () => {
         for (const hashtag of newHashtags) {
           const cleanHashtag = hashtag.replace(/^#/, '').trim();
 
+          // Skip empty hashtags
+          if (!cleanHashtag) {
+            continue;
+          }
+
           if (!currentHashtags.includes(cleanHashtag)) {
             try {
+              console.log('Sending hashtag:', { hashtag: cleanHashtag }); // Debug log
               const response = await fetchClient(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`,
                 {

@@ -22,6 +22,21 @@ export default function NotificationsPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  const fetchUserData = async (url: string): Promise<UserData | null> => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error(`Error: ${response.status} - ${response.statusText}`);
+        throw new Error('Network response was not ok');
+      }
+      const data: UserData = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Fetch data error:', error);
+      return null;
+    }
+  };
+
   const fetchNotifications = async (url: string) => {
     try {
       const dataResponse = await fetchClient(url);
@@ -79,6 +94,18 @@ export default function NotificationsPage() {
   const removeNotification = (index: number) => {
     setNotifications((prev) => prev.filter((_, i) => i !== index));
   };
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      const userDataResponse = await fetchUserData(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/profile/`,
+      );
+      if (userDataResponse) {
+        setUserData(userDataResponse);
+      }
+    };
+    loadUserData();
+  }, [router]);
 
   useEffect(() => {
     const loadUserData = async () => {
