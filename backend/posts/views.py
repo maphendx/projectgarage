@@ -6,9 +6,7 @@ from rest_framework.exceptions import ValidationError
 from .models import Post, Comment, Like, PostImage, PostVideo, PostAudio, Notification
 from rest_framework import status
 from .serializers import PostSerializer, CommentSerializer
-from django.db.models import Count 
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+
 from datetime import timedelta
 from django.utils.timezone import now
 from django.db import transaction
@@ -20,12 +18,11 @@ from django.core.files.storage import default_storage
 import tempfile
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-import random
-from django.db import models
-from users.models import CustomUser
-from nltk.metrics import jaccard_distance
 import logging
 from rest_framework.generics import ListAPIView
+from django.utils import timezone
+from nltk import jaccard_distance
+
 
 logger = logging.getLogger(__name__)
 
@@ -260,61 +257,55 @@ class CommentDetailView(APIView):
 class RecommendedPostsView(ListAPIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        
-        # Отримуємо підписки користувача
-        subscriptions = user.subscriptions.all()
-        
-        # Збираємо нові пости від підписаних користувачів
-        new_posts = Post.objects.filter(author__in=subscriptions).order_by('-created_at')
-        
-        # Отримуємо хештеги користувача
-        user_hashtags = set(user.hashtags.values_list('name', flat=True))
-        
-        # Перевірка наявності хештегів
-        if not user_hashtags:
-            logger.warning(f"User {user.id} has no hashtags.")
-            return Response({"message": "У вас немає хештегів для рекомендацій."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Збираємо рекомендовані пости
-        recommended_posts = set()  # Використовуємо множину для унікалізації
-        
-        # Додаємо нові пости до рекомендованих
-        recommended_posts.update(new_posts)
-        
-        # Пошук постів, які не в підписках, але мають спільні хештеги
-        other_posts = Post.objects.exclude(author__in=subscriptions)
-        
-        for post in other_posts:
-            post_hashtags = set(post.hashtags.values_list('name', flat=True))
-            # Перевіряємо наявність спільних хештегів за допомогою Jaccard distance
-            similarity = jaccard_distance(user_hashtags, post_hashtags)
-            if similarity < 0.5:  # Поріг схожості
-                recommended_posts.add(post)  # Додаємо лише ті пости, які відповідають порогу
-        
-        # Додаємо популярні пости (з найбільшою кількістю лайків)
-        popular_posts = Post.objects.annotate(likes_count=models.Count('likes')).order_by('-likes_count')[:5]
-        recommended_posts.update(popular_posts)
-        
-        # Додаємо нещодавні пости (наприклад, за останні 7 днів)
-        recent_posts = Post.objects.filter(created_at__gte=now() - timedelta(days=7)).exclude(author__in=subscriptions)
-        recommended_posts.update(recent_posts)
-        
-        # Додаємо випадковий пост, якщо є доступні пости
-        all_posts = Post.objects.all()
-        if all_posts.exists():
-            random_post = random.choice(all_posts)
-            recommended_posts.add(random_post)
-        
-        # Перетворюємо множину назад у список для серіалізації
-        recommended_posts = list(recommended_posts)
-        
-        # Серіалізуємо дані постів
-        serializer = PostSerializer(recommended_posts, many=True, context={'request': request})
-        
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        user = self.request.user
+        one_hour_ago = timezone.now() - timedelta(hours=1)
 
+        # Отримуємо всі пости, які не були лайкнуті користувачем
+        posts = Post.objects.exclude(likes=user)
+
+        recommendations = []
+        for post in posts:
+            score = 0
+
+            # Критерій 1: Якщо пост опублікований користувачем, на якого підписаний юзер
+            if post.author in user.subscriptions.all():
+                score += 0.3
+
+            # Критерій 2: Якщо пост має спільні хештеги з користувачем
+            user_hashtags = set(user.hashtags.values_list('name', flat=True))
+            post_hashtags = set(post.hashtags.values_list('name', flat=True))
+
+            if user_hashtags and post_hashtags:
+                similarity = 1 - jaccard_distance(set(user_hashtags), set(post_hashtags))
+                if similarity > 0:
+                    score += 0.25 * similarity  # Додаємо до оцінки пропорційно до схожості
+
+            # Критерій 3: Якщо пост має велику кількість лайків
+            if post.likes.count() > 10:  # Приклад: більше 10 лайків
+                score += 0.2
+
+            # Критерій 4: Якщо пост був опублікований в межах 7 днів
+            if post.created_at >= timezone.now() - timedelta(days=7):
+                score += 0.15
+
+            # Критерій 5: Якщо в хештегах поста є слово #chort
+            if '#chort' in post_hashtags:
+                score += 0.1
+
+            # Додаємо пост і його оцінку до списку рекомендацій
+            recommendations.append((post, score))
+
+        # Сортуємо рекомендації за оцінкою від 1 до 0
+        recommendations.sort(key=lambda x: x[1], reverse=True)
+
+        # Повертаємо лише пости, без оцінок
+        return [post for post, score in recommendations]
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = PostSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class RecentLikesView(APIView):
     permission_classes = [IsAuthenticated]
