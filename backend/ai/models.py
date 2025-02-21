@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 class MusicStyle(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -14,7 +14,7 @@ class GenerationTask(models.Model):
         ('lyrics', 'Lyrics Generation'),
         ('wav', 'WAV Generation'),
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="generation_tasks", null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,  related_name="generation_tasks", null=True, blank=True)
     task_id = models.CharField(max_length=255, blank=True, null=True)
     request_type = models.CharField(max_length=50, choices=REQUEST_TYPES)
     example = models.CharField(max_length=255, blank=True, null=True)
@@ -23,11 +23,11 @@ class GenerationTask(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.request_type} task {self.task_id or 'pending'}"
+        return f"Task {self.id}"
 
 class Song(models.Model):
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="songs",
         null=True,
