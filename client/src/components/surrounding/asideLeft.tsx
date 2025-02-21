@@ -111,14 +111,6 @@ const AsidePanelLeft: React.FC = () => {
             text='Головна'
           />
           <AsideListComponent
-            href='/servers'
-            icon={{
-              Solid: ServerStackSolidIcon,
-              Outline: ServerStackOutlineIcon,
-            }}
-            text='Сервери'
-          />
-          <AsideListComponent
             href='/chats'
             icon={{ Solid: ChatSolidIcon, Outline: ChatOutlineIcon }}
             text='Чати'
@@ -137,7 +129,7 @@ const AsidePanelLeft: React.FC = () => {
             text='Блоги'
           />
         </div>
-        <div className='mb-96 mt-5 border-t border-gray-700 pt-2'>
+        <div className='mb-[440px] mt-5 border-t border-gray-700 pt-2'>
           <AsideListComponent
             href='/favorites'
             icon={{ Solid: HeartSolidIcon, Outline: HeartOutlineIcon }}
@@ -152,11 +144,6 @@ const AsidePanelLeft: React.FC = () => {
             href='/playlists'
             icon={{ Solid: QueueSolidIcon, Outline: QueueOutlineIcon }}
             text='Плейлисти'
-          />
-          <AsideListComponent
-            href='/downloads'
-            icon={{ Solid: DownloadSolidIcon, Outline: DownloadOutlineIcon }}
-            text='Завантаження'
           />
         </div>
       </div>
