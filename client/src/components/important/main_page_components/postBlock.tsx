@@ -22,10 +22,14 @@ export const PostBlock = ({
   const [repostedPost, setRepostedPost] = useState<Post | null>(null);
   const [commentList, setCommentList] = useState([]);
   const { showError } = useError();
+  const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
 
   useEffect(() => {
     if (post.original_post) {
       loadRepostedPost(post.original_post);
+    }
+    if (getUser && post.author.subscribers) {
+      setIsSubscribed(post.author.subscribers.includes(getUser.id));
     }
   }, [post]);
 
@@ -115,6 +119,29 @@ export const PostBlock = ({
           is_liked: !post.is_liked,
         });
       }
+    } catch (error) {
+      showError(`${error}`, 'error');
+    }
+  };
+
+  const handleSubscribe = async () => {
+    try {
+      const dataResponse = await fetchClient(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/${post.author.id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (!dataResponse.ok) {
+        const error_text = await dataResponse.json();
+        throw new Error(JSON.stringify(error_text));
+      }
+
+      setIsSubscribed(!isSubscribed);
     } catch (error) {
       showError(`${error}`, 'error');
     }
@@ -242,6 +269,20 @@ export const PostBlock = ({
               iconClass='fas fa-share mr-1'
             />
           </motion.div>
+          {getUser?.id !== post.author.id && (
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+            >
+              <PostButton
+                text={isSubscribed ? 'Unsubscribe' : 'Subscribe'}
+                onClick={handleSubscribe}
+                iconClass='fas fa-user-plus mr-1'
+                additionClasses={isSubscribed ? 'font-bold text-white' : ''}
+              />
+            </motion.div>
+          )}
         </div>
       </div>
       <CommentBlock

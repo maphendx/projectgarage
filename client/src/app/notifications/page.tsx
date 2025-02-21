@@ -24,7 +24,7 @@ export default function NotificationsPage() {
 
   const fetchUserData = async (url: string): Promise<UserData | null> => {
     try {
-      const response = await fetch(url);
+      const response = await fetchClient(url);
       if (!response.ok) {
         console.error(`Error: ${response.status} - ${response.statusText}`);
         throw new Error('Network response was not ok');
@@ -118,20 +118,6 @@ export default function NotificationsPage() {
     };
     loadUserData();
   }, [router]);
-
-  async function fetchData(url: string): Promise<UserData | null> {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const data: UserData = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Fetch data error:', error);
-      return null;
-    }
-  }
 
   return (
     <motion.div

@@ -44,13 +44,11 @@ interface Reaction {
 interface Message {
   id: number;
   chat: number;
-  sender: string;
-  sender_id: number;
+  sender: number;
   sender_name?: string;
-  sender_avatar?: string;
+  sender_photo?: string;
   content: string;
   timestamp: string;
-  temporary?: boolean;
   reactions?: Reaction[];
 }
 
@@ -190,9 +188,7 @@ export default function ChatPage() {
     };
     fetchMessages();
 
-    const ws = new WebSocket(
-      `${WS_BASE_URL}/ws/chat/${encodeURIComponent(selectedRoom.name)}/`,
-    );
+    const ws = new WebSocket(`${WS_BASE_URL}/ws/chat/${selectedRoom.id}/`);
 
     ws.onopen = () => {
       console.log('WebSocket Connected');
@@ -204,19 +200,24 @@ export default function ChatPage() {
         setMessages((prev) => [
           ...prev,
           {
-            id: Date.now(),
+            id: data.id || Date.now(),
             chat: selectedRoom.id,
-            sender: data.sender,
-            sender_id: data.sender_id,
-            sender_name: data.sender_name,
+            sender: data.sender_id,
+            sender_name: data.sender,
+            sender_photo: data.sender_photo,
             content: data.message,
             timestamp: new Date().toISOString(),
+            reactions: [],
           },
         ]);
         scrollToBottom();
       } catch (error) {
         console.error('Error processing message:', error);
       }
+    };
+
+    ws.onerror = () => {
+      showError(ErrorMessages.WS_ERROR, 'error');
     };
 
     setWebSocket(ws);
@@ -226,7 +227,7 @@ export default function ChatPage() {
         ws.close();
       }
     };
-  }, [selectedRoom]);
+  }, [selectedRoom, scrollToBottom, showError]);
 
   const handleSendMessage = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -248,29 +249,7 @@ export default function ChatPage() {
 
       if (!response) throw new Error(ErrorMessages.SEND_ERROR);
 
-      const tempMessage: Message = {
-        id: response.id,
-        chat: selectedRoom.id,
-        sender: userData.display_name,
-        sender_id: userData.id,
-        sender_name: userData.display_name,
-        content: newMessage.trim(),
-        timestamp: new Date().toISOString(),
-      };
-
-      setMessages((prev) => [...prev, tempMessage]);
       setNewMessage('');
-      scrollToBottom();
-
-      if (webSocket?.readyState === WebSocket.OPEN) {
-        webSocket.send(
-          JSON.stringify({
-            type: 'chat_message',
-            message: newMessage.trim(),
-            sender: userData.display_name,
-          }),
-        );
-      }
     } catch (error) {
       showError(
         error instanceof Error ? error.message : ErrorMessages.SEND_ERROR,
@@ -504,27 +483,74 @@ export default function ChatPage() {
                                   exit='exit'
                                   transition={{ delay: index * 0.05 }}
                                   className={`mb-4 max-w-[80%] ${
-                                    msg.sender_id === userData?.id
+                                    msg.sender === userData?.id
                                       ? 'ml-auto'
                                       : 'mr-auto'
                                   }`}
                                 >
-                                  {/* Only display sender name if message is not from current user */}
-                                  {msg.sender_id !== userData?.id && (
-                                    <p className='mb-1 text-xs font-bold text-gray-300'>
-                                      {msg.sender_name}
-                                    </p>
-                                  )}
-                                  <div
-                                    className={`rounded-xl p-3 ${
-                                      msg.sender_id === userData?.id
-                                        ? 'bg-[#6374B6] text-white'
-                                        : 'bg-white/10 text-gray-200'
-                                    } relative`}
-                                  >
-                                    <p className='text-sm text-white'>
-                                      {msg.content}
-                                    </p>
+                                  <div className='flex items-start gap-2'>
+                                    {msg.sender !== userData?.id &&
+                                      msg.sender_photo && (
+                                        <img
+                                          src={msg.sender_photo}
+                                          alt={msg.sender_name}
+                                          className='h-8 w-8 rounded-full'
+                                        />
+                                      )}
+                                    <div>
+                                      {msg.sender !== userData?.id && (
+                                        <p className='mb-1 text-xs font-bold text-gray-300'>
+                                          {msg.sender_name}
+                                        </p>
+                                      )}
+                                      <div
+                                        className={`relative rounded-xl p-3 ${
+                                          msg.sender === userData?.id
+                                            ? 'bg-[#6374B6] text-white'
+                                            : 'bg-white/10 text-gray-200'
+                                        }`}
+                                      >
+                                        <p className='text-sm'>{msg.content}</p>
+
+                                        {/* Reactions */}
+                                        {msg.reactions &&
+                                          msg.reactions.length > 0 && (
+                                            <div className='mt-2 flex gap-1'>
+                                              {msg.reactions.map((reaction) => (
+                                                <span
+                                                  key={reaction.id}
+                                                  className='rounded bg-white/10 px-2 py-1 text-xs'
+                                                  title={`Реакція від ${reaction.user}`}
+                                                >
+                                                  {reaction.reaction}
+                                                </span>
+                                              ))}
+                                            </div>
+                                          )}
+
+                                        {/* Reaction buttons */}
+                                        <div className='mt-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100'>
+                                          {[
+                                            'like',
+                                            'love',
+                                            'laugh',
+                                            'wow',
+                                            'sad',
+                                            'angry',
+                                          ].map((reaction) => (
+                                            <button
+                                              key={reaction}
+                                              onClick={() =>
+                                                handleReaction(msg.id, reaction)
+                                              }
+                                              className='rounded bg-white/5 p-1 text-xs hover:bg-white/10'
+                                            >
+                                              {reaction}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 </motion.div>
                               ))}

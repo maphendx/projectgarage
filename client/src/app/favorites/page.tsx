@@ -58,14 +58,8 @@ export default function FavoritesPage() {
 
   const fetchUserData = async (): Promise<UserData | null> => {
     try {
-      const token = await refreshAccessToken();
-      const response = await fetch(
+      const response = await fetchClient(
         `${process.env.NEXT_PUBLIC_API_URL}/api/users/profile/`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
       );
       if (!response.ok) {
         console.error(`Error: ${response.status} - ${response.statusText}`);
