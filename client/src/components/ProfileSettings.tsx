@@ -18,6 +18,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 }) => {
   const [bio, setBio] = useState<string>('');
   const [hashtags, setHashtags] = useState<string[]>(initialHashtags);
+  const [hashtagInput, setHashtagInput] = useState<string>('');
   const router = useRouter();
 
   useEffect(() => {
@@ -28,20 +29,43 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     setBio(event.target.value);
   };
 
-  const handleHashtagsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    const newHashtags = value
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter((tag) => tag);
-    setHashtags(newHashtags);
+  const handleHashtagInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setHashtagInput(event.target.value);
+  };
+
+  const handleHashtagKeyPress = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault();
+      let newTag = hashtagInput.trim();
+      if (newTag.startsWith('#')) {
+        newTag = newTag.substring(1);
+      }
+      if (newTag && !hashtags.includes(newTag)) {
+        setHashtags([...hashtags, newTag]);
+        setHashtagInput('');
+      }
+    }
+  };
+
+  const removeHashtag = (tagToRemove: string) => {
+    const cleanTag = tagToRemove.startsWith('#')
+      ? tagToRemove.substring(1)
+      : tagToRemove;
+    setHashtags(hashtags.filter((tag) => tag !== cleanTag));
   };
 
   const handleSave = () => {
     if (bio) {
       onUpdateBio(bio);
     }
-    onUpdateHashtags(hashtags);
+    const cleanedHashtags = hashtags.map((tag) =>
+      tag.startsWith('#') ? tag.substring(1) : tag,
+    );
+    onUpdateHashtags(cleanedHashtags);
     onClose();
   };
 
@@ -93,16 +117,33 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         <label htmlFor='hashtags' className='block text-white'>
           Хештеги
         </label>
+        <div className='mb-2 flex flex-wrap gap-2'>
+          {hashtags.map((tag, index) => (
+            <span
+              key={index}
+              className='flex items-center rounded-full bg-[#6374B6] px-3 py-1 text-sm text-white'
+            >
+              #{tag}
+              <button
+                onClick={() => removeHashtag(tag)}
+                className='ml-2 text-white hover:text-red-300'
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
         <input
           id='hashtags'
           type='text'
-          value={hashtags.join(', ')}
-          onChange={handleHashtagsChange}
-          placeholder='Enter hashtags separated by commas'
+          value={hashtagInput}
+          onChange={handleHashtagInputChange}
+          onKeyPress={handleHashtagKeyPress}
+          placeholder='Введіть хештег та натисніть Enter'
           className='w-full rounded-lg border border-gray-600 bg-[#1C1C1F] p-2 text-white'
         />
         <p className='mt-2 text-sm text-gray-400'>
-          Введіть хештеги (e.g., "photography, music, coding").
+          Натисніть Enter або кому для додавання хештегу
         </p>
       </div>
 

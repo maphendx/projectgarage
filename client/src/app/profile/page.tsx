@@ -42,6 +42,7 @@ const Profile: React.FC = () => {
     localStorage.removeItem('refresh_token');
     router.push('/');
   };
+
   const handleProfilePhotoClick = () => {
     setEasterEggCounter((prev) => prev + 1);
     if (easterEggCounter === 4) {
@@ -49,6 +50,7 @@ const Profile: React.FC = () => {
       setEasterEggCounter(0);
     }
   };
+
   const fetchUserData = async () => {
     try {
       const response = await fetchClient(
@@ -108,40 +110,73 @@ const Profile: React.FC = () => {
   const handleUpdateHashtags = async (newHashtags: string[]) => {
     if (isOwnProfile) {
       try {
-        const currentHashtags = userData?.hashtags || [];
+        // Get current hashtags, ensuring we're working with clean hashtag names
+        const currentHashtags =
+          userData?.hashtags?.map((tag) =>
+            typeof tag === 'object' && tag !== null
+              ? (tag as { name: string }).name.replace(/^#/, '').trim()
+              : tag.replace(/^#/, '').trim(),
+          ) || [];
 
-        // Remove hashtags
+        // Remove hashtags one by one
         for (const hashtag of currentHashtags) {
-          if (!newHashtags.includes(hashtag)) {
-            await fetchClient(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`,
-              {
-                method: 'DELETE',
-                headers: {
-                  'Content-Type': 'application/json',
+          const cleanHashtag = hashtag.replace(/^#/, '').trim();
+          if (
+            !newHashtags
+              .map((tag) => tag.replace(/^#/, '').trim())
+              .includes(cleanHashtag)
+          ) {
+            try {
+              const response = await fetchClient(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`,
+                {
+                  method: 'DELETE',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ hashtag: cleanHashtag }),
                 },
-                body: JSON.stringify({ hashtag }),
-              },
-            );
+              );
+              if (!response.ok) {
+                console.warn(`Could not delete hashtag: ${cleanHashtag}`);
+              }
+            } catch (error) {
+              console.warn(`Error deleting hashtag: ${cleanHashtag}`, error);
+            }
           }
         }
 
-        // Add new hashtags
+        // Add new hashtags one by one
         for (const hashtag of newHashtags) {
-          if (!currentHashtags.includes(hashtag)) {
-            await fetchClient(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
+          const cleanHashtag = hashtag.replace(/^#/, '').trim();
+
+          if (!currentHashtags.includes(cleanHashtag)) {
+            try {
+              const response = await fetchClient(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ hashtag: cleanHashtag }),
                 },
-                body: JSON.stringify({ hashtag }),
-              },
-            );
+              );
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                console.warn(
+                  `Could not add hashtag: ${cleanHashtag}`,
+                  errorData,
+                );
+              }
+            } catch (error) {
+              console.warn(`Error adding hashtag: ${cleanHashtag}`, error);
+            }
           }
         }
 
+        // Refresh user data after all updates
         await fetchUserData();
       } catch (err) {
         console.error('Error updating hashtags:', err);
@@ -150,7 +185,7 @@ const Profile: React.FC = () => {
   };
 
   if (!userData) {
-    return <div className='mt-20 text-center text-white'>Loading...</div>;
+    return <div className='mt-20 text-center text-white'>Завантаження...</div>;
   }
 
   return (
