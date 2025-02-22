@@ -28,8 +28,8 @@ export const PostBlock = ({
     if (post.original_post) {
       loadRepostedPost(post.original_post);
     }
-    if (getUser && post.author.subscribers) {
-      setIsSubscribed(post.author.subscribers.includes(getUser.id));
+    if (getUser) {
+      checkSubscriptionStatus();
     }
   }, [post]);
 
@@ -51,6 +51,27 @@ export const PostBlock = ({
       }
 
       setRepostedPost(data);
+    } catch (error) {
+      showError(`${error}`, 'error');
+    }
+  };
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      const response = await fetchClient(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/${post.author.id}/list/`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (response.ok) {
+        const subscribers = await response.json();
+        setIsSubscribed(subscribers.some((sub: any) => sub.id === getUser?.id));
+      }
     } catch (error) {
       showError(`${error}`, 'error');
     }
@@ -127,9 +148,9 @@ export const PostBlock = ({
   const handleSubscribe = async () => {
     try {
       const dataResponse = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/${post.author.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/subscriptions/${post.author.id}`,
         {
-          method: 'POST',
+          method: isSubscribed ? 'DELETE' : 'POST',
           headers: {
             'Content-Type': 'application/json',
           },

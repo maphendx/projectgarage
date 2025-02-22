@@ -9,21 +9,15 @@ import Topbar from '@/components/surrounding/topbar';
 import AsidePanelLeft from '@/components/surrounding/asideLeft';
 import { AsidePanelRight } from '@/components/surrounding/asideRight';
 import MusicPlayer from '@/components/surrounding/player';
+import { UserData } from '@/components/not_components';
+import fetchClient from '@/other/fetchClient';
 
 const SunoDemoPage = () => {
   const router = useRouter();
   const { showError } = useError();
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Check authentication on load
-  useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      router.push('/auth');
-    }
-    setIsLoading(false);
-  }, [router]);
+  const [error, setError] = useState<string | null>(null);
 
   // Можливі режими запиту
   const [activeTab, setActiveTab] = useState<
@@ -67,6 +61,54 @@ const SunoDemoPage = () => {
     callBackUrl: '',
     example: '',
   });
+
+  useEffect(() => {
+    error && showError(error, 'error');
+  }, [error]);
+
+  const fetchUserData = async (): Promise<UserData | null> => {
+    try {
+      const response = await fetchClient(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/profile/`,
+      );
+      if (!response.ok) {
+        console.error(`Error: ${response.status} - ${response.statusText}`);
+        throw new Error('Network response was not ok');
+      }
+      const data: UserData = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Fetch data error:', error);
+      return null;
+    }
+  };
+
+  // Check authentication and load user data on mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          router.push('/auth');
+          return;
+        }
+
+        const userDataResponse = await fetchUserData();
+        if (userDataResponse) {
+          setUserData(userDataResponse);
+        }
+      } catch (err) {
+        setError(`Не вдалося отримати дані: ${err}`);
+        if (err instanceof Error && err.message.includes('401')) {
+          router.push('/auth');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [router]);
 
   // Обробник відправки запиту
   const handleSubmit = async (e: React.FormEvent) => {
@@ -143,51 +185,59 @@ const SunoDemoPage = () => {
             </aside>
 
             <main className='overflow-y flex-1 px-4 pb-4'>
-              <div className='fixed min-h-[80vh] w-[1280px] rounded-[30px] bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-lg'>
-                <div className='flex flex-row gap-6'>
-                  {/* Tabs Panel */}
-                  <motion.div className='w-60'>
-                    <div className='mb-6'>
-                      <h2 className='text-xl font-bold text-white'>
+              <div className='fixed min-h-[80vh] w-[1280px] rounded-[30px] bg-gradient-to-r from-[#2D2D45] to-[#3F4B8A] p-8 shadow-2xl backdrop-blur-lg'>
+                <div className='flex flex-row gap-8'>
+                  {/* Optimized Tabs Panel */}
+                  <motion.div className='w-64'>
+                    <div className='mb-8'>
+                      <h2 className='text-2xl font-bold text-white'>
                         AI Генерація
                       </h2>
+                      <p className='mt-2 text-sm text-gray-300'>
+                        Оберіть тип генерації для створення контенту
+                      </p>
                     </div>
-                    <div className='space-y-2'>
-                      {['generate_audio', 'extend_audio', 'lyrics', 'wav'].map(
-                        (tab) => (
-                          <motion.div
-                            key={tab}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className={`cursor-pointer rounded-lg p-4 transition-all ${
-                              activeTab === tab
-                                ? 'bg-[#6374B6] text-white'
-                                : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                            }`}
-                            onClick={() => setActiveTab(tab as any)}
-                          >
-                            <span className='text-sm text-white'>
-                              {tab === 'generate_audio'
-                                ? 'Генерація аудіо'
-                                : tab === 'extend_audio'
-                                  ? 'Розширення аудіо'
-                                  : tab === 'lyrics'
-                                    ? 'Генерація лірики'
-                                    : 'WAV генерація'}
+                    <div className='space-y-3'>
+                      {[
+                        {
+                          id: 'generate_audio',
+                          label: 'Генерація аудіо',
+                          icon: '🎵',
+                        },
+                        {
+                          id: 'extend_audio',
+                          label: 'Розширення аудіо',
+                          icon: '🎼',
+                        },
+                        { id: 'lyrics', label: 'Генерація лірики', icon: '📝' },
+                        { id: 'wav', label: 'WAV генерація', icon: '🎚️' },
+                      ].map((tab) => (
+                        <motion.div
+                          key={tab.id}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`cursor-pointer rounded-xl p-4 transition-all ${
+                            activeTab === tab.id
+                              ? 'bg-[#6374B6] text-white shadow-lg'
+                              : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                          }`}
+                          onClick={() => setActiveTab(tab.id as any)}
+                        >
+                          <div className='flex items-center gap-3'>
+                            <span className='text-xl'>{tab.icon}</span>
+                            <span className='text-sm font-medium'>
+                              {tab.label}
                             </span>
-                          </motion.div>
-                        ),
-                      )}
+                          </div>
+                        </motion.div>
+                      ))}
                     </div>
                   </motion.div>
 
-                  {/* Form Panel */}
+                  {/* Optimized Form Panel */}
                   <motion.div className='flex-1'>
-                    <div className='rounded-lg bg-white/5 p-4'>
-                      <form
-                        onSubmit={handleSubmit}
-                        className='space-y-4 text-white'
-                      >
+                    <div className='rounded-xl bg-white/5 p-6 backdrop-blur-sm'>
+                      <form onSubmit={handleSubmit} className='space-y-6'>
                         {activeTab === 'generate_audio' && (
                           <div>
                             <h2 className='mb-4 text-2xl font-semibold'>
@@ -222,12 +272,12 @@ const SunoDemoPage = () => {
                               />
                             </div>
                             <div className='mb-4'>
-                              <label className='mb-1 block'>
+                              <label className='mb-2 block text-sm font-medium text-gray-300'>
                                 CallBack URL:
                               </label>
                               <input
                                 type='text'
-                                className='w-full rounded border p-2'
+                                className='w-full rounded-lg border border-gray-600 bg-[#2D2D45] p-3 text-white placeholder-gray-400 focus:border-[#6374B6] focus:outline-none focus:ring-1 focus:ring-[#6374B6]'
                                 value={genAudioData.callBackUrl}
                                 onChange={(e) =>
                                   setGenAudioData({
@@ -310,12 +360,12 @@ const SunoDemoPage = () => {
                               />
                             </div>
                             <div className='mb-4'>
-                              <label className='mb-1 block'>
+                              <label className='mb-2 block text-sm font-medium text-gray-300'>
                                 CallBack URL:
                               </label>
                               <input
                                 type='text'
-                                className='w-full rounded border p-2'
+                                className='w-full rounded-lg border border-gray-600 bg-[#2D2D45] p-3 text-white placeholder-gray-400 focus:border-[#6374B6] focus:outline-none focus:ring-1 focus:ring-[#6374B6]'
                                 value={extendAudioData.callBackUrl}
                                 onChange={(e) =>
                                   setExtendAudioData({
@@ -442,12 +492,12 @@ const SunoDemoPage = () => {
                               />
                             </div>
                             <div className='mb-4'>
-                              <label className='mb-1 block'>
+                              <label className='mb-2 block text-sm font-medium text-gray-300'>
                                 CallBack URL:
                               </label>
                               <input
                                 type='text'
-                                className='w-full rounded border p-2'
+                                className='w-full rounded-lg border border-gray-600 bg-[#2D2D45] p-3 text-white placeholder-gray-400 focus:border-[#6374B6] focus:outline-none focus:ring-1 focus:ring-[#6374B6]'
                                 value={lyricsData.callBackUrl}
                                 onChange={(e) =>
                                   setLyricsData({
@@ -514,12 +564,12 @@ const SunoDemoPage = () => {
                               />
                             </div>
                             <div className='mb-4'>
-                              <label className='mb-1 block'>
+                              <label className='mb-2 block text-sm font-medium text-gray-300'>
                                 CallBack URL:
                               </label>
                               <input
                                 type='text'
-                                className='w-full rounded border p-2'
+                                className='w-full rounded-lg border border-gray-600 bg-[#2D2D45] p-3 text-white placeholder-gray-400 focus:border-[#6374B6] focus:outline-none focus:ring-1 focus:ring-[#6374B6]'
                                 value={wavData.callBackUrl}
                                 onChange={(e) =>
                                   setWavData({
@@ -552,21 +602,25 @@ const SunoDemoPage = () => {
 
                         <button
                           type='submit'
-                          className='w-full rounded-lg bg-[#6374B6] px-4 py-3 text-white hover:bg-opacity-70'
+                          className='w-full rounded-lg bg-gradient-to-r from-[#6374B6] to-[#8594D4] px-6 py-3 text-white transition-all hover:opacity-90 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                         >
                           Згенерувати
                         </button>
                       </form>
 
                       {response && (
-                        <div className='mt-4 rounded-lg bg-white/10 p-4'>
-                          <h3 className='mb-2 text-lg font-semibold text-white'>
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className='mt-6 rounded-lg bg-white/5 p-6 backdrop-blur-sm'
+                        >
+                          <h3 className='mb-3 text-lg font-semibold text-white'>
                             Результат:
                           </h3>
-                          <pre className='whitespace-pre-wrap text-gray-300'>
+                          <pre className='rounded-lg bg-[#2D2D45] p-4 text-sm text-gray-300'>
                             {JSON.stringify(response, null, 2)}
                           </pre>
-                        </div>
+                        </motion.div>
                       )}
                     </div>
                   </motion.div>

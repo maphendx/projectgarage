@@ -77,7 +77,6 @@ export default function FavoritesPage() {
     try {
       console.log(`Attempting to fetch post with ID: ${postId}`);
 
-      // Try multiple potential endpoints
       const endpoints = [
         `${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/${postId}/`,
         `${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/`,

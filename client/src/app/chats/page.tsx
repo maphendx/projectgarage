@@ -90,6 +90,7 @@ export default function ChatPage() {
   const [showCreateRoom, setShowCreateRoom] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomParticipants, setNewRoomParticipants] = useState('');
+  const [newRoomImage, setNewRoomImage] = useState<File | null>(null);
   const [webSocket, setWebSocket] = useState<WebSocket | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -274,22 +275,37 @@ export default function ChatPage() {
         .map((name) => name.trim())
         .filter((name) => name);
 
-      const response = await apiRequest<ChatRoom>(
-        '/messaging/chatrooms/',
-        'POST',
+      const formData = new FormData();
+      formData.append('name', newRoomName.trim());
+      formData.append(
+        'participants_display_names',
+        JSON.stringify(participantNames),
+      );
+
+      if (newRoomImage) {
+        formData.append('avatar', newRoomImage);
+      }
+
+      const response = await fetchClient(
+        `${API_BASE_URL}/messaging/chatrooms/`,
         {
-          name: newRoomName.trim(),
-          participants_display_names: participantNames,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          },
+          body: formData,
         },
       );
 
-      if (!response) throw new Error(ErrorMessages.ROOM_CREATE_ERROR);
+      if (!response.ok) throw new Error(ErrorMessages.ROOM_CREATE_ERROR);
 
-      setChatRooms((prev) => [...prev, response]);
+      const newRoom = await response.json();
+      setChatRooms((prev) => [...prev, newRoom]);
       showError('Кімнату успішно створено', 'success');
 
       setNewRoomName('');
       setNewRoomParticipants('');
+      setNewRoomImage(null);
       setShowCreateRoom(false);
     } catch (error) {
       showError(
@@ -617,8 +633,14 @@ export default function ChatPage() {
                   value={newRoomParticipants}
                   onChange={(e) => setNewRoomParticipants(e.target.value)}
                   className='mb-4 w-full rounded-lg bg-white/10 p-3 text-white placeholder-gray-400 focus:outline-none'
-                  placeholder='ID учасників (через кому, напр.: 1,2,3)'
-                  title='Введіть ID учасників через кому'
+                  placeholder='Імена учасників (через кому, напр.: user1,user2)'
+                  title='Введіть імена учасників через кому'
+                />
+                <input
+                  type='file'
+                  onChange={(e) => setNewRoomImage(e.target.files?.[0] || null)}
+                  className='mb-4 w-full text-white'
+                  accept='image/*'
                 />
                 <div className='flex justify-end gap-2'>
                   <button
@@ -626,6 +648,7 @@ export default function ChatPage() {
                       setShowCreateRoom(false);
                       setNewRoomName('');
                       setNewRoomParticipants('');
+                      setNewRoomImage(null);
                     }}
                     className='rounded-lg px-4 py-2 text-white hover:bg-white/10'
                   >

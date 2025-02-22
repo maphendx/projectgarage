@@ -11,12 +11,6 @@ const MicroPost = ({
 }) => {
   const router = useRouter();
 
-  const navigateToOriginalPost = () => {
-    if (post.original_post) {
-      router.push(`/posts/${post.original_post}`);
-    }
-  };
-
   return (
     <motion.div
       key={post.id}
@@ -50,14 +44,6 @@ const MicroPost = ({
             Автор: {post.author ? post.author.display_name : 'Невідомий'}
           </span>
         </div>
-        {post.original_post && (
-          <button
-            onClick={navigateToOriginalPost}
-            className='mt-2 text-blue-500 hover:underline'
-          >
-            Перейти до оригінального поста
-          </button>
-        )}
       </div>
       {setRepostPost && (
         <motion.button

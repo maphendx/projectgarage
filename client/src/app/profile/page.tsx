@@ -12,6 +12,13 @@ import MicroPost from '@/components/MicroPost';
 import fetchClient from '@/other/fetchClient';
 import Modal from '@/components/Modal';
 import EasterEggGame from '@/components/Egg';
+import FullPost from '@/components/FullPost';
+
+const modalVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+  exit: { opacity: 0 },
+};
 
 const Profile: React.FC = () => {
   const router = useRouter();
@@ -24,6 +31,8 @@ const Profile: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isEasterEggOpen, setIsEasterEggOpen] = useState(false);
   const [easterEggCounter, setEasterEggCounter] = useState(0);
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
@@ -93,7 +102,7 @@ const Profile: React.FC = () => {
     }
   };
 
-  const handleUpdateHashtags = async (newHashtags: {name : string}[]) => {
+  const handleUpdateHashtags = async (newHashtags: { name: string }[]) => {
     if (isOwnProfile) {
       try {
         const currentHashtags = userData?.hashtags || [];
@@ -134,6 +143,30 @@ const Profile: React.FC = () => {
       } catch (err) {
         console.error('Error updating hashtags:', err);
       }
+    }
+  };
+
+  const openOriginalPost = async (postId: number) => {
+    try {
+      const response = await fetchClient(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/${postId}/`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch post. Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setSelectedPost(data);
+      setIsPostModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching post:', error);
     }
   };
 
@@ -187,14 +220,16 @@ const Profile: React.FC = () => {
                 <p className='text-sm'>{userData.bio || 'No description'}</p>
                 {userData.hashtags && userData.hashtags.length > 0 && (
                   <div className='mt-2'>
-                    {userData.hashtags.map((tag : {name : string}, index : number) => (
-                      <span
-                        key={index}
-                        className='mr-2 inline-block rounded-full bg-gray-700 px-2 py-1 text-xs'
-                      >
-                        #{tag.name}
-                      </span>
-                    ))}
+                    {userData.hashtags.map(
+                      (tag: { name: string }, index: number) => (
+                        <span
+                          key={index}
+                          className='mr-2 inline-block rounded-full bg-gray-700 px-2 py-1 text-xs'
+                        >
+                          #{tag.name}
+                        </span>
+                      ),
+                    )}
                   </div>
                 )}
               </div>
@@ -227,7 +262,13 @@ const Profile: React.FC = () => {
               {userData.posts && userData.posts.length > 0 ? (
                 <div className='space-y-4'>
                   {userData.posts.toReversed().map((post, key) => (
-                    <MicroPost post={post} key={key} />
+                    <div
+                      key={key}
+                      onClick={() => openOriginalPost(post.id)}
+                      className='cursor-pointer'
+                    >
+                      <MicroPost post={post} key={key} />
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -255,6 +296,26 @@ const Profile: React.FC = () => {
                 <EasterEggGame userPhoto={userData?.photo} />
               </div>
             </Modal>
+            {isPostModalOpen && (
+              <motion.div
+                initial='hidden'
+                animate='visible'
+                exit='exit'
+                variants={modalVariants}
+                className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4'
+              >
+                {selectedPost && (
+                  <FullPost
+                    post={selectedPost}
+                    userData={userData}
+                    onClose={() => {
+                      setIsPostModalOpen(false);
+                      setSelectedPost(null);
+                    }}
+                  />
+                )}
+              </motion.div>
+            )}
           </div>
         </main>
       </div>

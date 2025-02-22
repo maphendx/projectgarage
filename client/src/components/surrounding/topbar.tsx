@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { RiRobot2Fill } from 'react-icons/ri';
 import { UserData } from '../not_components';
 import TopbarSearchField from './small_components/topbarSearchField';
 import TopbarButton from './small_components/topbarButton';
@@ -24,6 +25,10 @@ export default function Topbar({
     router.push('/notifications');
   };
 
+  const handleAiNavigation = () => {
+    router.push('/ai');
+  };
+
   return (
     <nav className='fixed-topbar'>
       <div className='max-w-8xl mx-auto'>
@@ -39,48 +44,42 @@ export default function Topbar({
           <TopbarSearchField />
           {/* User Information */}
           <div className='mr-4 mt-5 flex items-center'>
-            <div
-              className='flex h-[52px] w-[300px] items-center gap-2.5 rounded-[16px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-[#2B2D31] p-1 pl-1 text-[#A1A1A1] duration-300'
-              // style={{
-              //   boxShadow: '0 0 5px rgba(216, 180, 255, 0.6)',
-              // }}
-            >
-              {/* Notification and Message Icons*/}
-              {userData && (
+            <div className='flex h-[52px] w-[300px] items-center gap-3 rounded-[16px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-[#2B2D31] px-3 text-[#A1A1A1] duration-300'>
+              {userData ? (
                 <>
+                  {/* Notification, Message, and AI Icons*/}
                   <TopbarButton
                     onClick={handleNotificationsNavigation}
                     iconClass='fas fa-bell text-gray-300'
                   />
                   <TopbarButton iconClass='fas fa-envelope text-gray-300' />
-                </>
-              )}
-              {/* User Name and Avatar */}
-              <div className='flex flex-1 items-center justify-between pr-2'>
-                {userData ? (
-                  <>
+                  <TopbarButton onClick={handleAiNavigation}>
+                    <RiRobot2Fill size={20} className='text-gray-300' />
+                  </TopbarButton>
+                  {/* User Name and Avatar */}
+                  <div className='flex flex-1 items-center justify-end gap-3'>
                     <span
-                      className='ml-8 cursor-pointer text-sm font-medium hover:text-white hover:underline'
+                      className='cursor-pointer text-sm font-medium text-gray-300 hover:text-white hover:underline'
                       onClick={handleProfileNavigation}
                     >
                       {userData.display_name}
                     </span>
                     <img
-                      className='h-12 w-12 cursor-pointer rounded-[14px]'
+                      className='h-10 w-10 cursor-pointer rounded-[12px] transition-transform hover:scale-105'
                       src={userData.photo}
                       alt='Фото профілю'
                       onClick={handleProfileNavigation}
                     />
-                  </>
-                ) : (
-                  <button
-                    onClick={() => router.push('/auth')}
-                    className='ml-28 rounded-lg bg-[#7289DA] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#5B6EAE]'
-                  >
-                    Увійти
-                  </button>
-                )}
-              </div>
+                  </div>
+                </>
+              ) : (
+                <button
+                  onClick={() => router.push('/auth')}
+                  className='flex-1 rounded-[12px] bg-gradient-to-r from-[#7289DA] to-[#5B6EAE] py-2.5 text-sm font-medium text-white transition-all duration-300 hover:scale-[1.02] hover:opacity-90 hover:shadow-md active:scale-[0.98]'
+                >
+                  Увійти
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -155,8 +155,8 @@ const FullPost: React.FC<FullPostProps> = ({ post, userData, onClose }) => {
 
       {/* Post Interactions */}
       <div className='mb-4 flex justify-between text-gray-400'>
-        <span>❤️ {post.likes.length} Likes</span>
-        <span>💬 {comments.length} Comments</span>
+        <span>❤️ {post.likes.length} Лайк</span>
+        <span>💬 {comments.length} Коментар</span>
       </div>
 
       {/* Comments section */}
