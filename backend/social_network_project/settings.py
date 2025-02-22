@@ -30,6 +30,7 @@ APPEND_SLASH = False
 ALLOWED_HOSTS = []
 
 
+
 # Application definition
 
 INSTALLED_APPS = [       # коли створюєш нові додатки їх вписуються тут
@@ -59,6 +60,19 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-language',
+    'content-language',
+    'content-type',
+    'expires',
+    'ngrok-skip-browser-warning',  # Ваш нестандартний заголовок
+    'Authorization',  # Дозволяємо заголовок Authorization
+    'X-Requested-With',
+    'X-Custom-Header',  # Якщо є ще кастомні заголовки
+    'User-Agent',  # Якщо потрібно змінювати User-Agent
 ]
 
 ROOT_URLCONF = 'social_network_project.urls'

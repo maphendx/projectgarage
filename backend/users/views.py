@@ -414,8 +414,15 @@ class RecommendedUsersView(APIView):
             user_hashtags = set(user.hashtags.values_list('name', flat=True))
             potential_user_hashtags = set(potential_user.hashtags.values_list('name', flat=True))
             if user_hashtags and potential_user_hashtags:
-                similarity = 1 - jaccard_distance(user_hashtags, potential_user_hashtags)
-                score += 0.25 * similarity
+                # Порівняння хештегів за допомогою NLTK
+                similarity = 0
+                for user_hashtag in user_hashtags:
+                    for potential_user_hashtag in potential_user_hashtags:
+                        current_similarity = 1 - jaccard_distance(set(user_hashtag), set(potential_user_hashtag))
+                        if current_similarity > similarity:
+                            similarity = current_similarity
+                if similarity >= 0.5:  # Мінімум 50% схожості
+                    score += 0.25 * similarity
 
             # Критерій 2: Спільні підписки
             common_subscriptions = user.subscriptions.filter(id__in=potential_user.subscriptions.all()).count()
