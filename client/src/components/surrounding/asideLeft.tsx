@@ -7,26 +7,22 @@ import { motion } from 'framer-motion';
 import { Tooltip } from 'react-tooltip';
 import {
   HomeIcon as HomeSolidIcon,
-  ServerStackIcon as ServerStackSolidIcon,
   ChatBubbleLeftRightIcon as ChatSolidIcon,
   MicrophoneIcon as MicrophoneSolidIcon,
   NewspaperIcon as NewsSolidIcon,
   HeartIcon as HeartSolidIcon,
   ClockIcon as ClockSolidIcon,
   QueueListIcon as QueueSolidIcon,
-  ArrowDownTrayIcon as DownloadSolidIcon,
 } from '@heroicons/react/24/solid';
 
 import {
   HomeIcon as HomeOutlineIcon,
-  ServerStackIcon as ServerStackOutlineIcon,
   ChatBubbleLeftRightIcon as ChatOutlineIcon,
   MicrophoneIcon as MicrophoneOutlineIcon,
   NewspaperIcon as NewsOutlineIcon,
   HeartIcon as HeartOutlineIcon,
   ClockIcon as ClockOutlineIcon,
   QueueListIcon as QueueOutlineIcon,
-  ArrowDownTrayIcon as DownloadOutlineIcon,
 } from '@heroicons/react/24/outline';
 
 interface CompInterface {

@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import fetchClient from '@/other/fetchClient';
+import AvatarEditor from 'react-avatar-editor';
 
 interface ProfileSettingsProps {
   onUpdateBio: (newBio: string) => void;
-  onUpdateHashtags: (newHashtags: {name : string}[]) => void;
+  onUpdateHashtags: (newHashtags: { name: string }[]) => void;
   onClose: () => void;
-  initialHashtags: {name : string}[];
+  initialHashtags: { name: string }[];
 }
 
 const ProfileSettings: React.FC<ProfileSettingsProps> = ({
@@ -17,8 +18,13 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   initialHashtags,
 }) => {
   const [bio, setBio] = useState<string>('');
-  const [hashtags, setHashtags] = useState<{name : string}[]>(initialHashtags);
+  const [hashtags, setHashtags] = useState<{ name: string }[]>(initialHashtags);
   const router = useRouter();
+  const [avatar, setAvatar] = useState<File | null>(null);
+  const [avatarScale, setAvatarScale] = useState<number>(1);
+  const [editedAvatar, setEditedAvatar] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const editorRef = useRef<AvatarEditor | null>(null);
 
   useEffect(() => {
     setHashtags(initialHashtags);
@@ -34,16 +40,66 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       .split(',')
       .map((tag) => tag.trim())
       .filter((tag) => tag)
-      .map((tag) => ({name : tag}))
+      .map((tag) => ({ name: tag }));
     setHashtags(newHashtags);
   };
 
-  const handleSave = () => {
-    if (bio) {
-      onUpdateBio(bio);
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setAvatar(event.target.files[0]);
     }
-    onUpdateHashtags(hashtags);
-    onClose();
+  };
+
+  const handleAvatarScaleChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setAvatarScale(parseFloat(event.target.value));
+  };
+
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      if (bio) {
+        await onUpdateBio(bio);
+      }
+      await onUpdateHashtags(hashtags);
+      if (editedAvatar) {
+        await updateAvatar(editedAvatar);
+      }
+      onClose();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateAvatar = async (avatarDataUrl: string) => {
+    const formData = new FormData();
+    const blob = await (await fetch(avatarDataUrl)).blob();
+    formData.append('photo', blob, 'avatar.png');
+
+    try {
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/users/profile/`;
+      console.log(`Sending avatar update request to ${apiUrl}`);
+
+      const token = localStorage.getItem('access_token');
+
+      const response = await fetch(apiUrl, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      console.log('Response status:', response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response error text:', errorText);
+        throw new Error('Failed to update avatar');
+      }
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+    }
   };
 
   const handleDeleteProfile = async () => {
@@ -63,16 +119,86 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     }
   };
 
+  const handleSaveAvatar = () => {
+    if (editorRef.current) {
+      const canvas = editorRef.current.getImageScaledToCanvas().toDataURL();
+      setEditedAvatar(canvas);
+      console.log(canvas);
+    }
+  };
+
   return (
     <motion.div
-      className='p-6'
+      className='max-h-[80vh] overflow-y-auto rounded-lg bg-[#2B2D31] p-6 shadow-lg'
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
     >
-      <h2 className='mb-4 text-xl font-semibold text-white'>
-        Редагування профілю
-      </h2>
+      <div className='mb-4 flex items-center justify-between'>
+        <h2 className='text-xl font-semibold text-white'>
+          Редагування профілю
+        </h2>
+        <button
+          onClick={onClose}
+          className='text-white hover:text-gray-400'
+          aria-label='Close'
+        >
+          &times;
+        </button>
+      </div>
+
+      {/* Avatar Editor */}
+      <div className='mb-4'>
+        <label htmlFor='avatar' className='block text-white'>
+          Аватар
+        </label>
+        <input
+          id='avatar'
+          type='file'
+          accept='image/*'
+          onChange={handleAvatarChange}
+          className='w-full rounded-lg border border-gray-600 bg-[#1C1C1F] p-2 text-white'
+        />
+        {avatar && (
+          <div className='mt-4'>
+            <AvatarEditor
+              ref={editorRef}
+              image={avatar}
+              width={250}
+              height={250}
+              border={50}
+              borderRadius={125}
+              scale={avatarScale}
+              className='mx-auto'
+            />
+            <input
+              type='range'
+              min='1'
+              max='2'
+              step='0.01'
+              value={avatarScale}
+              onChange={handleAvatarScaleChange}
+              className='mt-2 w-full'
+            />
+            <button
+              onClick={handleSaveAvatar}
+              className='mt-2 w-full rounded-[20px] bg-[#6374B6] px-4 py-2 text-white'
+            >
+              Зберегти аватар
+            </button>
+          </div>
+        )}
+        {editedAvatar && (
+          <div className='mt-4'>
+            <img
+              src={editedAvatar}
+              alt='Edited Avatar'
+              className='mx-auto rounded-full'
+              style={{ width: '100px', height: '100px' }}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Bio */}
       <div className='mb-4'>
@@ -97,13 +223,13 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         <input
           id='hashtags'
           type='text'
-          value={hashtags.join(', ')}
+          value={hashtags.map((tag) => tag.name).join(', ')}
           onChange={handleHashtagsChange}
           placeholder='Enter hashtags separated by commas'
           className='w-full rounded-lg border border-gray-600 bg-[#1C1C1F] p-2 text-white'
         />
         <p className='mt-2 text-sm text-gray-400'>
-          Введіть хештеги (e.g., "photography, music, coding").
+          Введіть хештеги (e.g., &quot;photography, music, coding&quot;).
         </p>
       </div>
 
@@ -115,8 +241,9 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          disabled={isLoading}
         >
-          Зберегти
+          {isLoading ? 'Збереження...' : 'Зберегти'}
         </motion.button>
         <motion.button
           onClick={onClose}

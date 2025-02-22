@@ -1,9 +1,9 @@
-"use client";
-import { createContext, useContext, useState, ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+'use client';
+import { createContext, useContext, useState, ReactNode } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Типи для повідомлень
-type ErrorType = "error" | "warning" | "success" | "info";
+type ErrorType = 'error' | 'warning' | 'success' | 'info';
 
 interface ErrorState {
   message: string;
@@ -19,7 +19,7 @@ const ErrorContext = createContext<ErrorContextType | undefined>(undefined);
 export const ErrorProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<ErrorState | null>(null);
 
-  const showError = (message: string, type: ErrorType = "error") => {
+  const showError = (message: string, type: ErrorType = 'error') => {
     setError({ message, type });
     // Автоматично ховаємо помилку через 3 секунди
     setTimeout(() => {
@@ -35,14 +35,17 @@ export const ErrorProvider = ({ children }: { children: ReactNode }) => {
       <AnimatePresence>
         {error && (
           <motion.div
-            className={`fixed z-50 bottom-4 left-1/2 p-3 rounded-xl ${
-              error.type === "error" ? "bg-red-600" :
-              error.type === "warning" ? "bg-yellow-500 text-black" :
-              error.type === "success" ? "bg-green-500" :
-              "bg-blue-500"
+            className={`fixed bottom-4 left-1/2 z-50 rounded-xl p-3 ${
+              error.type === 'error'
+                ? 'bg-red-600'
+                : error.type === 'warning'
+                  ? 'bg-yellow-500 text-black'
+                  : error.type === 'success'
+                    ? 'bg-green-500'
+                    : 'bg-blue-500'
             }`}
-            initial={{ opacity: 0, y: 20, x: "-50%" }}
-            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            initial={{ opacity: 0, y: 20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
             exit={{ opacity: 0, y: 20 }}
           >
             {error.message}
@@ -56,7 +59,7 @@ export const ErrorProvider = ({ children }: { children: ReactNode }) => {
 export const useError = () => {
   const context = useContext(ErrorContext);
   if (!context) {
-    throw new Error("useError must be used within an ErrorProvider");
+    throw new Error('useError must be used within an ErrorProvider');
   }
   return context;
 };

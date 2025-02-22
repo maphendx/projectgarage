@@ -5,13 +5,13 @@ export interface UserData {
   email?: string;
   photo?: string;
   bio?: string;
-  hashtags?: {name : string}[];
+  hashtags?: { name: string }[];
   subscriptions_count?: number;
   subscribers_count?: number;
   total_likes?: number;
-  posts?: Post[],
-  muted?: boolean
-  talks?: number
+  posts?: Post[];
+  muted?: boolean;
+  talks?: number;
 }
 
 export interface Post {
@@ -21,12 +21,12 @@ export interface Post {
   comments?: number;
   original_post?: number;
   created_at?: string;
-  images: {id : number, image : string}[];
-  audios: {id : number, audio : string}[];
-  videos: {id : number, video : string}[];
+  images: { id: number; image: string }[];
+  audios: { id: number; audio: string }[];
+  videos: { id: number; video: string }[];
   is_liked?: boolean;
-  hashtag_objects: {id : number, name : string}[];
-  author: { display_name?: string; photo?: string, id: number };
+  hashtag_objects: { id: number; name: string }[];
+  author: { display_name?: string; photo?: string; id: number };
 }
 
 const dateFormatter = (get: string | undefined) => {
@@ -50,13 +50,13 @@ const dateFormatter = (get: string | undefined) => {
 export default dateFormatter;
 
 export enum FileType {
-  Photo = "PHOTO",
-  Audio = "AUDIO",
-  Video = "VIDEO",
+  Photo = 'PHOTO',
+  Audio = 'AUDIO',
+  Video = 'VIDEO',
 }
 
 export interface FileContainer {
-  photos : File[],
-  videos : File[],
-  audios : File[],
+  photos: File[];
+  videos: File[];
+  audios: File[];
 }
