@@ -195,8 +195,18 @@ def callback(request):
             audio_file_path = download_file(audio_url, "ai/music", task_id)
             photo_file_path = download_file(image_url, "ai/photo", task_id)
             style_names = [s.strip() for s in tags.split(",") if s.strip()]
+            
             # Створення запису Song із прив'язкою до користувача (якщо є)
-            song = Song.objects.create(user=task_record.user if task_record else None, task_id=task_id, model_name=model_name, title=title, audio_file=audio_file_path, photo_file=photo_file_path, example=task_record.example if task_record else "")
+            song = Song.objects.create(
+                user=task_record.user if task_record else None,  # Прив'язка до користувача
+                task_id=task_id,
+                model_name=model_name,
+                title=title,
+                audio_file=audio_file_path,
+                photo_file=photo_file_path,
+                example=task_record.example if task_record else "",
+                is_public=False  # Встановлюємо за замовчуванням на приватну
+            )
             for style_name in style_names:
                 style_obj, _ = MusicStyle.objects.get_or_create(name=style_name)
                 song.styles.add(style_obj)
@@ -213,10 +223,6 @@ def callback(request):
             task_record.result = {"songs": songs_list}
             task_record.save()
     return Response({"songs": songs_list}, status=200)
-
-@login_required
-def home(request):
-    return render(request, 'index.html')
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -320,3 +326,44 @@ def get_wav_record(request):
         }, status=200)
     except GenerationTask.DoesNotExist:
         return Response({"msg": "Завдання не знайдено"}, status=404)
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_song_visibility(request, song_id):
+    """
+    Ендпоінт для оновлення видимості пісні (публічна/приватна).
+    """
+    try:
+        song = Song.objects.get(id=song_id, user=request.user)
+    except Song.DoesNotExist:
+        return Response({"msg": "Пісня не знайдена"}, status=404)
+
+    is_public = request.data.get("is_public")
+    if is_public is not None:
+        song.is_public = is_public
+        song.save()
+        return Response({"msg": "Статус пісні оновлено", "is_public": song.is_public}, status=200)
+    
+    return Response({"msg": "Необхідно вказати is_public"}, status=400)
+
+@api_view(['GET'])
+def list_public_songs(request):
+    """
+    Ендпоінт для отримання всіх публічних пісень, згенерованих усіма користувачами.
+    Повертає JSON-список з даними про пісні, включаючи id, назву, модель, шляхи до аудіо та фото файлів,
+    example і список стилів.
+    """
+    songs = Song.objects.filter(is_public=True).order_by('?')  # Вибірка публічних пісень у випадковому порядку
+    songs_list = []
+    for song in songs:
+        songs_list.append({
+            "id": song.id,
+            "title": song.title,
+            "model_name": song.model_name,
+            "audio_file": song.audio_file,
+            "photo_file": song.photo_file,
+            "example": song.example,
+            "styles": [style.name for style in song.styles.all()],
+            "created_at": song.created_at
+        })
+    return Response({"songs": songs_list}, status=200)

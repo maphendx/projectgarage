@@ -11,5 +11,7 @@ urlpatterns = [
     path('wav/generate/', views.generate_wav, name='generate_wav'),
     path('wav/record-info/', views.get_wav_record, name='get_wav_record'),
     path('callback/', views.callback, name='callback'),
-    path('', views.home, name='home'),
+    path('user/songs/', views.list_user_songs, name='list_user_songs'),
+    path('user/songs/<int:song_id>/visibility/', views.update_song_visibility, name='update_song_visibility'),
+    path('public/songs/', views.list_public_songs, name='list_public_songs'),
 ]

@@ -61,7 +61,7 @@ class VoiceSignalingConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps(response))
             print(f"Користувач {self.my_id} приєднався. Інші користувачі: {user_list}")
             
-        elif msg_type in ("offer", "answer", "candidate", "leave", "mute-status"):
+        elif msg_type in ("offer", "answer", "candidate", "leave", "mute-status", "request-status"):
             # Обробка сигналізаційних повідомлень: offer, answer, candidate
             target_id = data.get("to")
             if target_id is None:
@@ -74,7 +74,7 @@ class VoiceSignalingConsumer(AsyncWebsocketConsumer):
                             "text": message
                         })
                         print(f"Надіслано розсилку від {self.my_id} до усіх: {message}")
-                        return
+                return
 
             target_channel = connected_peers[self.room_group_name].get(int(target_id))
             if target_channel:

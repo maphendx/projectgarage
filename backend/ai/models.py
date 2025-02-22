@@ -41,6 +41,7 @@ class Song(models.Model):
     example = models.CharField(max_length=255, blank=True, null=True)
     styles = models.ManyToManyField(MusicStyle, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_public = models.BooleanField(default=False)  # Додано поле для публічності
 
     def __str__(self):
         return f"{self.title} ({self.model_name})"
