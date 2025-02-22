@@ -60,6 +60,7 @@ class CustomUser(models.Model):
     hashtags = models.ManyToManyField(UserHashtag, blank=False)  # Хештеги користувача
     objects = CustomUserManager()  # Використовуємо кастомний менеджер для створення користувачів
     subscriptions = models.ManyToManyField("self", symmetrical=False, blank=True, related_name="subscribers") # 
+    ignored_users = models.ManyToManyField("self", symmetrical=False, blank=True, related_name="ignored_by")  # Додано поле для ігнорування
 
     REQUIRED_FIELDS = ['display_name', 'password']  # Вказуємо обов'язкові поля
     USERNAME_FIELD = 'email'  # Використовуємо email для автентифікації користувачів

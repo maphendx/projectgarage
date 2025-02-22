@@ -61,16 +61,21 @@ class VoiceSignalingConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps(response))
             print(f"Користувач {self.my_id} приєднався. Інші користувачі: {user_list}")
             
-        elif msg_type in ("offer", "answer", "candidate", "leave"):
+        elif msg_type in ("offer", "answer", "candidate", "leave", "mute-status"):
             # Обробка сигналізаційних повідомлень: offer, answer, candidate
             target_id = data.get("to")
             if target_id is None:
-                # Якщо не зазначено отримувача, ігноруємо повідомлення
-                return
-            # ########
-            # print("ПОТОЧНА БАЗА БАЗОВАНА: ", connected_peers[self.room_group_name])
-            # print(f"🔎 Шукаємо {target_id} серед {connected_peers[self.room_group_name].keys()}")
-            # print(f"📊 Тип target_id: {type(target_id)}")
+                for i in connected_peers[self.room_group_name].keys():
+                    if i != self.my_id:
+                        data["from"] = self.my_id
+                        message = json.dumps(data)
+                        await self.channel_layer.send(connected_peers[self.room_group_name][i], {
+                            "type": "signal_message",
+                            "text": message
+                        })
+                        print(f"Надіслано розсилку від {self.my_id} до усіх: {message}")
+                        return
+
             target_channel = connected_peers[self.room_group_name].get(int(target_id))
             if target_channel:
                 # Додаємо інформацію про відправника

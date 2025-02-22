@@ -19,6 +19,11 @@ from django.conf import settings
 from django.db import transaction
 from django.contrib.auth.models import BaseUserManager 
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from django.utils import timezone
+from datetime import timedelta
+from collections import defaultdict
+import json
+import os
 
 
 # Реєстрація користувача
@@ -205,48 +210,6 @@ class UserSubscribersView(APIView):
         except CustomUser.DoesNotExist:
             return Response({"message": "Користувача не зндено"}, status=status.HTTP_404_NOT_FOUND)
 
-
-class RecommendationService:
-    @staticmethod
-    def recommend_users(current_user, threshold=0.6):
-        recommended_users = []
-
-        # 1. Схожість хештегів
-        current_user_tags = set(tag.name for tag in current_user.hashtags.all())
-        for user in CustomUser.objects.exclude(id=current_user.id):
-            user_tags = set(tag.name for tag in user.hashtags.all())
-            if len(user_tags) == 0:
-                continue
-            similarity = 1 - jaccard_distance(current_user_tags, user_tags)
-            if similarity >= threshold:
-                recommended_users.append(user)
-
-        # 2. Активність
-        recommended_users.extend(
-            CustomUser.objects.filter(total_likes__gte=current_user.total_likes).exclude(id=current_user.id)
-        )
-
-        # 3. Взаємний пошук
-        recommended_users.extend(
-            CustomUser.objects.filter(
-                subscriptions__in=current_user.subscriptions.all(),
-                subscribers__in=current_user.subscribers.all()
-            ).exclude(id=current_user.id)
-        )
-
-        # 4. Географічний принцип
-        recommended_users.extend(
-            CustomUser.objects.filter(
-                Q(location__icontains=current_user.location)
-            ).exclude(id=current_user.id)
-        )
-
-        # Видалення дублікатів
-        recommended_users = list(set(recommended_users))
-        return recommended_users
-
-
-
 class SearchView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -422,3 +385,111 @@ class GoogleAuthView(GenericAPIView):
             "payload": serializer_data,
             "token": get_tokens_for_user(user),
         }, status=status.HTTP_200_OK)
+
+# Налаштування логування
+log_file_path = os.path.join(settings.BASE_DIR, 'logs', 'recommendations.log')
+os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+file_handler = logging.FileHandler(log_file_path)
+formatter = logging.Formatter('%(asctime)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+class RecommendedUsersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Отримуємо всіх користувачів, окрім самого себе, тих, на яких підписаний, та ігнорованих
+        users = CustomUser.objects.exclude(id=user.id).exclude(subscriptions=user).exclude(ignored_users=user)
+
+        recommendations = []
+        for potential_user in users:
+            score = 0
+
+            # Критерій 1: Використання хештегів
+            user_hashtags = set(user.hashtags.values_list('name', flat=True))
+            potential_user_hashtags = set(potential_user.hashtags.values_list('name', flat=True))
+            if user_hashtags and potential_user_hashtags:
+                similarity = 1 - jaccard_distance(user_hashtags, potential_user_hashtags)
+                score += 0.25 * similarity
+
+            # Критерій 2: Спільні підписки
+            common_subscriptions = user.subscriptions.filter(id__in=potential_user.subscriptions.all()).count()
+            if common_subscriptions > 0:
+                score += 0.25 * (common_subscriptions / user.subscriptions.count())
+
+            # Критерій 3: Взаємодії (лайки, коментарі, репости)
+            interactions = self.calculate_interactions(user, potential_user)
+            score += 0.35 * interactions
+
+            # Критерій 4: Схожість інтересів
+            interest_similarity = self.calculate_interest_similarity(user, potential_user)
+            if interest_similarity > 0.7:
+                score += 0.15
+
+            # Логування рекомендацій у JSON форматі
+            log_data = {
+                "requesting_user": user.display_name,
+                "recommended_user": potential_user.display_name,
+                "score": score,
+                "criteria": {
+                    "hashtag_similarity": 0.25 * similarity if user_hashtags and potential_user_hashtags else 0,
+                    "common_subscriptions": 0.25 * (common_subscriptions / user.subscriptions.count()) if common_subscriptions > 0 else 0,
+                    "interactions": 0.35 * interactions,
+                    "interest_similarity": 0.15 if interest_similarity > 0.7 else 0
+                }
+            }
+            logger.info(json.dumps(log_data))
+
+            recommendations.append((potential_user, score))
+
+        # Сортуємо рекомендації за оцінкою від 1 до 0
+        recommendations.sort(key=lambda x: x[1], reverse=True)
+
+        # Повертаємо лише 15 користувачів з найвищими оцінками
+        recommended_users = [user for user, score in recommendations[:15]]
+        serializer = UserProfileSerializer(recommended_users, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def calculate_interactions(self, user, potential_user):
+        # Логіка для обчислення взаємодій (лайки, коментарі, репости)
+        user_likes = user.likes.count()
+        potential_user_likes = potential_user.likes.count()
+        user_comments = user.comments.count()
+        potential_user_comments = potential_user.comments.count()
+        user_reposts = user.posts.filter(original_post__isnull=False).count()
+        potential_user_reposts = potential_user.posts.filter(original_post__isnull=False).count()
+
+        total_interactions = (user_likes + user_comments + user_reposts)
+        potential_interactions = (potential_user_likes + potential_user_comments + potential_user_reposts)
+
+        if total_interactions == 0:
+            return 0
+
+        return min(total_interactions, potential_interactions) / total_interactions
+
+    def calculate_interest_similarity(self, user, potential_user):
+        # Логіка для обчислення схожості інтересів на основі історії лайків
+        user_liked_posts = set(user.likes.values_list('id', flat=True))
+        potential_user_liked_posts = set(potential_user.likes.values_list('id', flat=True))
+
+        if not user_liked_posts or not potential_user_liked_posts:
+            return 0
+
+        intersection = user_liked_posts.intersection(potential_user_liked_posts)
+        return len(intersection) / len(user_liked_posts)
+
+class IgnoreUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        try:
+            user_to_ignore = CustomUser.objects.get(id=user_id)
+            request.user.ignored_users.add(user_to_ignore)
+            return Response({"message": f"Ви ігноруєте {user_to_ignore.display_name}"}, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response({"message": "Користувача не знайдено"}, status=status.HTTP_404_NOT_FOUND)

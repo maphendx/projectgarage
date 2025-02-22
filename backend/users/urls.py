@@ -11,7 +11,9 @@ from .views import (
                     UserSubscriptionsView, 
                     UserProfileDetailView, 
                     SearchView, 
-                    GoogleAuthView
+                    GoogleAuthView,
+                    RecommendedUsersView,
+                    IgnoreUserView
                     )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -31,6 +33,8 @@ urlpatterns = [
     path('search/posts/', SearchView.as_view(), name='search-posts'),
     path('auth/google/', GoogleAuthView.as_view(), name='google-auth'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('users/Recommendation/', RecommendedUsersView.as_view(), name='Users-Recommendation'),
+    path('ignore/<int:user_id>/', IgnoreUserView.as_view(), name='ignore-user'),  # Додано маршрут для ігнорування
 ]
 
 # Додавання статичних файлів (зображення)
