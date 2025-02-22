@@ -1,13 +1,17 @@
 export interface UserData {
+  id: number;
   display_name?: string;
   full_name?: string;
   email?: string;
   photo?: string;
   bio?: string;
-  hashtags?: string[];
+  hashtags?: {name : string}[];
   subscriptions_count?: number;
   subscribers_count?: number;
   total_likes?: number;
+  posts?: Post[],
+  muted?: boolean
+  talks?: number
 }
 
 export interface Post {

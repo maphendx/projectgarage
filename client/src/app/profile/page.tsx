@@ -7,23 +7,11 @@ import AsidePanelLeft from '@/components/surrounding/asideLeft';
 import Topbar from '@/components/surrounding/topbar';
 import ProfileSettings from '@/components/ProfileSettings';
 import { motion } from 'framer-motion';
-import { Post } from '@/components/not_components';
+import { Post, UserData } from '@/components/not_components';
 import MicroPost from '@/components/MicroPost';
 import fetchClient from '@/other/fetchClient';
 import Modal from '@/components/Modal';
 import EasterEggGame from '@/components/Egg';
-
-interface UserData {
-  display_name?: string;
-  email?: string;
-  photo?: string;
-  bio?: string;
-  hashtags?: string[];
-  subscriptions_count?: number;
-  subscribers_count?: number;
-  total_likes?: number;
-  posts?: Post[];
-}
 
 const Profile: React.FC = () => {
   const router = useRouter();
@@ -42,7 +30,6 @@ const Profile: React.FC = () => {
     localStorage.removeItem('refresh_token');
     router.push('/');
   };
-
   const handleProfilePhotoClick = () => {
     setEasterEggCounter((prev) => prev + 1);
     if (easterEggCounter === 4) {
@@ -50,7 +37,6 @@ const Profile: React.FC = () => {
       setEasterEggCounter(0);
     }
   };
-
   const fetchUserData = async () => {
     try {
       const response = await fetchClient(
@@ -107,82 +93,43 @@ const Profile: React.FC = () => {
     }
   };
 
-  const handleUpdateHashtags = async (newHashtags: string[]) => {
+  const handleUpdateHashtags = async (newHashtags: {name : string}[]) => {
     if (isOwnProfile) {
       try {
-        // Get current hashtags, ensuring we're working with clean hashtag names
-        const currentHashtags =
-          userData?.hashtags?.map((tag) =>
-            typeof tag === 'object' && tag !== null
-              ? (tag as { name: string }).name
-              : tag,
-          ) || [];
+        const currentHashtags = userData?.hashtags || [];
 
-        // Remove hashtags one by one
+        // Remove hashtags
         for (const hashtag of currentHashtags) {
-          const cleanHashtag = hashtag.replace(/^#/, '').trim();
-          if (
-            !newHashtags
-              .map((tag) => tag.replace(/^#/, '').trim())
-              .includes(cleanHashtag)
-          ) {
-            try {
-              const response = await fetchClient(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`,
-                {
-                  method: 'DELETE',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ hashtag: cleanHashtag }),
+          if (!newHashtags.includes(hashtag)) {
+            await fetchClient(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`,
+              {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
                 },
-              );
-              if (!response.ok) {
-                console.warn(`Could not delete hashtag: ${cleanHashtag}`);
-              }
-            } catch (error) {
-              console.warn(`Error deleting hashtag: ${cleanHashtag}`, error);
-            }
+                body: JSON.stringify({ hashtag }),
+              },
+            );
           }
         }
 
-        // Add new hashtags one by one
+        // Add new hashtags
         for (const hashtag of newHashtags) {
-          const cleanHashtag = hashtag.replace(/^#/, '').trim();
-
-          // Skip empty hashtags
-          if (!cleanHashtag) {
-            continue;
-          }
-
-          if (!currentHashtags.includes(cleanHashtag)) {
-            try {
-              console.log('Sending hashtag:', { hashtag: cleanHashtag }); // Debug log
-              const response = await fetchClient(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`,
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ hashtag: cleanHashtag }),
+          if (!currentHashtags.includes(hashtag)) {
+            await fetchClient(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/users/hashtags/`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
                 },
-              );
-
-              if (!response.ok) {
-                const errorData = await response.json();
-                console.warn(
-                  `Could not add hashtag: ${cleanHashtag}`,
-                  errorData,
-                );
-              }
-            } catch (error) {
-              console.warn(`Error adding hashtag: ${cleanHashtag}`, error);
-            }
+                body: JSON.stringify({ hashtag }),
+              },
+            );
           }
         }
 
-        // Refresh user data after all updates
         await fetchUserData();
       } catch (err) {
         console.error('Error updating hashtags:', err);
@@ -191,7 +138,7 @@ const Profile: React.FC = () => {
   };
 
   if (!userData) {
-    return <div className='mt-20 text-center text-white'>Завантаження...</div>;
+    return <div className='mt-20 text-center text-white'>Loading...</div>;
   }
 
   return (
@@ -240,12 +187,12 @@ const Profile: React.FC = () => {
                 <p className='text-sm'>{userData.bio || 'No description'}</p>
                 {userData.hashtags && userData.hashtags.length > 0 && (
                   <div className='mt-2'>
-                    {userData.hashtags.map((tag, index) => (
+                    {userData.hashtags.map((tag : {name : string}, index : number) => (
                       <span
                         key={index}
                         className='mr-2 inline-block rounded-full bg-gray-700 px-2 py-1 text-xs'
                       >
-                        #{tag}
+                        #{tag.name}
                       </span>
                     ))}
                   </div>
