@@ -61,6 +61,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class SubscribeSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+
+    def validate_user_id(self, value):
+        if value == self.context['request'].user.id:
+            raise serializers.ValidationError("Не можна підписатися на самого себе.")
+        return value
     class Meta:
         model = CustomUser
         fields = ['id', 'display_name', 'photo']

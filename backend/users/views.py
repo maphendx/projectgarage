@@ -176,14 +176,18 @@ class SubscriptionsView(APIView):
             return Response({"message": f"Ви підписались на {user_to_follow.display_name}"}, status=status.HTTP_200_OK)
         except CustomUser.DoesNotExist:
             return Response({"message": "Користувача не знайдено"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, user_id):
         try:
             user_to_unfollow = CustomUser.objects.get(id=user_id) 
             request.user.unsubscribe(user_to_unfollow)
-            return Response({"message": f"Ви відписались від {user_to_unfollow.username}"}, status=status.HTTP_200_OK)
+            return Response({"message": f"Ви відписались від {user_to_unfollow.display_name}"}, status=status.HTTP_200_OK)
         except CustomUser.DoesNotExist:
             return Response({"message": "Користувача не знайдено"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class UserSubscriptionsView(APIView):
     permission_classes = [IsAuthenticated]
