@@ -12,7 +12,7 @@ import { AsidePanelRight } from '@/components/surrounding/asideRight';
 import MusicPlayer from '@/components/surrounding/player';
 import Topbar from '@/components/surrounding/topbar';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '@/components/Modal';
 import DropzoneUploader from '@/components/DropzoneUploader';
@@ -36,8 +36,10 @@ export default function Home() {
   });
 
   useEffect(() => {
-    error && showError(error, 'error');
-  }, [error]);
+    if (error) {
+      showError(error, 'error');
+    }
+  }, [error, showError]);
 
   const handleAddFile = (fileType: FileType) => {
     setAddFileWindow(true);
@@ -102,24 +104,27 @@ export default function Home() {
     }
   };
 
-  const fetchData = async (url: string) => {
-    try {
-      const dataResponse = await fetchClient(url);
+  const fetchData = useCallback(
+    async (url: string) => {
+      try {
+        const dataResponse = await fetchClient(url);
 
-      if (!dataResponse.ok) {
-        throw new Error(`HTTP error! status: ${dataResponse.status}`);
+        if (!dataResponse.ok) {
+          throw new Error(`HTTP error! status: ${dataResponse.status}`);
+        }
+
+        return await dataResponse.json();
+      } catch (err) {
+        setError(`Не вдалося отримати дані за "${url}": ${err}`);
+        if (err instanceof Error && err.message.includes('401')) {
+          router.push('/');
+        }
       }
+    },
+    [router],
+  );
 
-      return await dataResponse.json();
-    } catch (err) {
-      setError(`Не вдалося отримати дані за "${url}": ${err}`);
-      if (err instanceof Error && err.message.includes('401')) {
-        router.push('/');
-      }
-    }
-  };
-
-  const handlePostsListTrigger = async () => {
+  const handlePostsListTrigger = useCallback(async () => {
     const postsListResponse: Post[] = await fetchData(
       `${process.env.NEXT_PUBLIC_API_URL}/api/posts/posts/`,
     );
@@ -130,7 +135,7 @@ export default function Home() {
         window.scrollBy(0, -1); // Повернення назад
       }, 50);
     }
-  };
+  }, [fetchData]);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -147,7 +152,7 @@ export default function Home() {
     };
     loadUserData();
     loadPosts();
-  }, [router]);
+  }, [router, fetchData, handlePostsListTrigger]);
 
   return (
     <motion.div

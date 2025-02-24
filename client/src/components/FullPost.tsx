@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Post, UserData } from './not_components';
 import dateFormatter from './not_components';
 import fetchClient from '@/other/fetchClient';
 import { useError } from '@/context/ErrorContext';
+import Image from 'next/image';
 
 interface FullPostProps {
   post: Post;
@@ -20,7 +21,7 @@ interface Comment {
   id: number;
 }
 
-const FullPost: React.FC<FullPostProps> = ({ post, userData, onClose }) => {
+const FullPost: React.FC<FullPostProps> = ({ post, onClose }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -37,11 +38,7 @@ const FullPost: React.FC<FullPostProps> = ({ post, userData, onClose }) => {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
-  useEffect(() => {
-    fetchComments();
-  }, [post.id]);
-
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetchClient(
@@ -54,12 +51,16 @@ const FullPost: React.FC<FullPostProps> = ({ post, userData, onClose }) => {
 
       const data = await response.json();
       setComments(data.reverse());
-    } catch (error) {
+    } catch {
       showError('Не вдалося завантажити коментарі', 'error');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [post.id, showError]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [post.id, fetchComments]);
 
   const handleCommentSubmit = async () => {
     if (newComment.trim().length < 3) {
@@ -86,7 +87,7 @@ const FullPost: React.FC<FullPostProps> = ({ post, userData, onClose }) => {
 
       await fetchComments();
       setNewComment('');
-    } catch (error) {
+    } catch {
       showError('Не вдалося додати коментар', 'error');
     } finally {
       setIsSubmitting(false);
@@ -124,11 +125,14 @@ const FullPost: React.FC<FullPostProps> = ({ post, userData, onClose }) => {
       </button>
 
       <div className='mb-4 flex items-center'>
-        <img
-          src={post.author?.photo}
-          alt={post.author?.display_name}
+        <Image
+          src={post.author?.photo || '/default-avatar.png'} // Provide a default image if photo is undefined
+          alt={post.author?.display_name || 'Невідомий автор'} // Provide a default alt text if display_name is undefined
           className='mr-4 h-12 w-12 rounded-full'
+          width={48}
+          height={48}
         />
+        /{'>'}
         <div>
           <h2 className='text-xl font-bold text-white'>
             {post.author?.display_name || 'Невідомий автор'}
@@ -143,11 +147,13 @@ const FullPost: React.FC<FullPostProps> = ({ post, userData, onClose }) => {
       {post.images && post.images.length > 0 && (
         <div className='mb-4 grid grid-cols-2 gap-4'>
           {post.images.map((img, index) => (
-            <img
+            <Image
               key={index}
               src={img.image}
               alt={`Post image ${index + 1}`}
               className='h-64 w-full rounded-lg object-cover'
+              width={640}
+              height={480}
             />
           ))}
         </div>

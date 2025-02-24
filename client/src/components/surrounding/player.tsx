@@ -1,4 +1,5 @@
 import PlayerButton from './small_components/playerButton';
+import Image from 'next/image';
 
 export default function MusicPlayer() {
   // програвач: наразі приховав, бо зочем
@@ -7,7 +8,12 @@ export default function MusicPlayer() {
       <div className='max-w-8xl mx-auto h-20 px-4'>
         <div className='flex h-full items-center justify-between'>
           <div className='flex items-center'>
-            <img className='h-10 w-10 rounded' alt='Album' />
+            <Image
+              src='/path/to/image'
+              alt='description'
+              width={500}
+              height={300}
+            />
             <div className='ml-3'>
               <p className='text-sm font-medium text-white'>Літній дощ</p>
               <p className='text-xs text-gray-400'>Віктор Павлік</p>

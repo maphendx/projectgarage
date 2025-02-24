@@ -1,6 +1,6 @@
 import { useError } from '@/context/ErrorContext';
 import { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, FileWithPath } from 'react-dropzone';
 import { FileType } from './not_components';
 
 const DropzoneUploader = ({
@@ -62,9 +62,9 @@ const DropzoneUploader = ({
     }
   };
 
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      const filteredFiles = acceptedFiles.filter((file) =>
+  const handleDrop = useCallback(
+    (acceptedFiles: FileWithPath[]) => {
+      const filteredFiles = acceptedFiles.filter((file: FileWithPath) =>
         allowedTypes(fileType).includes(file.type),
       );
 
@@ -86,11 +86,11 @@ const DropzoneUploader = ({
       setFiles(filteredFiles); // Передаємо лише файли з правильним форматом
       setLocalFiles(filteredFiles);
     },
-    [setFiles],
+    [fileType, showError, setFiles],
   );
 
   const { getRootProps, getInputProps } = useDropzone({
-    onDrop,
+    onDrop: handleDrop,
     accept: allowedTypesForDegenerat(fileType),
   });
 

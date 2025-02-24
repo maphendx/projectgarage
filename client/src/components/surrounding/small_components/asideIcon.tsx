@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 const AsideIcon = ({
   img_url,
   text,
@@ -11,10 +13,12 @@ const AsideIcon = ({
     <div className='mt-4 flex items-center'>
       <div className='relative'>
         {img_url ? (
-          <img
+          <Image
             src={img_url}
             className='ml-5 h-12 w-12 rounded-[14px] bg-[#D9D9D9]'
             alt='типо чел'
+            width={48}
+            height={48}
           />
         ) : (
           <div className='ml-5 flex h-12 w-12 items-center justify-center rounded-[14px] bg-[#D9D9D9] text-white'>

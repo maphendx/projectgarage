@@ -28,7 +28,7 @@ const refreshAccessToken = async () => {
 };
 
 // Головна `fetch`-функція
-const fetchClient = async (url: string, options?: any) => {
+const fetchClient = async (url: string, options?: RequestInit) => {
   const accessToken = getAccessToken();
 
   // Додаємо токен в заголовки
@@ -46,7 +46,7 @@ const fetchClient = async (url: string, options?: any) => {
       headers.Authorization = `Bearer ${newAccessToken}`;
 
       response = await fetch(`${url}`, { ...options, headers });
-    } catch (error) {
+    } catch {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
     }

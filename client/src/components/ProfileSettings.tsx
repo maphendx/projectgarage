@@ -19,6 +19,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 }) => {
   const [bio, setBio] = useState<string>('');
   const [hashtags, setHashtags] = useState<{ name: string }[]>(initialHashtags);
+  const [newHashtag, setNewHashtag] = useState<string>('');
   const router = useRouter();
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarScale, setAvatarScale] = useState<number>(1);
@@ -34,14 +35,25 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     setBio(event.target.value);
   };
 
-  const handleHashtagsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    const newHashtags = value
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter((tag) => tag)
-      .map((tag) => ({ name: tag }));
-    setHashtags(newHashtags);
+  const handleNewHashtagChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setNewHashtag(event.target.value);
+  };
+
+  const addHashtag = () => {
+    if (
+      newHashtag.trim() &&
+      !hashtags.some((tag) => tag.name === newHashtag.trim())
+    ) {
+      setHashtags([...hashtags, { name: newHashtag.trim() }]);
+      setNewHashtag('');
+    }
+    ç;
+  };
+
+  const removeHashtag = (name: string) => {
+    setHashtags(hashtags.filter((tag) => tag.name !== name));
   };
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -220,17 +232,39 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         <label htmlFor='hashtags' className='block text-white'>
           Хештеги
         </label>
-        <input
-          id='hashtags'
-          type='text'
-          value={hashtags.map((tag) => tag.name).join(', ')}
-          onChange={handleHashtagsChange}
-          placeholder='Enter hashtags separated by commas'
-          className='w-full rounded-lg border border-gray-600 bg-[#1C1C1F] p-2 text-white'
-        />
-        <p className='mt-2 text-sm text-gray-400'>
-          Введіть хештеги (e.g., &quot;photography, music, coding&quot;).
-        </p>
+        <div className='flex items-center'>
+          <input
+            id='newHashtag'
+            type='text'
+            value={newHashtag}
+            onChange={handleNewHashtagChange}
+            placeholder='Add a new hashtag'
+            className='flex-grow rounded-lg border border-gray-600 bg-[#1C1C1F] p-2 text-white'
+          />
+          <button
+            onClick={addHashtag}
+            className='ml-2 rounded-lg bg-[#6374B6] px-4 py-2 text-white'
+          >
+            Додати
+          </button>
+        </div>
+        <div className='mt-2 flex flex-wrap'>
+          {hashtags.map((tag) => (
+            <div
+              key={tag.name}
+              className='m-1 flex items-center rounded-full bg-gray-700 px-3 py-1 text-sm text-white'
+            >
+              #{tag.name} {/* Only displaying tag.name */}
+              <button
+                onClick={() => removeHashtag(tag.name)}
+                className='ml-2 text-red-500 hover:text-red-700'
+                aria-label={`Remove ${tag.name}`}
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Buttons */}

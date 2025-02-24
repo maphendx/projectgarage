@@ -1,8 +1,7 @@
 'use client';
 import { UserData } from '@/components/not_components';
-import { useRouter, useParams } from 'next/navigation';
-import Image from 'next/image';
-import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import React, { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Topbar from '@/components/surrounding/topbar';
 import AsidePanelLeft from '@/components/surrounding/asideLeft';
@@ -18,8 +17,6 @@ interface NotificationData {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const fetchUserData = async (url: string): Promise<UserData | null> => {
@@ -37,22 +34,24 @@ export default function NotificationsPage() {
     }
   };
 
-  const fetchNotifications = async (url: string) => {
-    try {
-      const dataResponse = await fetchClient(url);
+  const fetchNotifications = useCallback(
+    async (url: string) => {
+      try {
+        const dataResponse = await fetchClient(url);
 
-      if (!dataResponse.ok) {
-        throw new Error(`HTTP error! status: ${dataResponse.status}`);
-      }
+        if (!dataResponse.ok) {
+          throw new Error(`HTTP error! status: ${dataResponse.status}`);
+        }
 
-      return await dataResponse.json();
-    } catch (err) {
-      setError(`Не вдалося отримати дані за "${url}": ${err}`);
-      if (err instanceof Error && err.message.includes('401')) {
-        router.push('/');
+        return await dataResponse.json();
+      } catch (err) {
+        if (err instanceof Error && err.message.includes('401')) {
+          router.push('/');
+        }
       }
-    }
-  };
+    },
+    [router],
+  );
 
   const setupWebSocket = async () => {
     // Формуємо WebSocket URL на основі протоколу поточної сторінки
@@ -117,7 +116,7 @@ export default function NotificationsPage() {
       }
     };
     loadUserData();
-  }, [router]);
+  }, [router, fetchNotifications]);
 
   return (
     <motion.div

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import AsidePanelLeft from '@/components/surrounding/asideLeft';
@@ -27,7 +27,7 @@ const Profile: React.FC = () => {
   const isOwnProfile = userId === '';
   const profileUrl = isOwnProfile ? 'profile/' : `profile/${userId}/`;
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isEasterEggOpen, setIsEasterEggOpen] = useState(false);
   const [easterEggCounter, setEasterEggCounter] = useState(0);
@@ -46,7 +46,7 @@ const Profile: React.FC = () => {
       setEasterEggCounter(0);
     }
   };
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     try {
       const response = await fetchClient(
         `${process.env.NEXT_PUBLIC_API_URL}/api/users/${profileUrl}`,
@@ -68,11 +68,11 @@ const Profile: React.FC = () => {
       console.error('Error fetching user data:', err);
       setError('Failed to load profile data.');
     }
-  };
+  }, [profileUrl]);
 
   useEffect(() => {
     fetchUserData();
-  }, [router, userId, isOwnProfile]);
+  }, [fetchUserData]);
 
   const handleUpdateBio = async (newBio: string) => {
     if (isOwnProfile) {
@@ -226,7 +226,7 @@ const Profile: React.FC = () => {
                           key={index}
                           className='mr-2 inline-block rounded-full bg-gray-700 px-2 py-1 text-xs'
                         >
-                          #{tag.name}
+                          #{tag.name} {/* Only displaying tag.name */}
                         </span>
                       ),
                     )}

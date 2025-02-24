@@ -38,7 +38,7 @@ export default function SnakeGame({
 
   const initGame = useCallback(() => {
     const initialSnake: Position[] = [];
-    let xPos = Math.floor(GRID_SIZE / 2);
+    const xPos = Math.floor(GRID_SIZE / 2);
     const yPos = Math.floor(GRID_SIZE / 2);
 
     for (let i = 0; i < INITIAL_SNAKE_SIZE; i++) {

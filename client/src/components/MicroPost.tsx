@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import dateFormatter, { Post } from './not_components';
-import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 const MicroPost = ({
   post: post,
@@ -9,8 +9,6 @@ const MicroPost = ({
   post: Post;
   setRepostPost?: (post: Post | undefined) => void;
 }) => {
-  const router = useRouter();
-
   return (
     <motion.div
       key={post.id}
@@ -25,7 +23,7 @@ const MicroPost = ({
         {post.images.length > 0 && (
           <div className='flex flex-wrap'>
             {post.images.map((element, key) => (
-              <img
+              <Image
                 key={key}
                 src={element.image}
                 alt='Post image'

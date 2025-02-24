@@ -48,7 +48,7 @@ const MainContent = ({
   return (
     <main>
       <div className='flex min-h-screen justify-center'>
-        <div className='border-b-solid border-t-none posts-container mx-auto min-h-[85vh] w-[100%] max-w-[100%] rounded-[30px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-opacity-70 bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-xl'>
+        <div className='posts-container mx-auto min-h-[85vh] w-[100%] max-w-[1290px] rounded-[30px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-opacity-70 bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-xl'>
           {userData && (
             <NewPostBlock
               userData={userData}
@@ -63,7 +63,7 @@ const MainContent = ({
           {localPostsList ? (
             localPostsList.map((post: Post) => (
               <motion.div
-                className='post-block'
+                className='post-block mb-6'
                 key={post.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -77,7 +77,9 @@ const MainContent = ({
               </motion.div>
             ))
           ) : (
-            <div>Завантаження...</div>
+            <div className='flex h-full items-center justify-center p-4 text-center text-gray-400'>
+              Завантаження...
+            </div>
           )}
         </div>
       </div>

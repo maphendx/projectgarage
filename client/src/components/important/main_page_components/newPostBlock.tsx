@@ -132,7 +132,7 @@ const NewPostBlock = ({
     >
       <div className='mb-4 flex items-center'>
         <img
-          className='h-12 w-12 rounded-full border-[1px] border-[#2d2d2d]'
+          className='h-12 w-12 rounded-[14px] border-[1px] border-[#2d2d2d]'
           src={userData ? userData.photo : 'Завантаження...'}
           alt='User'
         />

@@ -4,6 +4,7 @@ import { RiRobot2Fill } from 'react-icons/ri';
 import { UserData } from '../not_components';
 import TopbarSearchField from './small_components/topbarSearchField';
 import TopbarButton from './small_components/topbarButton';
+import Image from 'next/image';
 
 export default function Topbar({
   paramUserData,
@@ -34,10 +35,12 @@ export default function Topbar({
       <div className='max-w-8xl mx-auto'>
         <div className='flex h-16 items-center justify-between gap-2'>
           {/* Logo */}
-          <img
+          <Image
             src='/logo.svg'
             alt='Logo'
             className='ml-5 mt-5 h-[52px] w-auto cursor-pointer'
+            width={50}
+            height={50}
             onClick={() => router.push('/')}
           />
           {/* Search Field */}
@@ -64,10 +67,12 @@ export default function Topbar({
                     >
                       {userData.display_name}
                     </span>
-                    <img
+                    <Image
                       className='h-10 w-10 cursor-pointer rounded-[12px] transition-transform hover:scale-105'
                       src={userData.photo}
                       alt='Фото профілю'
+                      width={40}
+                      height={40}
                       onClick={handleProfileNavigation}
                     />
                   </div>

@@ -21,8 +21,21 @@ export const PostBlock = ({
   const [post, setPost] = useState<Post>(getPost);
   const [repostedPost, setRepostedPost] = useState<Post | null>(null);
   const [commentList, setCommentList] = useState([]);
+  const [showFullContent, setShowFullContent] = useState<boolean>(false); // New state for toggling full content
   const { showError } = useError();
   const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
+
+  // Truncate long content to a specific length (e.g., 200 characters)
+  const truncateContent = (text: string, maxLength: number = 200) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
+  // Truncate long hashtags
+  const truncateHashtag = (hashtag: string, maxLength: number = 20) => {
+    if (hashtag.length <= maxLength) return hashtag;
+    return hashtag.substring(0, maxLength) + '...';
+  };
 
   useEffect(() => {
     if (post.original_post) {
@@ -196,8 +209,24 @@ export const PostBlock = ({
           </div>
         </div>
         <p className='mt-4 whitespace-pre-wrap break-words text-white'>
-          {/* {post.content} */}
-          {post.content && <VideoEmbed content={post.content} />}
+          {/* Truncate long content with a "Read More" toggle */}
+          {post.content && (
+            <div>
+              <VideoEmbed
+                content={
+                  showFullContent ? post.content : truncateContent(post.content)
+                }
+              />
+              {post.content.length > 200 && (
+                <button
+                  onClick={() => setShowFullContent(!showFullContent)}
+                  className='mt-2 text-sm text-gray-400 hover:text-gray-300'
+                >
+                  {showFullContent ? 'Show Less' : 'Read More'}
+                </button>
+              )}
+            </div>
+          )}
         </p>
         <div className='mb-4 flex flex-col items-start justify-start'>
           {/* Блок фотографій */}
@@ -244,8 +273,11 @@ export const PostBlock = ({
                 <div
                   key={key}
                   className='mr-2 mt-2 flex rounded-md bg-[#ffffff0f] p-1'
+                  title={element.name} // Show full hashtag on hover
                 >
-                  <p>{element.name}</p>
+                  <p className='overflow-hidden text-ellipsis whitespace-nowrap text-sm'>
+                    {truncateHashtag(element.name)}
+                  </p>
                 </div>
               ))}
             </div>

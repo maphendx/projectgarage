@@ -1,11 +1,25 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback, FormEvent } from 'react';
+import {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  FormEvent,
+  ChangeEvent,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Users, Plus, Send } from 'lucide-react';
+import {
+  Users,
+  Send,
+  Trash2,
+  Image as ImageIcon,
+  UserPlus,
+} from 'lucide-react';
 import { useError } from '@/context/ErrorContext';
 import fetchClient from '@/other/fetchClient';
+import Image from 'next/image';
 
 import Topbar from '@/components/surrounding/topbar';
 import AsidePanelLeft from '@/components/surrounding/asideLeft';
@@ -17,21 +31,19 @@ const WS_BASE_URL = process.env.NEXT_PUBLIC_API_URL
   ? process.env.NEXT_PUBLIC_API_URL.replace(/^http/, 'ws')
   : 'ws://localhost:8000';
 
-const ErrorMessages = {
-  AUTH_REQUIRED: "Авторизація обов'язкова",
-  FETCH_ERROR: 'Помилка отримання даних',
-  SEND_ERROR: 'Помилка надсилання повідомлення',
-  ROOM_CREATE_ERROR: 'Помилка створення кімнати',
-  ROOM_NAME_REQUIRED: "Назва кімнати обов'язкова",
-  WS_ERROR: "Помилка з'єднання WebSocket",
-  PARTICIPANTS_INVALID: 'Невірний формат ID учасників',
-} as const;
+interface UserData {
+  id: number;
+  display_name: string;
+  email: string;
+  photo?: string;
+}
 
 interface ChatRoom {
   id: number;
   name: string;
   created_at: string;
   participants: UserData[];
+  avatar?: string;
 }
 
 interface Reaction {
@@ -52,12 +64,6 @@ interface Message {
   reactions?: Reaction[];
 }
 
-interface UserData {
-  id: number;
-  display_name: string;
-  email: string;
-}
-
 const messageVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
@@ -65,19 +71,13 @@ const messageVariants = {
     y: 0,
     transition: { type: 'spring', stiffness: 300, damping: 20 },
   },
-  exit: { opacity: 0, y: 20, transition: { duration: 0.3 } },
+  exit: { opacity: 0, y: -20, transition: { duration: 0.2 } },
 };
 
 export default function ChatPage() {
   const router = useRouter();
   const { showError } = useError();
-
-  useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      router.push('/auth');
-    }
-  }, [router]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
@@ -86,95 +86,87 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
-  const [showCreateRoom, setShowCreateRoom] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomParticipants, setNewRoomParticipants] = useState('');
   const [newRoomImage, setNewRoomImage] = useState<File | null>(null);
-  const [webSocket, setWebSocket] = useState<WebSocket | null>(null);
-
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
-  // Auto-scroll when messages update
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) router.push('/auth');
+  }, [router]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
   const getAuthHeaders = useCallback(() => {
     const token = localStorage.getItem('access_token');
-    if (!token) {
-      showError(ErrorMessages.AUTH_REQUIRED, 'error');
-      router.push('/auth');
-      return null;
-    }
-    return {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-  }, [router, showError]);
+    return token ? { Authorization: `Bearer ${token}` } : null;
+  }, []);
 
   const apiRequest = useCallback(
     async <T,>(
       endpoint: string,
       method: string = 'GET',
-      body?: any,
+      body?: unknown,
+      isMultipart: boolean = false,
     ): Promise<T | null> => {
       const headers = getAuthHeaders();
       if (!headers) return null;
 
+      const config: RequestInit = {
+        method,
+        headers: isMultipart
+          ? headers
+          : { ...headers, 'Content-Type': 'application/json' },
+        ...(body && !isMultipart && { body: JSON.stringify(body) }),
+        ...(body && isMultipart && { body }),
+      };
+
       try {
-        const response = await fetchClient(`${API_BASE_URL}${endpoint}`, {
-          method,
-          headers,
-          ...(body && { body: JSON.stringify(body) }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.detail || 'API Request failed');
-        }
-
-        return await response.json();
-      } catch (error) {
-        showError(
-          error instanceof Error ? error.message : ErrorMessages.FETCH_ERROR,
-          'error',
+        const response = await fetchClient(
+          `${API_BASE_URL}${endpoint}`,
+          config,
         );
+        if (!response.ok) throw new Error(await response.text());
+        return response.status === 204 ? null : await response.json();
+      } catch (error) {
+        showError((error as Error).message || 'API request failed', 'error');
         return null;
       }
     },
     [getAuthHeaders, showError],
   );
 
+  const handleFetchEmojis = async () => {
+    const emojis = await apiRequest<{ [key: string]: string }>(
+      '/messaging/emoji/',
+    );
+    return emojis;
+  };
+
+  // Load initial data
   useEffect(() => {
     const loadInitialData = async () => {
-      try {
-        const [userProfile, rooms] = await Promise.all([
-          apiRequest<UserData>('/users/profile/'),
-          apiRequest<ChatRoom[]>('/messaging/chatrooms/'),
-        ]);
-
-        if (userProfile) setUserData(userProfile);
-        if (rooms) {
-          setChatRooms(rooms);
-          if (rooms.length > 0 && !selectedRoom) {
-            setSelectedRoom(rooms[0]);
-          }
-        }
-      } catch (error) {
-        showError(ErrorMessages.FETCH_ERROR, 'error');
-      } finally {
-        setIsLoading(false);
-      }
+      setIsLoading(true);
+      const [userProfile, rooms] = await Promise.all([
+        apiRequest<UserData>('/users/profile/'),
+        apiRequest<ChatRoom[]>('/messaging/chatrooms/'),
+        handleFetchEmojis(),
+      ]);
+      setUserData(userProfile);
+      setChatRooms(rooms || []);
+      if (rooms?.length && !selectedRoom) setSelectedRoom(rooms[0]);
+      setIsLoading(false);
     };
-
     loadInitialData();
-  }, [apiRequest, showError]);
+  }, [apiRequest, handleFetchEmojis, selectedRoom]);
 
+  // WebSocket setup
   useEffect(() => {
     if (!selectedRoom) return;
 
@@ -182,28 +174,30 @@ export default function ChatPage() {
       const msgs = await apiRequest<Message[]>(
         `/messaging/messages/${selectedRoom.id}/`,
       );
-      if (msgs) {
-        setMessages(msgs);
-        scrollToBottom();
-      }
+      setMessages(msgs || []);
     };
     fetchMessages();
 
-    const ws = new WebSocket(`${WS_BASE_URL}/ws/chat/${selectedRoom.id}/`);
-
-    ws.onopen = () => {
-      console.log('WebSocket Connected');
+    const roomIdentifier = encodeURIComponent(selectedRoom.name);
+    const websocket = new WebSocket(
+      `${WS_BASE_URL}/ws/chat/${roomIdentifier}/`,
+    );
+    websocket.onopen = () => {
+      const token = localStorage.getItem('access_token');
+      websocket.send(
+        JSON.stringify({ type: 'authorization', token: `Bearer ${token}` }),
+      );
     };
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
+    websocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'chat_message') {
         setMessages((prev) => [
           ...prev,
           {
             id: data.id || Date.now(),
             chat: selectedRoom.id,
-            sender: data.sender_id,
+            sender: data.sender_id || 0,
             sender_name: data.sender,
             sender_photo: data.sender_photo,
             content: data.message,
@@ -211,181 +205,149 @@ export default function ChatPage() {
             reactions: [],
           },
         ]);
-        scrollToBottom();
-      } catch (error) {
-        console.error('Error processing message:', error);
+      } else if (data.type === 'reaction') {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === data.message_id
+              ? {
+                  ...msg,
+                  reactions: [
+                    ...(msg.reactions || []),
+                    {
+                      id: data.reaction_id,
+                      user: data.user_id,
+                      reaction: data.reaction,
+                      created_at: new Date().toISOString(),
+                    },
+                  ],
+                }
+              : msg,
+          ),
+        );
       }
+      scrollToBottom();
     };
 
-    ws.onerror = () => {
-      showError(ErrorMessages.WS_ERROR, 'error');
-    };
+    websocket.onerror = () => showError('WebSocket connection failed', 'error');
 
-    setWebSocket(ws);
-
-    return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
-    };
-  }, [selectedRoom, scrollToBottom, showError]);
+    return () => websocket.close();
+  }, [selectedRoom, scrollToBottom, showError, apiRequest]);
 
   const handleSendMessage = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedRoom || !userData || isSending) return;
+    if (!newMessage.trim() || !selectedRoom || isSending) return;
 
     setIsSending(true);
-
-    try {
-      const messageData = {
-        content: newMessage.trim(),
-        chat: selectedRoom.id,
-      };
-
-      const response = await apiRequest<Message>(
-        `/messaging/messages/${selectedRoom.id}/`,
-        'POST',
-        messageData,
-      );
-
-      if (!response) throw new Error(ErrorMessages.SEND_ERROR);
-
-      setNewMessage('');
-    } catch (error) {
-      showError(
-        error instanceof Error ? error.message : ErrorMessages.SEND_ERROR,
-        'error',
-      );
-    } finally {
-      setIsSending(false);
-    }
+    const response = await apiRequest<Message>(
+      `/messaging/messages/${selectedRoom.id}/`,
+      'POST',
+      { content: newMessage.trim(), chat: selectedRoom.id },
+    );
+    if (response) setNewMessage('');
+    setIsSending(false);
   };
 
   const handleCreateRoom = async () => {
     if (!newRoomName.trim()) {
-      showError(ErrorMessages.ROOM_NAME_REQUIRED, 'warning');
+      showError('Room name is required', 'warning');
       return;
     }
 
-    setIsCreatingRoom(true);
+    const formData = new FormData();
+    formData.append('name', newRoomName.trim());
+    if (newRoomParticipants)
+      formData.append('participants_display_names', newRoomParticipants);
+    if (newRoomImage) formData.append('avatar', newRoomImage);
 
-    try {
-      const participantNames = newRoomParticipants
-        .split(',')
-        .map((name) => name.trim())
-        .filter((name) => name);
-
-      const formData = new FormData();
-      formData.append('name', newRoomName.trim());
-      formData.append(
-        'participants_display_names',
-        JSON.stringify(participantNames),
-      );
-
-      if (newRoomImage) {
-        formData.append('avatar', newRoomImage);
-      }
-
-      const response = await fetchClient(
-        `${API_BASE_URL}/messaging/chatrooms/`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-          },
-          body: formData,
-        },
-      );
-
-      if (!response.ok) throw new Error(ErrorMessages.ROOM_CREATE_ERROR);
-
-      const newRoom = await response.json();
+    const newRoom = await apiRequest<ChatRoom>(
+      '/messaging/chatrooms/',
+      'POST',
+      formData,
+      true,
+    );
+    if (newRoom) {
       setChatRooms((prev) => [...prev, newRoom]);
-      showError('Кімнату успішно створено', 'success');
-
+      setSelectedRoom(newRoom);
       setNewRoomName('');
       setNewRoomParticipants('');
       setNewRoomImage(null);
-      setShowCreateRoom(false);
-    } catch (error) {
-      showError(
-        error instanceof Error
-          ? error.message
-          : ErrorMessages.ROOM_CREATE_ERROR,
-        'error',
+      showError('Room created successfully', 'success');
+    }
+  };
+
+  const handleUpdateAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
+    if (!selectedRoom || !e.target.files?.[0]) return;
+
+    const formData = new FormData();
+    formData.append('avatar', e.target.files[0]);
+    const updatedRoom = await apiRequest<ChatRoom>(
+      `/messaging/chatrooms/${selectedRoom.id}/avatar/`,
+      'PATCH',
+      formData,
+      true,
+    );
+    if (updatedRoom) {
+      setChatRooms((prev) =>
+        prev.map((room) => (room.id === selectedRoom.id ? updatedRoom : room)),
       );
-    } finally {
-      setIsCreatingRoom(false);
+      setSelectedRoom(updatedRoom);
+      showError('Avatar updated successfully', 'success');
     }
   };
 
   const handleReaction = async (messageId: number, reaction: string) => {
-    try {
-      const response = await apiRequest<Reaction>(
-        `/messaging/messages/${messageId}/reaction/`,
-        'POST',
-        { reaction },
-      );
+    const validReactions = ['like', 'love', 'laugh', 'wow', 'sad', 'angry'];
+    const mappedReaction =
+      {
+        '👍': 'like',
+        '❤️': 'love',
+        '😂': 'laugh',
+        '😲': 'wow',
+        '😢': 'sad',
+        '😠': 'angry',
+      }[reaction] || reaction;
 
-      if (!response) throw new Error('Failed to add reaction');
+    if (!validReactions.includes(mappedReaction)) return;
 
+    const response = await apiRequest<Reaction>(
+      `/messaging/messages/${messageId}/reaction/`,
+      'POST',
+      { reaction: mappedReaction },
+    );
+    if (response) {
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === messageId
-            ? {
-                ...msg,
-                reactions: [...(msg.reactions || []), response],
-              }
+            ? { ...msg, reactions: [...(msg.reactions || []), response] }
             : msg,
         ),
       );
-    } catch (error) {
-      showError('Failed to add reaction', 'error');
     }
   };
 
-  const handleRemoveReaction = async (messageId: number) => {
-    try {
-      await apiRequest(`/messaging/messages/${messageId}/reaction/`, 'DELETE');
-
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === messageId
-            ? {
-                ...msg,
-                reactions: msg.reactions?.filter(
-                  (r) => r.user !== userData?.id,
-                ),
-              }
-            : msg,
-        ),
-      );
-    } catch (error) {
-      showError('помилкааа', 'error');
-    }
+  const handleDeleteReaction = async (messageId: number) => {
+    await apiRequest(`/messaging/messages/${messageId}/reaction/`, 'DELETE');
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              reactions: msg.reactions?.filter((r) => r.user !== userData?.id),
+            }
+          : msg,
+      ),
+    );
   };
 
-  const handleAddParticipants = async (
-    roomId: number,
-    participantNames: string[],
-  ) => {
-    try {
-      const response = await apiRequest<ChatRoom>(
-        `/messaging/chatrooms/${roomId}/add_user/`,
-        'POST',
-        { user_display_names: participantNames },
-      );
+  const handleDeleteMessage = async (messageId: number) => {
+    await apiRequest(`/messaging/messages/${messageId}/delete/`, 'DELETE');
+    setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
+  };
 
-      if (!response) throw new Error('Failed to add participants');
-
-      setChatRooms((prev) =>
-        prev.map((room) => (room.id === roomId ? response : room)),
-      );
-
-      showError('Учасників успішно додано', 'success');
-    } catch (error) {
-      showError('Failed to add participants', 'error');
-    }
+  const handleDeleteRoom = async (roomId: number) => {
+    await apiRequest(`/messaging/chatrooms/${roomId}/`, 'DELETE');
+    setChatRooms((prev) => prev.filter((room) => room.id !== roomId));
+    if (selectedRoom?.id === roomId) setSelectedRoom(null);
   };
 
   return (
@@ -408,7 +370,6 @@ export default function ChatPage() {
         </div>
       ) : (
         <>
-          {/* Topbar */}
           <motion.header
             className='sticky top-0 z-30 h-[92px] bg-[#1C1C1F]'
             initial={{ y: -50, opacity: 0 }}
@@ -424,173 +385,249 @@ export default function ChatPage() {
             </aside>
 
             <main className='overflow-y flex-1 px-4 pb-4'>
-              <div className='fixed min-h-[80vh] w-[1280px] rounded-[30px] bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-lg'>
-                <div className='flex flex-row gap-6'>
-                  {/* Chat Rooms List */}
-                  <motion.div className='w-60'>
-                    <div className='mb-6 flex items-center justify-between'>
-                      <h2 className='flex items-center text-xl font-bold text-white'>
-                        <MessageCircle className='mr-2 text-[#6374B6]' />
-                        Чат кімнати
-                      </h2>
+              <div className='fixed min-h-[80vh] w-[1280px] rounded-[30px] bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-xl'>
+                <div className='flex flex-row gap-8'>
+                  {/* Chat Rooms Sidebar */}
+                  <motion.div className='w-64'>
+                    <div className='mb-8'>
+                      <h2 className='text-2xl font-bold text-white'>Chats</h2>
+                      <p className='mt-2 text-sm text-gray-300'>
+                        Select a chat room to start messaging
+                      </p>
                       <button
-                        onClick={() => setShowCreateRoom(true)}
-                        className='rounded-full p-2 hover:bg-white/10'
+                        onClick={handleCreateRoom}
+                        className='mt-4 w-full rounded-lg bg-[#6374B6] px-4 py-2 text-white transition-all hover:opacity-90 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                       >
-                        <Plus className='h-5 w-5 text-white' />
+                        Create Chat
                       </button>
                     </div>
-                    <div className='space-y-2'>
+                    <div className='space-y-3'>
                       {chatRooms.map((room) => (
                         <motion.div
                           key={room.id}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          className={`cursor-pointer rounded-lg p-4 transition-all ${
+                          className={`cursor-pointer rounded-xl p-4 transition-all ${
                             selectedRoom?.id === room.id
-                              ? 'bg-[#6374B6] text-white'
-                              : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                              ? 'bg-[#6374B6] text-white shadow-lg'
+                              : 'bg-white/5 text-gray-300 hover:bg-white/10'
                           }`}
                           onClick={() => setSelectedRoom(room)}
                         >
-                          <div className='flex items-center'>
-                            <Users className='mr-2 h-4 w-4 text-[#6374B6]' />
-                            <span className='text-sm text-white'>
-                              {room.name}
-                            </span>
+                          <div className='flex items-center gap-3'>
+                            {room.avatar ? (
+                              <Image
+                                src={room.avatar}
+                                alt={room.name}
+                                width={40}
+                                height={40}
+                                className='rounded-full'
+                              />
+                            ) : (
+                              <div className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-600'>
+                                <Users className='h-5 w-5 text-[#6374B6]' />
+                              </div>
+                            )}
+                            <span className='flex-1 truncate'>{room.name}</span>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteRoom(room.id);
+                              }}
+                              className='rounded-full p-1 hover:bg-red-500/20'
+                            >
+                              <Trash2 className='h-4 w-4' />
+                            </motion.button>
                           </div>
                         </motion.div>
                       ))}
                     </div>
                   </motion.div>
 
-                  {/* Conversation Pane */}
+                  {/* Chat Area */}
                   <motion.div className='flex-1'>
-                    <div className='rounded-lg bg-white/5 p-4'>
+                    <div className='rounded-xl bg-white/5 p-6 backdrop-blur-sm'>
                       {!selectedRoom ? (
-                        <div className='flex h-[60vh] items-center justify-center text-gray-400'>
-                          Виберіть чат кімнату, щоб почати спілкування
+                        <div className='flex flex-1 items-center justify-center text-gray-400'>
+                          Select a chat to start messaging
                         </div>
                       ) : (
                         <>
-                          <div className='mb-4 flex items-center justify-between border-b border-white/10 pb-4'>
-                            <h3 className='text-lg font-semibold text-white'>
-                              {selectedRoom.name}
-                            </h3>
-                            <span className='text-sm text-white'>
-                              {selectedRoom.participants.length} учасників
-                            </span>
+                          <div className='mb-4 flex items-center justify-between border-b border-gray-700 pb-3'>
+                            <div className='flex items-center gap-3'>
+                              {selectedRoom.avatar && (
+                                <Image
+                                  src={selectedRoom.avatar}
+                                  alt={selectedRoom.name}
+                                  width={40}
+                                  height={40}
+                                  className='rounded-full'
+                                />
+                              )}
+                              <h3 className='text-lg font-semibold'>
+                                {selectedRoom.name}
+                              </h3>
+                            </div>
+                            <div className='flex gap-3'>
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                className='flex items-center gap-1 text-sm hover:text-[#6374B6]'
+                              >
+                                <UserPlus className='h-4 w-4' /> Settings
+                              </motion.button>
+                              <label className='flex cursor-pointer items-center gap-1 text-sm hover:text-[#6374B6]'>
+                                <ImageIcon className='h-4 w-4' /> Avatar
+                                <input
+                                  type='file'
+                                  className='hidden'
+                                  onChange={handleUpdateAvatar}
+                                  accept='image/*'
+                                />
+                              </label>
+                            </div>
                           </div>
 
-                          <div
-                            className='no-scrollbar h-[70vh] overflow-y-auto'
-                            style={{
-                              scrollbarWidth: 'none',
-                              msOverflowStyle: 'none',
-                            }}
-                          >
+                          <div className='flex-1 space-y-4 overflow-y-auto p-2'>
                             <AnimatePresence>
-                              {messages.map((msg, index) => (
+                              {messages.map((msg) => (
                                 <motion.div
                                   key={msg.id}
                                   variants={messageVariants}
                                   initial='hidden'
                                   animate='visible'
                                   exit='exit'
-                                  transition={{ delay: index * 0.05 }}
-                                  className={`mb-4 max-w-[80%] ${
+                                  className={`flex ${
                                     msg.sender === userData?.id
-                                      ? 'ml-auto'
-                                      : 'mr-auto'
+                                      ? 'justify-end'
+                                      : 'justify-start'
                                   }`}
                                 >
-                                  <div className='flex items-start gap-2'>
+                                  <div
+                                    className={`group flex max-w-[70%] gap-2 ${
+                                      msg.sender === userData?.id
+                                        ? 'flex-row-reverse'
+                                        : ''
+                                    }`}
+                                  >
                                     {msg.sender !== userData?.id &&
                                       msg.sender_photo && (
-                                        <img
+                                        <Image
                                           src={msg.sender_photo}
-                                          alt={msg.sender_name}
-                                          className='h-8 w-8 rounded-full'
+                                          alt={msg.sender_name || ''}
+                                          width={36}
+                                          height={36}
+                                          className='rounded-full'
                                         />
                                       )}
-                                    <div>
+                                    <div className='flex flex-col'>
                                       {msg.sender !== userData?.id && (
-                                        <p className='mb-1 text-xs font-bold text-gray-300'>
+                                        <span className='mb-1 text-xs text-gray-400'>
                                           {msg.sender_name}
-                                        </p>
+                                        </span>
                                       )}
                                       <div
-                                        className={`relative rounded-xl p-3 ${
+                                        className={`rounded-2xl p-3 shadow-md ${
                                           msg.sender === userData?.id
                                             ? 'bg-[#6374B6] text-white'
-                                            : 'bg-white/10 text-gray-200'
+                                            : 'bg-gray-700 text-gray-200'
                                         }`}
                                       >
-                                        <p className='text-sm'>{msg.content}</p>
-
-                                        {/* Reactions */}
-                                        {msg.reactions &&
-                                          msg.reactions.length > 0 && (
-                                            <div className='mt-2 flex gap-1'>
-                                              {msg.reactions.map((reaction) => (
-                                                <span
-                                                  key={reaction.id}
-                                                  className='rounded bg-white/10 px-2 py-1 text-xs'
-                                                  title={`Реакція від ${reaction.user}`}
-                                                >
-                                                  {reaction.reaction}
-                                                </span>
-                                              ))}
-                                            </div>
-                                          )}
-
-                                        {/* Reaction buttons */}
-                                        <div className='mt-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100'>
-                                          {[
-                                            'like',
-                                            'love',
-                                            'laugh',
-                                            'wow',
-                                            'sad',
-                                            'angry',
-                                          ].map((reaction) => (
-                                            <button
-                                              key={reaction}
-                                              onClick={() =>
-                                                handleReaction(msg.id, reaction)
-                                              }
-                                              className='rounded bg-white/5 p-1 text-xs hover:bg-white/10'
-                                            >
-                                              {reaction}
-                                            </button>
-                                          ))}
-                                        </div>
+                                        <p className='whitespace-pre-wrap text-sm'>
+                                          {msg.content}
+                                        </p>
+                                        {msg.reactions?.length > 0 && (
+                                          <div className='mt-2 flex flex-wrap gap-2'>
+                                            {msg.reactions.map((r) => (
+                                              <motion.span
+                                                key={r.id}
+                                                whileHover={{ scale: 1.1 }}
+                                                className='cursor-pointer rounded-full bg-gray-600/50 px-2 py-1 text-xs'
+                                                onClick={() =>
+                                                  r.user === userData?.id &&
+                                                  handleDeleteReaction(msg.id)
+                                                }
+                                              >
+                                                {r.reaction === 'like'
+                                                  ? '👍'
+                                                  : r.reaction === 'love'
+                                                    ? '❤️'
+                                                    : r.reaction === 'laugh'
+                                                      ? '😂'
+                                                      : r.reaction === 'wow'
+                                                        ? '😲'
+                                                        : r.reaction === 'sad'
+                                                          ? '😢'
+                                                          : r.reaction ===
+                                                              'angry'
+                                                            ? '😠'
+                                                            : r.reaction}
+                                              </motion.span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className='mt-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100'>
+                                        {[
+                                          '👍',
+                                          '❤️',
+                                          '😂',
+                                          '😲',
+                                          '😢',
+                                          '😠',
+                                        ].map((emoji) => (
+                                          <motion.button
+                                            key={emoji}
+                                            whileHover={{ scale: 1.2 }}
+                                            whileTap={{ scale: 0.9 }}
+                                            className='rounded-full p-1 hover:bg-gray-600/50'
+                                            onClick={() =>
+                                              handleReaction(msg.id, emoji)
+                                            }
+                                          >
+                                            {emoji}
+                                          </motion.button>
+                                        ))}
+                                        {msg.sender === userData?.id && (
+                                          <motion.button
+                                            whileHover={{ scale: 1.2 }}
+                                            whileTap={{ scale: 0.9 }}
+                                            className='rounded-full p-1 hover:bg-red-500/50'
+                                            onClick={() =>
+                                              handleDeleteMessage(msg.id)
+                                            }
+                                          >
+                                            ґ
+                                            <Trash2 className='h-4 w-4' />
+                                          </motion.button>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
                                 </motion.div>
                               ))}
-                              <div ref={messagesEndRef} />
                             </AnimatePresence>
                             <div ref={messagesEndRef} />
                           </div>
 
                           <form onSubmit={handleSendMessage} className='mt-4'>
-                            <div className='flex overflow-hidden rounded-full bg-white/10'>
+                            <div className='flex items-center gap-2 rounded-full bg-gray-700/50 p-2 shadow-inner'>
                               <input
                                 type='text'
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
-                                className='flex-1 bg-transparent p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6374B6]'
-                                placeholder='Напишіть повідомлення...'
+                                className='flex-1 bg-transparent p-2 text-white placeholder-gray-400 focus:outline-none'
+                                placeholder='Type a message...'
                               />
-                              <button
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
                                 type='submit'
-                                disabled={!newMessage.trim()}
-                                className='bg-[#6374B6] px-4 py-3 hover:bg-opacity-70 disabled:opacity-50'
+                                disabled={!newMessage.trim() || isSending}
+                                className='rounded-full bg-[#6374B6] p-2 disabled:opacity-50'
                               >
-                                <Send className='h-4 w-4 text-white' />
-                              </button>
+                                <Send className='h-5 w-5' />
+                              </motion.button>
                             </div>
                           </form>
                         </>
@@ -609,62 +646,6 @@ export default function ChatPage() {
           <footer className='fixed bottom-0 left-0 right-0 bg-[#1C1C1F] shadow-md'>
             <MusicPlayer />
           </footer>
-
-          {showCreateRoom && (
-            <motion.div
-              className='fixed inset-0 z-50 flex items-center justify-center bg-black/50'
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <div className='w-full max-w-md rounded-lg bg-[#2A2A40] p-6'>
-                <h2 className='mb-4 text-lg font-semibold text-white'>
-                  Створити кімнату
-                </h2>
-                <input
-                  type='text'
-                  value={newRoomName}
-                  onChange={(e) => setNewRoomName(e.target.value)}
-                  className='mb-4 w-full rounded-lg bg-white/10 p-3 text-white placeholder-gray-400 focus:outline-none'
-                  placeholder='Назва кімнати...'
-                />
-                <input
-                  type='text'
-                  value={newRoomParticipants}
-                  onChange={(e) => setNewRoomParticipants(e.target.value)}
-                  className='mb-4 w-full rounded-lg bg-white/10 p-3 text-white placeholder-gray-400 focus:outline-none'
-                  placeholder='Імена учасників (через кому, напр.: user1,user2)'
-                  title='Введіть імена учасників через кому'
-                />
-                <input
-                  type='file'
-                  onChange={(e) => setNewRoomImage(e.target.files?.[0] || null)}
-                  className='mb-4 w-full text-white'
-                  accept='image/*'
-                />
-                <div className='flex justify-end gap-2'>
-                  <button
-                    onClick={() => {
-                      setShowCreateRoom(false);
-                      setNewRoomName('');
-                      setNewRoomParticipants('');
-                      setNewRoomImage(null);
-                    }}
-                    className='rounded-lg px-4 py-2 text-white hover:bg-white/10'
-                  >
-                    Скасувати
-                  </button>
-                  <button
-                    onClick={handleCreateRoom}
-                    disabled={!newRoomName.trim()}
-                    className='rounded-lg bg-[#6374B6] px-4 py-2 text-white hover:bg-opacity-70'
-                  >
-                    Створити
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
         </>
       )}
     </motion.div>

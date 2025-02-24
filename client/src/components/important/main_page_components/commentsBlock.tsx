@@ -2,6 +2,7 @@ import { UserData } from '@/components/not_components';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import fetchClient from '@/other/fetchClient';
+import Image from 'next/image';
 
 interface CompInterface {
   isVisible: boolean;
@@ -81,10 +82,12 @@ const CommentBlock = ({
           variants={modalVariants}
         >
           <div className='flex'>
-            <img
+            <Image
               className='h-10 w-10 rounded-[14px]'
-              src={userData ? userData.photo : 'Завантаження...'}
+              src={userData ? userData.photo : '/path/to/placeholder-image.png'}
               alt='User'
+              width={40}
+              height={40}
             />
             <div className='ml-3 flex-1'>
               <textarea
@@ -112,10 +115,16 @@ const CommentBlock = ({
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <img
+                  <Image
                     className='h-10 w-10 rounded-[14px]'
-                    src={userData ? userData.photo : 'Завантаження...'}
+                    src={
+                      userData
+                        ? userData.photo
+                        : '/path/to/placeholder-image.png'
+                    }
                     alt={comment.author.display_name || 'User'}
+                    width={40}
+                    height={40}
                   />
                   <div className='ml-3'>
                     <p className='text-sm font-medium text-white'>

@@ -7,10 +7,8 @@ import Topbar from '@/components/surrounding/topbar';
 import AsidePanelLeft from '@/components/surrounding/asideLeft';
 import { Post, UserData } from '@/components/not_components';
 import { useError } from '@/context/ErrorContext';
-import { refreshAccessToken } from '@/other/fetchClient';
 import fetchClient from '@/other/fetchClient';
 import MicroPost from '@/components/MicroPost';
-import Modal from '@/components/Modal';
 import FullPost from '@/components/FullPost';
 
 const modalVariants = {
@@ -31,47 +29,61 @@ export default function FavoritesPage() {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   useEffect(() => {
-    error && showError(error, 'error');
-  }, [error]);
-
-  const fetchLikedPosts = async () => {
-    try {
-      const response = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/posts/history/likes/`,
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setLikedPosts(data.reverse());
-    } catch (err) {
-      setError(`Не вдалося отримати дані: ${err}`);
-      if (err instanceof Error && err.message.includes('401')) {
-        router.push('/');
-      }
-    } finally {
-      setIsLoading(false);
+    if (error) {
+      showError(error, 'error');
     }
-  };
+  }, [error, showError]);
 
-  const fetchUserData = async (): Promise<UserData | null> => {
-    try {
-      const response = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/users/profile/`,
-      );
-      if (!response.ok) {
-        console.error(`Error: ${response.status} - ${response.statusText}`);
-        throw new Error('Network response was not ok');
+  useEffect(() => {
+    const fetchLikedPosts = async () => {
+      try {
+        const response = await fetchClient(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/posts/history/likes/`,
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setLikedPosts(data.reverse());
+      } catch (err) {
+        setError(`Не вдалося отримати дані: ${err}`);
+        if (err instanceof Error && err.message.includes('401')) {
+          router.push('/');
+        }
+      } finally {
+        setIsLoading(false);
       }
-      const data: UserData = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Fetch data error:', error);
-      return null;
-    }
-  };
+    };
+
+    const fetchUserData = async (): Promise<UserData | null> => {
+      try {
+        const response = await fetchClient(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/users/profile/`,
+        );
+        if (!response.ok) {
+          console.error(`Error: ${response.status} - ${response.statusText}`);
+          throw new Error('Network response was not ok');
+        }
+        const data: UserData = await response.json();
+        return data;
+      } catch (error) {
+        console.error('Fetch data error:', error);
+        return null;
+      }
+    };
+
+    const loadUserData = async () => {
+      const userDataResponse = await fetchUserData();
+      if (userDataResponse) {
+        setUserData(userDataResponse);
+      }
+    };
+
+    loadUserData();
+    fetchLikedPosts();
+  }, [router]);
 
   const openOriginalPost = async (postId: number) => {
     try {
@@ -126,17 +138,6 @@ export default function FavoritesPage() {
     }
   };
 
-  useEffect(() => {
-    const loadUserData = async () => {
-      const userDataResponse = await fetchUserData();
-      if (userDataResponse) {
-        setUserData(userDataResponse);
-      }
-    };
-    loadUserData();
-    fetchLikedPosts();
-  }, [router]);
-
   return (
     <motion.div
       className='flex min-h-screen flex-col bg-[#1C1C1F] text-white'
@@ -163,21 +164,25 @@ export default function FavoritesPage() {
         <main className='flex-1 overflow-y-auto p-6'>
           <h1 className='mb-4 text-3xl font-bold'>Лайкнуті пости</h1>
 
-          <AnimatePresence>
-            {likedPosts && likedPosts.length > 0 ? (
-              likedPosts.map((post) => (
-                <div
-                  key={post.id}
-                  onClick={() => openOriginalPost(post.id)}
-                  className='cursor-pointer'
-                >
-                  <MicroPost post={post} />
-                </div>
-              ))
-            ) : (
-              <p className='mt-4 text-gray-400'>Немає лайкнутих постів</p>
-            )}
-          </AnimatePresence>
+          {isLoading ? (
+            <p className='mt-4 text-gray-400'>Завантаження...</p>
+          ) : (
+            <AnimatePresence>
+              {likedPosts && likedPosts.length > 0 ? (
+                likedPosts.map((post) => (
+                  <div
+                    key={post.id}
+                    onClick={() => openOriginalPost(post.id)}
+                    className='cursor-pointer'
+                  >
+                    <MicroPost post={post} />
+                  </div>
+                ))
+              ) : (
+                <p className='mt-4 text-gray-400'>Немає лайкнутих постів</p>
+              )}
+            </AnimatePresence>
+          )}
         </main>
       </div>
       {isModalOpen && (

@@ -81,7 +81,7 @@ const TopbarSearchField = () => {
     return () => {
       clearTimeout(typingTimeout);
     };
-  }, []);
+  }, [typingTimeout]);
 
   return (
     <motion.div

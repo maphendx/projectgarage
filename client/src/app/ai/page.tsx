@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useError } from '@/context/ErrorContext';
@@ -11,6 +11,13 @@ import { AsidePanelRight } from '@/components/surrounding/asideRight';
 import MusicPlayer from '@/components/surrounding/player';
 import { UserData } from '@/components/not_components';
 import fetchClient from '@/other/fetchClient';
+
+// Define a more specific type for response if possible
+type ResponseData = {
+  // Define the structure of your response data here
+  error?: string;
+  // Add other fields as necessary
+};
 
 const SunoDemoPage = () => {
   const router = useRouter();
@@ -23,7 +30,7 @@ const SunoDemoPage = () => {
   const [activeTab, setActiveTab] = useState<
     'generate_audio' | 'extend_audio' | 'lyrics' | 'wav'
   >('generate_audio');
-  const [response, setResponse] = useState<any>(null);
+  const [response, setResponse] = useState<ResponseData | null>(null);
 
   // Стан для форми генерації аудіо
   const [genAudioData, setGenAudioData] = useState({
@@ -63,8 +70,10 @@ const SunoDemoPage = () => {
   });
 
   useEffect(() => {
-    error && showError(error, 'error');
-  }, [error]);
+    if (error) {
+      showError(error, 'error');
+    }
+  }, [error, showError]);
 
   const fetchUserData = async (): Promise<UserData | null> => {
     try {
@@ -221,7 +230,15 @@ const SunoDemoPage = () => {
                               ? 'bg-[#6374B6] text-white shadow-lg'
                               : 'bg-white/5 text-gray-300 hover:bg-white/10'
                           }`}
-                          onClick={() => setActiveTab(tab.id as any)}
+                          onClick={() =>
+                            setActiveTab(
+                              tab.id as
+                                | 'generate_audio'
+                                | 'extend_audio'
+                                | 'lyrics'
+                                | 'wav',
+                            )
+                          }
                         >
                           <div className='flex items-center gap-3'>
                             <span className='text-xl'>{tab.icon}</span>
