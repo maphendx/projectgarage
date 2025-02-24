@@ -49,7 +49,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       setHashtags([...hashtags, { name: newHashtag.trim() }]);
       setNewHashtag('');
     }
-    ç;
+    // ç;
   };
 
   const removeHashtag = (name: string) => {

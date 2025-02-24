@@ -117,7 +117,7 @@ const Profile: React.FC = () => {
                 headers: {
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ hashtag }),
+                body: JSON.stringify({"hashtag": hashtag.name}),
               },
             );
           }
@@ -133,7 +133,7 @@ const Profile: React.FC = () => {
                 headers: {
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ hashtag }),
+                body: JSON.stringify({"hashtag": hashtag.name}),
               },
             );
           }
