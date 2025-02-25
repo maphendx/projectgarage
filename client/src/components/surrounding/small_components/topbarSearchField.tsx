@@ -101,7 +101,7 @@ const TopbarSearchField = () => {
           type='text'
           value={searchQuery}
           placeholder='Пошук...'
-          className='text-ml-4 mt-5 h-[52px] w-[1275px] rounded-[16px] bg-[rgb(43,45,49)] px-4 pl-10 pr-10 text-[#A1A1A1] placeholder-[#A1A1A1]/60 transition-all duration-300 placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-[#2B2D31]'
+          className='text-ml-4 mt-5 h-[52px] w-[99%] min-w-[300px] rounded-[16px] bg-[rgb(43,45,49)] px-4 pl-10 pr-10 text-[#A1A1A1] placeholder-[#A1A1A1]/60 transition-all duration-300 placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-[#2B2D31]'
           onChange={handleInputChange}
           animate={{
             boxShadow: isTyping

@@ -47,8 +47,8 @@ const MainContent = ({
 
   return (
     <main>
-      <div className='flex min-h-screen justify-center'>
-        <div className='posts-container mx-auto min-h-[85vh] w-[100%] max-w-[1290px] rounded-[30px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-opacity-70 bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-xl'>
+      <div className='flex min-h-screen justify-center px-2 sm:px-4'>
+        <div className='posts-container mx-auto min-h-[85vh] w-[100%] max-w-[1290px] rounded-[20px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-opacity-70 bg-gradient-to-r from-[#414164] to-[#97A7E7] p-3 shadow-2xl backdrop-blur-xl sm:rounded-[30px] sm:p-6'>
           {userData && (
             <NewPostBlock
               userData={userData}

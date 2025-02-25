@@ -193,20 +193,36 @@ export const PostBlock = ({
         className='border-b-solid border-t-none mb-6 rounded-[30px] border-b-[0.5px] border-t-[0.5px] border-[#2d2d2d] bg-gradient-to-r from-[#2D2F3AB3] to-[#1A1A2EB3] p-6'
         style={{ boxShadow: '0 4px 4px rgba(0, 0, 0, 0.25)' }}
       >
-        <div className='flex'>
-          <img
-            className='h-10 w-10 rounded-[14px] border-[1px] border-[#2d2d2d]'
-            src={post.author?.photo}
-            alt='User'
-          />
-          <div className='ml-3'>
-            <p className='cursor-pointer text-sm font-medium text-white hover:underline'>
-              {post.author?.display_name}
-            </p>
-            <p className='text-sm text-gray-400'>
-              {dateFormatter(post.created_at)}
-            </p>
+        <div className='flex items-center justify-between'>
+          <div className='flex'>
+            <img
+              className='h-10 w-10 rounded-[14px] border-[1px] border-[#2d2d2d]'
+              src={post.author?.photo}
+              alt='User'
+            />
+            <div className='ml-3'>
+              <p className='cursor-pointer text-sm font-medium text-white hover:underline'>
+                {post.author?.display_name}
+              </p>
+              <p className='text-sm text-gray-400'>
+                {dateFormatter(post.created_at)}
+              </p>
+            </div>
           </div>
+          {getUser?.id !== post.author.id && (
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+            >
+              <PostButton
+                text={isSubscribed ? 'Відписатися' : 'Підписатися'}
+                onClick={handleSubscribe}
+                iconClass='fas fa-user-plus mr-1'
+                additionClasses={isSubscribed ? 'font-bold text-white' : ''}
+              />
+            </motion.div>
+          )}
         </div>
         <p className='mt-4 whitespace-pre-wrap break-words text-white'>
           {/* Truncate long content with a "Read More" toggle */}
@@ -322,20 +338,6 @@ export const PostBlock = ({
               iconClass='fas fa-share mr-1'
             />
           </motion.div>
-          {getUser?.id !== post.author.id && (
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-            >
-              <PostButton
-                text={isSubscribed ? 'Unsubscribe' : 'Subscribe'}
-                onClick={handleSubscribe}
-                iconClass='fas fa-user-plus mr-1'
-                additionClasses={isSubscribed ? 'font-bold text-white' : ''}
-              />
-            </motion.div>
-          )}
         </div>
       </div>
       <CommentBlock

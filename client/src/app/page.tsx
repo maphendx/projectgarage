@@ -188,14 +188,14 @@ export default function Home() {
           </motion.header>
 
           {/* Main Layout */}
-          <div className='flex flex-1 overflow-hidden'>
+          <div className='relative flex flex-1 overflow-hidden'>
             {/* Left Sidebar */}
-            <aside className='sticky top-0 z-20 h-screen w-20 flex-shrink-0 bg-[#1C1C1F]'>
+            <aside className='sticky top-0 z-20 hidden h-screen w-16 flex-shrink-0 bg-[#1C1C1F] sm:block md:w-20'>
               <AsidePanelLeft />
             </aside>
 
             {/* Main Content */}
-            <main className='overflow-y flex-1 px-4 pb-4'>
+            <main className='relative z-10 flex-1 overflow-y-auto pb-4'>
               <AnimatePresence>
                 <motion.div
                   className='space-y-4'
@@ -217,8 +217,10 @@ export default function Home() {
             </main>
 
             {/* Right Sidebar */}
-            <aside className='sticky top-0 hidden h-screen w-80 flex-shrink-0 bg-[#1C1C1F] lg:block'>
-              <AsidePanelRight />
+            <aside className='sticky top-0 hidden h-screen min-w-[240px] max-w-[320px] flex-shrink-0 bg-[#1C1C1F] lg:hidden xl:w-[20vw] 2xl:block'>
+              <div className='relative z-20'>
+                <AsidePanelRight />
+              </div>
             </aside>
           </div>
 
