@@ -166,7 +166,7 @@ const Auth: React.FC = () => {
               </div>
 
               <motion.button
-                className='w-full transform rounded-full bg-[#B5D6E7]/80 py-3 text-[#1C1C1F] shadow-md backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] hover:bg-[#B5D6E7]/90'
+                className='w-full transform rounded-full bg-[#B5D6e2]/80 py-3 text-[#1C1C1F] shadow-md backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] hover:bg-[#B5D6E7]/90'
                 onClick={() => setIsSignInOpen(true)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

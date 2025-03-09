@@ -48,6 +48,7 @@ interface ChatRoom {
 
 interface Reaction {
   id: number;
+  message: number; // Add message reference
   user: number;
   reaction: string;
   created_at: string;
@@ -57,11 +58,12 @@ interface Message {
   id: number;
   chat: number;
   sender: number;
-  sender_name?: string;
-  sender_photo?: string;
+  sender_name?: string; // Add sender name
+  sender_photo?: string; // Add sender photo
   content: string;
   timestamp: string;
-  reactions?: Reaction[];
+  parent?: number; // Add support for reply threading
+  reactions: Reaction[];
 }
 
 const messageVariants = {
@@ -89,6 +91,11 @@ export default function ChatPage() {
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomParticipants, setNewRoomParticipants] = useState('');
   const [newRoomImage, setNewRoomImage] = useState<File | null>(null);
+  const [showNewRoomModal, setShowNewRoomModal] = useState(false);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newParticipants, setNewParticipants] = useState('');
+
+  const websocketRef = useRef<WebSocket | null>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -121,8 +128,11 @@ export default function ChatPage() {
       const config: RequestInit = {
         method,
         headers: isMultipart
-          ? headers
-          : { ...headers, 'Content-Type': 'application/json' },
+          ? { ...(headers as Record<string, string>) }
+          : {
+              ...(headers as Record<string, string>),
+              'Content-Type': 'application/json',
+            },
         ...(body && !isMultipart && { body: JSON.stringify(body) }),
         ...(body && isMultipart && { body }),
       };
@@ -142,109 +152,168 @@ export default function ChatPage() {
     [getAuthHeaders, showError],
   );
 
-  const handleFetchEmojis = async () => {
-    const emojis = await apiRequest<{ [key: string]: string }>(
-      '/messaging/emoji/',
-    );
-    return emojis;
+  const getReactionEmoji = (reaction: string) => {
+    const reactionMap: { [key: string]: string } = {
+      like: '👍',
+      love: '❤️',
+      laugh: '😂',
+      wow: '😲',
+      sad: '😢',
+      angry: '😠',
+    };
+    return reactionMap[reaction] || reaction;
   };
 
-  // Load initial data
+  const groupReactions = (reactions: Reaction[]) => {
+    const grouped: { [key: string]: number } = {};
+    reactions.forEach((reaction) => {
+      const emoji = getReactionEmoji(reaction.reaction);
+      if (grouped[emoji]) {
+        grouped[emoji]++;
+      } else {
+        grouped[emoji] = 1;
+      }
+    });
+    return grouped;
+  };
+
   useEffect(() => {
     const loadInitialData = async () => {
       setIsLoading(true);
       const [userProfile, rooms] = await Promise.all([
         apiRequest<UserData>('/users/profile/'),
         apiRequest<ChatRoom[]>('/messaging/chatrooms/'),
-        handleFetchEmojis(),
       ]);
-      setUserData(userProfile);
-      setChatRooms(rooms || []);
-      if (rooms?.length && !selectedRoom) setSelectedRoom(rooms[0]);
+
+      if (userProfile) setUserData(userProfile);
+      if (rooms?.length) {
+        setChatRooms(rooms);
+        // Only set selected room if it's not already set
+        if (!selectedRoom) {
+          const firstRoom = rooms[0];
+          setSelectedRoom(firstRoom);
+        }
+      }
       setIsLoading(false);
     };
-    loadInitialData();
-  }, [apiRequest, handleFetchEmojis, selectedRoom]);
 
-  // WebSocket setup
+    const token = localStorage.getItem('access_token');
+    if (token) loadInitialData();
+  }, [apiRequest, selectedRoom]);
+
   useEffect(() => {
-    if (!selectedRoom) return;
+    if (!selectedRoom?.id || !userData) return;
 
     const fetchMessages = async () => {
       const msgs = await apiRequest<Message[]>(
         `/messaging/messages/${selectedRoom.id}/`,
       );
-      setMessages(msgs || []);
+      if (msgs) setMessages(msgs);
     };
-    fetchMessages();
 
-    const roomIdentifier = encodeURIComponent(selectedRoom.name);
+    fetchMessages();
+    // Setup websocket connection...
     const websocket = new WebSocket(
-      `${WS_BASE_URL}/ws/chat/${roomIdentifier}/`,
+      `${WS_BASE_URL}/ws/chat/${encodeURIComponent(selectedRoom.name)}/`,
     );
+    websocketRef.current = websocket;
+
     websocket.onopen = () => {
+      console.log('WebSocket Connected');
       const token = localStorage.getItem('access_token');
       websocket.send(
-        JSON.stringify({ type: 'authorization', token: `Bearer ${token}` }),
+        JSON.stringify({
+          type: 'authorization',
+          token: `Bearer ${token}`,
+        }),
       );
     };
 
     websocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'chat_message') {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: data.id || Date.now(),
+      try {
+        const data = JSON.parse(event.data);
+        console.log('WebSocket message received:', data);
+
+        if (data.type === 'chat_message') {
+          const sender = selectedRoom?.participants.find(
+            (p) => p.id === data.sender_id,
+          );
+          const newMessage: Message = {
+            id: data.message_id,
             chat: selectedRoom.id,
-            sender: data.sender_id || 0,
-            sender_name: data.sender,
-            sender_photo: data.sender_photo,
+            sender: data.sender_id,
+            sender_name: sender?.display_name || data.sender,
+            sender_photo: sender?.photo || data.sender_photo,
             content: data.message,
-            timestamp: new Date().toISOString(),
+            timestamp: data.timestamp,
             reactions: [],
-          },
-        ]);
-      } else if (data.type === 'reaction') {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === data.message_id
-              ? {
-                  ...msg,
-                  reactions: [
-                    ...(msg.reactions || []),
-                    {
-                      id: data.reaction_id,
-                      user: data.user_id,
-                      reaction: data.reaction,
-                      created_at: new Date().toISOString(),
-                    },
-                  ],
-                }
-              : msg,
-          ),
-        );
+            parent: data.parent_id,
+          };
+
+          setMessages((prev) => {
+            if (prev.some((msg) => msg.id === newMessage.id)) return prev;
+            return [...prev, newMessage];
+          });
+          scrollToBottom();
+        }
+      } catch (error) {
+        console.error('WebSocket message parsing error:', error);
       }
-      scrollToBottom();
     };
 
-    websocket.onerror = () => showError('WebSocket connection failed', 'error');
+    websocket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      showError('Failed to connect to chat. Please try again.', 'error');
+    };
 
-    return () => websocket.close();
-  }, [selectedRoom, scrollToBottom, showError, apiRequest]);
+    websocket.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    return () => {
+      if (websocket.readyState === WebSocket.OPEN) {
+        websocket.close();
+      }
+    };
+  }, [selectedRoom, userData, scrollToBottom]);
 
   const handleSendMessage = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedRoom || isSending) return;
+    if (!newMessage.trim() || !selectedRoom?.id || isSending || !userData)
+      return;
 
     setIsSending(true);
-    const response = await apiRequest<Message>(
-      `/messaging/messages/${selectedRoom.id}/`,
-      'POST',
-      { content: newMessage.trim(), chat: selectedRoom.id },
-    );
-    if (response) setNewMessage('');
-    setIsSending(false);
+    const messageContent = {
+      content: newMessage.trim(),
+      sender_name: userData.display_name,
+      sender_photo: userData.photo,
+    };
+
+    try {
+      const response = await apiRequest<Message>(
+        `/messaging/messages/${selectedRoom.id}/`,
+        'POST',
+        messageContent,
+      );
+
+      if (response) {
+        setNewMessage('');
+        // Add message locally for immediate feedback
+        setMessages((prev) => [
+          ...prev,
+          {
+            ...response,
+            sender_name: userData.display_name,
+            sender_photo: userData.photo,
+          },
+        ]);
+        scrollToBottom();
+      }
+    } catch (error) {
+      showError('Failed to send message', 'error');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleCreateRoom = async () => {
@@ -255,9 +324,22 @@ export default function ChatPage() {
 
     const formData = new FormData();
     formData.append('name', newRoomName.trim());
-    if (newRoomParticipants)
-      formData.append('participants_display_names', newRoomParticipants);
-    if (newRoomImage) formData.append('avatar', newRoomImage);
+
+    // Handle participants array properly
+    if (newRoomParticipants) {
+      const participants = newRoomParticipants
+        .split(',')
+        .map((name) => name.trim())
+        .filter((name) => name);
+      formData.append(
+        'participants_display_names',
+        JSON.stringify(participants),
+      );
+    }
+
+    if (newRoomImage) {
+      formData.append('avatar', newRoomImage);
+    }
 
     const newRoom = await apiRequest<ChatRoom>(
       '/messaging/chatrooms/',
@@ -265,13 +347,43 @@ export default function ChatPage() {
       formData,
       true,
     );
+
     if (newRoom) {
       setChatRooms((prev) => [...prev, newRoom]);
       setSelectedRoom(newRoom);
       setNewRoomName('');
       setNewRoomParticipants('');
       setNewRoomImage(null);
+      setShowNewRoomModal(false);
       showError('Room created successfully', 'success');
+    }
+  };
+
+  const handleAddUsersToRoom = async () => {
+    if (!selectedRoom || !newParticipants.trim()) {
+      showError('Please enter participant names', 'warning');
+      return;
+    }
+
+    const userDisplayNames = newParticipants
+      .split(',')
+      .map((name) => name.trim())
+      .filter((name) => name);
+
+    const response = await apiRequest<ChatRoom>(
+      `/messaging/chatrooms/${selectedRoom.id}/add_user/`,
+      'POST',
+      { user_display_names: userDisplayNames },
+    );
+
+    if (response) {
+      setChatRooms((prev) =>
+        prev.map((room) => (room.id === selectedRoom.id ? response : room)),
+      );
+      setSelectedRoom(response);
+      setNewParticipants('');
+      setShowAddUserModal(false);
+      showError('Users added successfully', 'success');
     }
   };
 
@@ -280,12 +392,14 @@ export default function ChatPage() {
 
     const formData = new FormData();
     formData.append('avatar', e.target.files[0]);
+
     const updatedRoom = await apiRequest<ChatRoom>(
       `/messaging/chatrooms/${selectedRoom.id}/avatar/`,
       'PATCH',
       formData,
       true,
     );
+
     if (updatedRoom) {
       setChatRooms((prev) =>
         prev.map((room) => (room.id === selectedRoom.id ? updatedRoom : room)),
@@ -296,109 +410,79 @@ export default function ChatPage() {
   };
 
   const handleReaction = async (messageId: number, reaction: string) => {
-    const validReactions = ['like', 'love', 'laugh', 'wow', 'sad', 'angry'];
-    const mappedReaction =
-      {
-        '👍': 'like',
-        '❤️': 'love',
-        '😂': 'laugh',
-        '😲': 'wow',
-        '😢': 'sad',
-        '😠': 'angry',
-      }[reaction] || reaction;
+    const reactionMap: { [key: string]: string } = {
+      '👍': 'like',
+      '❤️': 'love',
+      '😂': 'laugh',
+      '😲': 'wow',
+      '😢': 'sad',
+      '😠': 'angry',
+    };
 
-    if (!validReactions.includes(mappedReaction)) return;
+    const backendReaction = reactionMap[reaction];
+    if (!backendReaction) return;
 
-    const response = await apiRequest<Reaction>(
+    await apiRequest<Reaction>(
       `/messaging/messages/${messageId}/reaction/`,
       'POST',
-      { reaction: mappedReaction },
+      { reaction: backendReaction },
     );
-    if (response) {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === messageId
-            ? { ...msg, reactions: [...(msg.reactions || []), response] }
-            : msg,
-        ),
-      );
-    }
   };
 
   const handleDeleteReaction = async (messageId: number) => {
     await apiRequest(`/messaging/messages/${messageId}/reaction/`, 'DELETE');
-    setMessages((prev) =>
-      prev.map((msg) =>
-        msg.id === messageId
-          ? {
-              ...msg,
-              reactions: msg.reactions?.filter((r) => r.user !== userData?.id),
-            }
-          : msg,
-      ),
-    );
   };
 
   const handleDeleteMessage = async (messageId: number) => {
-    await apiRequest(`/messaging/messages/${messageId}/delete/`, 'DELETE');
+    await apiRequest(`/messaging/messages/${messageId}/`, 'DELETE');
     setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
   };
 
   const handleDeleteRoom = async (roomId: number) => {
     await apiRequest(`/messaging/chatrooms/${roomId}/`, 'DELETE');
     setChatRooms((prev) => prev.filter((room) => room.id !== roomId));
-    if (selectedRoom?.id === roomId) setSelectedRoom(null);
+    if (selectedRoom?.id === roomId) {
+      setSelectedRoom(
+        chatRooms.length > 1
+          ? chatRooms.find((room) => room.id !== roomId) || null
+          : null,
+      );
+    }
   };
 
   return (
-    <motion.div
-      className='flex min-h-screen flex-col bg-[#1C1C1F] text-white'
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className='flex min-h-screen flex-col bg-[#1C1C1F] text-white'>
       {isLoading ? (
         <div className='flex h-screen items-center justify-center'>
-          <motion.div
-            className='text-lg font-semibold text-gray-300'
-            animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
+          <div className='text-lg font-semibold text-gray-300'>
             Завантаження...
-          </motion.div>
+          </div>
         </div>
       ) : (
         <>
-          <motion.header
-            className='sticky top-0 z-30 h-[92px] bg-[#1C1C1F]'
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 100 }}
-          >
+          <header className='sticky top-0 z-30 h-[92px] bg-[#1C1C1F]'>
             <Topbar paramUserData={userData} />
-          </motion.header>
+          </header>
 
           <div className='flex flex-1 overflow-hidden'>
             <aside className='sticky top-0 z-20 h-screen w-20 flex-shrink-0 bg-[#1C1C1F]'>
               <AsidePanelLeft />
             </aside>
 
-            <main className='overflow-y flex-1 px-4 pb-4'>
+            <main className='flex-1 overflow-y-auto px-4 pb-4'>
               <div className='fixed min-h-[80vh] w-[1280px] rounded-[30px] bg-gradient-to-r from-[#414164] to-[#97A7E7] p-6 shadow-2xl backdrop-blur-xl'>
                 <div className='flex flex-row gap-8'>
-                  {/* Chat Rooms Sidebar */}
                   <motion.div className='w-64'>
                     <div className='mb-8'>
-                      <h2 className='text-2xl font-bold text-white'>Chats</h2>
+                      <h2 className='text-2xl font-bold text-white'>Чати</h2>
                       <p className='mt-2 text-sm text-gray-300'>
-                        Select a chat room to start messaging
+                        Оберіть чат для початку спілкування
                       </p>
                       <button
-                        onClick={handleCreateRoom}
+                        onClick={() => setShowNewRoomModal(true)}
                         className='mt-4 w-full rounded-lg bg-[#6374B6] px-4 py-2 text-white transition-all hover:opacity-90 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                       >
-                        Create Chat
+                        Створити чат
                       </button>
                     </div>
                     <div className='space-y-3'>
@@ -445,12 +529,11 @@ export default function ChatPage() {
                     </div>
                   </motion.div>
 
-                  {/* Chat Area */}
                   <motion.div className='flex-1'>
                     <div className='rounded-xl bg-white/5 p-6 backdrop-blur-sm'>
                       {!selectedRoom ? (
                         <div className='flex flex-1 items-center justify-center text-gray-400'>
-                          Select a chat to start messaging
+                          Оберіть чат для початку спілкування
                         </div>
                       ) : (
                         <>
@@ -473,11 +556,13 @@ export default function ChatPage() {
                               <motion.button
                                 whileHover={{ scale: 1.1 }}
                                 className='flex items-center gap-1 text-sm hover:text-[#6374B6]'
+                                onClick={() => setShowAddUserModal(true)}
                               >
-                                <UserPlus className='h-4 w-4' /> Settings
+                                <UserPlus className='h-4 w-4' /> Додати
+                                користувача
                               </motion.button>
                               <label className='flex cursor-pointer items-center gap-1 text-sm hover:text-[#6374B6]'>
-                                <ImageIcon className='h-4 w-4' /> Avatar
+                                <ImageIcon className='h-4 w-4' /> Аватар
                                 <input
                                   type='file'
                                   className='hidden'
@@ -488,7 +573,7 @@ export default function ChatPage() {
                             </div>
                           </div>
 
-                          <div className='flex-1 space-y-4 overflow-y-auto p-2'>
+                          <div className='max-h-[60vh] flex-1 space-y-4 overflow-y-auto p-2'>
                             <AnimatePresence>
                               {messages.map((msg) => (
                                 <motion.div
@@ -504,28 +589,13 @@ export default function ChatPage() {
                                   }`}
                                 >
                                   <div
-                                    className={`group flex max-w-[70%] gap-2 ${
+                                    className={`group flex max-w-[70%] items-end gap-2 ${
                                       msg.sender === userData?.id
                                         ? 'flex-row-reverse'
                                         : ''
                                     }`}
                                   >
-                                    {msg.sender !== userData?.id &&
-                                      msg.sender_photo && (
-                                        <Image
-                                          src={msg.sender_photo}
-                                          alt={msg.sender_name || ''}
-                                          width={36}
-                                          height={36}
-                                          className='rounded-full'
-                                        />
-                                      )}
                                     <div className='flex flex-col'>
-                                      {msg.sender !== userData?.id && (
-                                        <span className='mb-1 text-xs text-gray-400'>
-                                          {msg.sender_name}
-                                        </span>
-                                      )}
                                       <div
                                         className={`rounded-2xl p-3 shadow-md ${
                                           msg.sender === userData?.id
@@ -537,69 +607,79 @@ export default function ChatPage() {
                                           {msg.content}
                                         </p>
                                         {msg.reactions?.length > 0 && (
-                                          <div className='mt-2 flex flex-wrap gap-2'>
-                                            {msg.reactions.map((r) => (
-                                              <motion.span
-                                                key={r.id}
-                                                whileHover={{ scale: 1.1 }}
-                                                className='cursor-pointer rounded-full bg-gray-600/50 px-2 py-1 text-xs'
-                                                onClick={() =>
-                                                  r.user === userData?.id &&
-                                                  handleDeleteReaction(msg.id)
-                                                }
+                                          <div className='mt-2 flex space-x-2'>
+                                            {Object.entries(
+                                              groupReactions(
+                                                msg.reactions || [],
+                                              ),
+                                            ).map(([emoji, count]) => (
+                                              <span
+                                                key={emoji}
+                                                className='flex items-center space-x-1 text-sm'
                                               >
-                                                {r.reaction === 'like'
-                                                  ? '👍'
-                                                  : r.reaction === 'love'
-                                                    ? '❤️'
-                                                    : r.reaction === 'laugh'
-                                                      ? '😂'
-                                                      : r.reaction === 'wow'
-                                                        ? '😲'
-                                                        : r.reaction === 'sad'
-                                                          ? '😢'
-                                                          : r.reaction ===
-                                                              'angry'
-                                                            ? '😠'
-                                                            : r.reaction}
-                                              </motion.span>
+                                                <span>{emoji}</span>
+                                                <span>{count}</span>
+                                              </span>
                                             ))}
                                           </div>
                                         )}
                                       </div>
-                                      <div className='mt-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100'>
-                                        {[
-                                          '👍',
-                                          '❤️',
-                                          '😂',
-                                          '😲',
-                                          '😢',
-                                          '😠',
-                                        ].map((emoji) => (
-                                          <motion.button
-                                            key={emoji}
-                                            whileHover={{ scale: 1.2 }}
-                                            whileTap={{ scale: 0.9 }}
-                                            className='rounded-full p-1 hover:bg-gray-600/50'
-                                            onClick={() =>
-                                              handleReaction(msg.id, emoji)
-                                            }
-                                          >
-                                            {emoji}
-                                          </motion.button>
-                                        ))}
+                                      <div className='mt-1 flex space-x-2 text-xs text-gray-400'>
+                                        <div className='flex items-center gap-2'>
+                                          {msg.sender_photo && (
+                                            <Image
+                                              src={msg.sender_photo}
+                                              alt={msg.sender_name || 'User'}
+                                              width={20}
+                                              height={20}
+                                              className='rounded-full'
+                                            />
+                                          )}
+                                          <span>
+                                            {msg.sender_name || 'Unknown'}
+                                          </span>
+                                        </div>
+                                        <button
+                                          onClick={() =>
+                                            handleReaction(msg.id, '👍')
+                                          }
+                                          className='hover:text-white'
+                                        >
+                                          👍
+                                        </button>
+                                        <button
+                                          onClick={() =>
+                                            handleReaction(msg.id, '❤️')
+                                          }
+                                          className='hover:text-white'
+                                        >
+                                          ❤️
+                                        </button>
+                                        <button
+                                          onClick={() =>
+                                            handleReaction(msg.id, '😂')
+                                          }
+                                          className='hover:text-white'
+                                        >
+                                          😂
+                                        </button>
+                                        <button
+                                          onClick={() =>
+                                            handleDeleteReaction(msg.id)
+                                          }
+                                          className='hover:text-white'
+                                        >
+                                          Видалити реакцію
+                                        </button>
                                         {msg.sender === userData?.id && (
-                                          <motion.button
-                                            whileHover={{ scale: 1.2 }}
-                                            whileTap={{ scale: 0.9 }}
-                                            className='rounded-full p-1 hover:bg-red-500/50'
+                                          <button
                                             onClick={() =>
                                               handleDeleteMessage(msg.id)
                                             }
+                                            className='hover:text-white'
                                           >
-                                            ґ
-                                            <Trash2 className='h-4 w-4' />
-                                          </motion.button>
+                                            Видалити
+                                          </button>
                                         )}
                                       </div>
                                     </div>
@@ -617,7 +697,7 @@ export default function ChatPage() {
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
                                 className='flex-1 bg-transparent p-2 text-white placeholder-gray-400 focus:outline-none'
-                                placeholder='Type a message...'
+                                placeholder='Введіть повідомлення...'
                               />
                               <motion.button
                                 whileHover={{ scale: 1.1 }}
@@ -648,6 +728,117 @@ export default function ChatPage() {
           </footer>
         </>
       )}
-    </motion.div>
+
+      {showNewRoomModal && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4'>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className='w-full max-w-md rounded-xl bg-[#2C2C3C] p-6 shadow-xl'
+          >
+            <h2 className='mb-4 text-xl font-bold'>
+              Створити нову кімнату чату
+            </h2>
+            <div className='space-y-4'>
+              <div>
+                <label className='mb-1 block text-sm text-gray-300'>
+                  Назва кімнати
+                </label>
+                <input
+                  type='text'
+                  value={newRoomName}
+                  onChange={(e) => setNewRoomName(e.target.value)}
+                  className='w-full rounded-lg bg-gray-700 p-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                  placeholder='Введіть назву кімнати'
+                />
+              </div>
+              <div>
+                <label className='mb-1 block text-sm text-gray-300'>
+                  Учасники (через кому)
+                </label>
+                <input
+                  type='text'
+                  value={newRoomParticipants}
+                  onChange={(e) => setNewRoomParticipants(e.target.value)}
+                  className='w-full rounded-lg bg-gray-700 p-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                  placeholder='user1, user2, user3'
+                />
+              </div>
+              <div>
+                <label className='mb-1 block text-sm text-gray-300'>
+                  Аватар кімнати
+                </label>
+                <input
+                  type='file'
+                  onChange={(e) =>
+                    e.target.files && setNewRoomImage(e.target.files[0])
+                  }
+                  className='w-full rounded-lg bg-gray-700 p-2 text-white'
+                  accept='image/*'
+                />
+              </div>
+              <div className='flex justify-end space-x-2'>
+                <button
+                  onClick={() => setShowNewRoomModal(false)}
+                  className='rounded-lg bg-gray-600 px-4 py-2 text-white transition-all hover:bg-gray-700'
+                >
+                  Скасувати
+                </button>
+                <button
+                  onClick={handleCreateRoom}
+                  className='rounded-lg bg-[#6374B6] px-4 py-2 text-white transition-all hover:opacity-90'
+                >
+                  Створити
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {showAddUserModal && selectedRoom && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4'>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className='w-full max-w-md rounded-xl bg-[#2C2C3C] p-6 shadow-xl'
+          >
+            <h2 className='mb-4 text-xl font-bold'>
+              Додати користувачів до {selectedRoom.name}
+            </h2>
+            <div className='space-y-4'>
+              <div>
+                <label className='mb-1 block text-sm text-gray-300'>
+                  Користувачі (через кому)
+                </label>
+                <input
+                  type='text'
+                  value={newParticipants}
+                  onChange={(e) => setNewParticipants(e.target.value)}
+                  className='w-full rounded-lg bg-gray-700 p-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                  placeholder='user1, user2, user3'
+                />
+              </div>
+              <div className='flex justify-end space-x-2'>
+                <button
+                  onClick={() => setShowAddUserModal(false)}
+                  className='rounded-lg bg-gray-600 px-4 py-2 text-white transition-all hover:bg-gray-700'
+                >
+                  Скасувати
+                </button>
+                <button
+                  onClick={handleAddUsersToRoom}
+                  className='rounded-lg bg-[#6374B6] px-4 py-2 text-white transition-all hover:opacity-90'
+                >
+                  Додати користувачів
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
   );
 }
