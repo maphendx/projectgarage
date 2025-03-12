@@ -1,0 +1,386 @@
+{
+    "code": 200,
+    "data": {
+        "callbackType": "text",
+        "data": [
+            {
+                "audio_url": "",
+                "createTime": 1741786587265,
+                "id": "e4b3df66-4c94-41e6-8191-d74249000de8",
+                "image_url": "https://apiboxfiles.erweima.ai/ZTRiM2RmNjYtNGM5NC00MWU2LTgxOTEtZDc0MjQ5MDAwZGU4.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "",
+                "source_image_url": "https://cdn2.suno.ai/image_e4b3df66-4c94-41e6-8191-d74249000de8.jpeg",
+                "source_stream_audio_url": "https://audiopipe.suno.ai/?item_id=e4b3df66-4c94-41e6-8191-d74249000de8",
+                "stream_audio_url": "https://mfile.erweima.ai/ZTRiM2RmNjYtNGM5NC00MWU2LTgxOTEtZDc0MjQ5MDAwZGU4",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            },
+            {
+                "audio_url": "",
+                "createTime": 1741786587265,
+                "id": "db45f457-deeb-44ca-bfd8-3a4571ee9eef",
+                "image_url": "https://apiboxfiles.erweima.ai/ZGI0NWY0NTctZGVlYi00NGNhLWJmZDgtM2E0NTcxZWU5ZWVm.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "",
+                "source_image_url": "https://cdn2.suno.ai/image_db45f457-deeb-44ca-bfd8-3a4571ee9eef.jpeg",
+                "source_stream_audio_url": "https://audiopipe.suno.ai/?item_id=db45f457-deeb-44ca-bfd8-3a4571ee9eef",
+                "stream_audio_url": "https://mfile.erweima.ai/ZGI0NWY0NTctZGVlYi00NGNhLWJmZDgtM2E0NTcxZWU5ZWVm",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            }
+        ],
+        "task_id": "b6e5e86c5d51af123e36e9604bc2360e"
+    },
+    "msg": "Text generated successfully."
+}
+{
+    "code": 200,
+    "data": {
+        "callbackType": "first",
+        "data": [
+            {
+                "audio_url": "https://apiboxfiles.erweima.ai/ZTRiM2RmNjYtNGM5NC00MWU2LTgxOTEtZDc0MjQ5MDAwZGU4.mp3",
+                "createTime": 1741786587265,
+                "duration": 111.44,
+                "id": "e4b3df66-4c94-41e6-8191-d74249000de8",
+                "image_url": "https://apiboxfiles.erweima.ai/ZTRiM2RmNjYtNGM5NC00MWU2LTgxOTEtZDc0MjQ5MDAwZGU4.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "",
+                "source_audio_url": "https://cdn1.suno.ai/e4b3df66-4c94-41e6-8191-d74249000de8.mp3",
+                "source_image_url": "https://cdn2.suno.ai/image_e4b3df66-4c94-41e6-8191-d74249000de8.jpeg",
+                "source_stream_audio_url": "https://audiopipe.suno.ai/?item_id=e4b3df66-4c94-41e6-8191-d74249000de8",
+                "stream_audio_url": "https://mfile.erweima.ai/ZTRiM2RmNjYtNGM5NC00MWU2LTgxOTEtZDc0MjQ5MDAwZGU4",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            },
+            {
+                "audio_url": "",
+                "createTime": 1741786587265,
+                "id": "db45f457-deeb-44ca-bfd8-3a4571ee9eef",
+                "image_url": "https://apiboxfiles.erweima.ai/ZGI0NWY0NTctZGVlYi00NGNhLWJmZDgtM2E0NTcxZWU5ZWVm.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "",
+                "source_image_url": "https://cdn2.suno.ai/image_db45f457-deeb-44ca-bfd8-3a4571ee9eef.jpeg",
+                "source_stream_audio_url": "https://audiopipe.suno.ai/?item_id=db45f457-deeb-44ca-bfd8-3a4571ee9eef",
+                "stream_audio_url": "https://mfile.erweima.ai/ZGI0NWY0NTctZGVlYi00NGNhLWJmZDgtM2E0NTcxZWU5ZWVm",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            }
+        ],
+        "task_id": "b6e5e86c5d51af123e36e9604bc2360e"
+    },
+    "msg": "First audio generated successfully."
+}
+{
+    "code": 200,
+    "data": {
+        "callbackType": "complete",
+        "data": [
+            {
+                "audio_url": "https://apiboxfiles.erweima.ai/ZTRiM2RmNjYtNGM5NC00MWU2LTgxOTEtZDc0MjQ5MDAwZGU4.mp3",
+                "createTime": 1741786667699,
+                "duration": 111.44,
+                "id": "e4b3df66-4c94-41e6-8191-d74249000de8",
+                "image_url": "https://apiboxfiles.erweima.ai/ZTRiM2RmNjYtNGM5NC00MWU2LTgxOTEtZDc0MjQ5MDAwZGU4.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "",
+                "source_audio_url": "https://cdn1.suno.ai/e4b3df66-4c94-41e6-8191-d74249000de8.mp3",
+                "source_image_url": "https://cdn2.suno.ai/image_e4b3df66-4c94-41e6-8191-d74249000de8.jpeg",
+                "source_stream_audio_url": "https://cdn1.suno.ai/e4b3df66-4c94-41e6-8191-d74249000de8.mp3",
+                "stream_audio_url": "https://mfile.erweima.ai/ZTRiM2RmNjYtNGM5NC00MWU2LTgxOTEtZDc0MjQ5MDAwZGU4",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            },
+            {
+                "audio_url": "https://apiboxfiles.erweima.ai/ZGI0NWY0NTctZGVlYi00NGNhLWJmZDgtM2E0NTcxZWU5ZWVm.mp3",
+                "createTime": 1741786667699,
+                "duration": 128.8,
+                "id": "db45f457-deeb-44ca-bfd8-3a4571ee9eef",
+                "image_url": "https://apiboxfiles.erweima.ai/ZGI0NWY0NTctZGVlYi00NGNhLWJmZDgtM2E0NTcxZWU5ZWVm.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "",
+                "source_audio_url": "https://cdn1.suno.ai/db45f457-deeb-44ca-bfd8-3a4571ee9eef.mp3",
+                "source_image_url": "https://cdn2.suno.ai/image_db45f457-deeb-44ca-bfd8-3a4571ee9eef.jpeg",
+                "source_stream_audio_url": "https://cdn1.suno.ai/db45f457-deeb-44ca-bfd8-3a4571ee9eef.mp3",
+                "stream_audio_url": "https://mfile.erweima.ai/ZGI0NWY0NTctZGVlYi00NGNhLWJmZDgtM2E0NTcxZWU5ZWVm",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            }
+        ],
+        "task_id": "b6e5e86c5d51af123e36e9604bc2360e"
+    },
+    "msg": "All generated successfully."
+}
+{
+    "code": 200,
+    "data": {
+        "callbackType": "text",
+        "data": [
+            {
+                "audio_url": "",
+                "createTime": 1741788906812,
+                "id": "dbd850da-2252-407c-809f-dcec6ea1cf53",
+                "image_url": "https://apiboxfiles.erweima.ai/ZGJkODUwZGEtMjI1Mi00MDdjLTgwOWYtZGNlYzZlYTFjZjUz.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "",
+                "source_image_url": "https://cdn2.suno.ai/image_dbd850da-2252-407c-809f-dcec6ea1cf53.jpeg",
+                "source_stream_audio_url": "https://audiopipe.suno.ai/?item_id=dbd850da-2252-407c-809f-dcec6ea1cf53",
+                "stream_audio_url": "https://mfile.erweima.ai/ZGJkODUwZGEtMjI1Mi00MDdjLTgwOWYtZGNlYzZlYTFjZjUz",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            },
+            {
+                "audio_url": "",
+                "createTime": 1741788906812,
+                "id": "e6a53a87-d8f1-4051-bfb3-e20f8c21b322",
+                "image_url": "https://apiboxfiles.erweima.ai/ZTZhNTNhODctZDhmMS00MDUxLWJmYjMtZTIwZjhjMjFiMzIy.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "",
+                "source_image_url": "https://cdn2.suno.ai/image_e6a53a87-d8f1-4051-bfb3-e20f8c21b322.jpeg",
+                "source_stream_audio_url": "https://audiopipe.suno.ai/?item_id=e6a53a87-d8f1-4051-bfb3-e20f8c21b322",
+                "stream_audio_url": "https://mfile.erweima.ai/ZTZhNTNhODctZDhmMS00MDUxLWJmYjMtZTIwZjhjMjFiMzIy",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            }
+        ],
+        "task_id": "5d1e0d0518c12741bfdecfde9bc84a4c"
+    },
+    "msg": "Text generated successfully."
+}
+{
+    "code": 200,
+    "data": {
+        "callbackType": "first",
+        "data": [
+            {
+                "audio_url": "https://apiboxfiles.erweima.ai/ZGJkODUwZGEtMjI1Mi00MDdjLTgwOWYtZGNlYzZlYTFjZjUz.mp3",
+                "createTime": 1741788906812,
+                "duration": 112.32,
+                "id": "dbd850da-2252-407c-809f-dcec6ea1cf53",
+                "image_url": "https://apiboxfiles.erweima.ai/ZGJkODUwZGEtMjI1Mi00MDdjLTgwOWYtZGNlYzZlYTFjZjUz.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "",
+                "source_audio_url": "https://cdn1.suno.ai/dbd850da-2252-407c-809f-dcec6ea1cf53.mp3",
+                "source_image_url": "https://cdn2.suno.ai/image_dbd850da-2252-407c-809f-dcec6ea1cf53.jpeg",
+                "source_stream_audio_url": "https://audiopipe.suno.ai/?item_id=dbd850da-2252-407c-809f-dcec6ea1cf53",
+                "stream_audio_url": "https://mfile.erweima.ai/ZGJkODUwZGEtMjI1Mi00MDdjLTgwOWYtZGNlYzZlYTFjZjUz",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            },
+            {
+                "audio_url": "",
+                "createTime": 1741788906812,
+                "id": "e6a53a87-d8f1-4051-bfb3-e20f8c21b322",
+                "image_url": "https://apiboxfiles.erweima.ai/ZTZhNTNhODctZDhmMS00MDUxLWJmYjMtZTIwZjhjMjFiMzIy.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "",
+                "source_image_url": "https://cdn2.suno.ai/image_e6a53a87-d8f1-4051-bfb3-e20f8c21b322.jpeg",
+                "source_stream_audio_url": "https://audiopipe.suno.ai/?item_id=e6a53a87-d8f1-4051-bfb3-e20f8c21b322",
+                "stream_audio_url": "https://mfile.erweima.ai/ZTZhNTNhODctZDhmMS00MDUxLWJmYjMtZTIwZjhjMjFiMzIy",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            }
+        ],
+        "task_id": "5d1e0d0518c12741bfdecfde9bc84a4c"
+    },
+    "msg": "First audio generated successfully."
+}
+{
+    "code": 200,
+    "data": {
+        "callbackType": "complete",
+        "data": [
+            {
+                "audio_url": "https://apiboxfiles.erweima.ai/ZGJkODUwZGEtMjI1Mi00MDdjLTgwOWYtZGNlYzZlYTFjZjUz.mp3",
+                "createTime": 1741789031063,
+                "duration": 112.32,
+                "id": "dbd850da-2252-407c-809f-dcec6ea1cf53",
+                "image_url": "https://apiboxfiles.erweima.ai/ZGJkODUwZGEtMjI1Mi00MDdjLTgwOWYtZGNlYzZlYTFjZjUz.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "",
+                "source_audio_url": "https://cdn1.suno.ai/dbd850da-2252-407c-809f-dcec6ea1cf53.mp3",
+                "source_image_url": "https://cdn2.suno.ai/image_dbd850da-2252-407c-809f-dcec6ea1cf53.jpeg",
+                "source_stream_audio_url": "https://cdn1.suno.ai/dbd850da-2252-407c-809f-dcec6ea1cf53.mp3",
+                "stream_audio_url": "https://mfile.erweima.ai/ZGJkODUwZGEtMjI1Mi00MDdjLTgwOWYtZGNlYzZlYTFjZjUz",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            },
+            {
+                "audio_url": "https://apiboxfiles.erweima.ai/ZTZhNTNhODctZDhmMS00MDUxLWJmYjMtZTIwZjhjMjFiMzIy.mp3",
+                "createTime": 1741789031063,
+                "duration": 171.12,
+                "id": "e6a53a87-d8f1-4051-bfb3-e20f8c21b322",
+                "image_url": "https://apiboxfiles.erweima.ai/ZTZhNTNhODctZDhmMS00MDUxLWJmYjMtZTIwZjhjMjFiMzIy.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "",
+                "source_audio_url": "https://cdn1.suno.ai/e6a53a87-d8f1-4051-bfb3-e20f8c21b322.mp3",
+                "source_image_url": "https://cdn2.suno.ai/image_e6a53a87-d8f1-4051-bfb3-e20f8c21b322.jpeg",
+                "source_stream_audio_url": "https://cdn1.suno.ai/e6a53a87-d8f1-4051-bfb3-e20f8c21b322.mp3",
+                "stream_audio_url": "https://mfile.erweima.ai/ZTZhNTNhODctZDhmMS00MDUxLWJmYjMtZTIwZjhjMjFiMzIy",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            }
+        ],
+        "task_id": "5d1e0d0518c12741bfdecfde9bc84a4c"
+    },
+    "msg": "All generated successfully."
+}
+{
+    "code": 200,
+    "data": {
+        "callbackType": "complete",
+        "data": [
+            {
+                "audio_url": "https://apiboxfiles.erweima.ai/ZjM2ZGNkMGItY2FhNS00OTc0LTlmNjMtYTA2Mjg5Y2U0ZDEz.mp3",
+                "createTime": 1741789927868,
+                "duration": 114.71997916666666,
+                "id": "f36dcd0b-caa5-4974-9f63-a06289ce4d13",
+                "image_url": "https://apiboxfiles.erweima.ai/MTk3Y2E2MjktYWQwNS00ZWRjLTk2M2MtNGJkOWQyYjY4NDY5.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "\n\nContinue with similar peaceful piano melodies",
+                "source_audio_url": "https://cdn1.suno.ai/f36dcd0b-caa5-4974-9f63-a06289ce4d13.mp3",
+                "source_image_url": "https://cdn2.suno.ai/image_197ca629-ad05-4edc-963c-4bd9d2b68469.jpeg",
+                "source_stream_audio_url": "https://cdn1.suno.ai/f36dcd0b-caa5-4974-9f63-a06289ce4d13.mp3",
+                "stream_audio_url": "https://mfile.erweima.ai/ZjM2ZGNkMGItY2FhNS00OTc0LTlmNjMtYTA2Mjg5Y2U0ZDEz",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            },
+            {
+                "audio_url": "https://apiboxfiles.erweima.ai/NWUzYTI5MjItYjQ2NS00OGUxLTg0NjQtYjlhZjMyMmQyODM4.mp3",
+                "createTime": 1741789927868,
+                "duration": 114.55997916666666,
+                "id": "5e3a2922-b465-48e1-8464-b9af322d2838",
+                "image_url": "https://apiboxfiles.erweima.ai/MjY5OTQ3MzQtMTAyOS00MzJmLTkwZDQtYjM4ZDdlYzk1OGQx.jpeg",
+                "model_name": "chirp-v3-5",
+                "prompt": "\n\nContinue with similar peaceful piano melodies",
+                "source_audio_url": "https://cdn1.suno.ai/5e3a2922-b465-48e1-8464-b9af322d2838.mp3",
+                "source_image_url": "https://cdn2.suno.ai/image_26994734-1029-432f-90d4-b38d7ec958d1.jpeg",
+                "source_stream_audio_url": "https://cdn1.suno.ai/5e3a2922-b465-48e1-8464-b9af322d2838.mp3",
+                "stream_audio_url": "https://mfile.erweima.ai/NWUzYTI5MjItYjQ2NS00OGUxLTg0NjQtYjlhZjMyMmQyODM4",
+                "tags": "Classical",
+                "title": "Peaceful Piano Meditation"
+            }
+        ],
+        "task_id": "4620c4f2e24b107e661d8437e77a975c"
+    },
+    "msg": "All generated successfully."
+}
+{
+    "code": 200,
+    "data": {
+        "callbackType": "complete",
+        "data": [
+            {
+                "error_message": "",
+                "status": "complete",
+                "text": "[Verse 1]\nThe pavement hums a quiet tune tonight\nStreetlights glow like fireflies in their flight\nThe city's pulse beats soft under the dark\nA symphony of lives\nA fleeting spark\n\n[Verse 2]\nThe windows flicker dreams behind the glass\nWhispers blend with footsteps as they pass\nThe world slows down\nIt sheds its heavy coat\nUnderneath the moon\nWe gently float\n\n[Chorus]\nPeaceful nights under city skies\nStars wink down\nWatching life arise\nBreath of calm in a dance of light\nOh\nCity dreams in the quiet night\n\n[Verse 3]\nThe skyline hums\nA sleeping lullaby\nSoft winds carry stories whispered by\nNeon signs reflecting on the stream\nLife is breathing softly in this dream\n\n[Bridge]\nThe chaos melts in shadows\nFades away\nNight's embrace singing songs of yesterday\nThe world finds peace beneath its sprawling wings\nIn the city's stillness\nThe soul softly sings\n\n[Chorus]\nPeaceful nights under city skies\nStars wink down\nWatching life arise\nBreath of calm in a dance of light\nOh\nCity dreams in the quiet night",
+                "title": "City Lights Serenade"
+            },
+            {
+                "error_message": "",
+                "status": "complete",
+                "text": "[Verse]\nStreetlights glowing soft and dim\nTheir whispers brush the midnight's brim\nFootsteps fade like echoes sigh\nUnderneath the velvet sky\n\n[Chorus]\nThe city's heart beats low and slow\nA secret rhythm only night can show\nNeon dreams in shadows play\nGuiding stars in lost café\n\n[Verse 2]\nWindow panes hold stories close\nTangled tales the moonlight knows\nSilent cars hum distant tunes\nGuarded by the watching moon\n\n[Bridge]\nConcrete jungle learns to rest\nIts weary soul now feels its best\nA peace so rare it fills the air\nSoft sighs of calm are everywhere\n\n[Chorus]\nThe city's heart beats low and slow\nA secret rhythm only night can show\nNeon dreams in shadows play\nGuiding stars in lost café\n\n[Outro]\nAt quiet's peak the dawn will call\nBut for now the city's walls hold all\nA soothing hymn no one can fight\nThis perfect still this peaceful night",
+                "title": "City Lullaby"
+            }
+        ],
+        "task_id": "3461f8e87cef0274acd489ae8864c897"
+    },
+    "msg": "All generated successfully."
+}
+{
+    "code": 200,
+    "data": {
+        "callbackType": "complete",
+        "data": [
+            {
+                "error_message": "",
+                "status": "complete",
+                "text": "[Verse]\nNeon stars above the street\nWhispered winds in quiet beat\nShadows dance where echoes play\nNight reveals its muted sway\n\n[Chorus]\nCity sighs a gentle tune\nUnderneath the glowing moon\nLamps ignite the cobbled ground\nMagic hums without a sound\n\n[Verse 2]\nWindows hum with stories shared\nDreams and secrets softly paired\nThrough the alleys whispers glide\nIn the dark we safely hide\n\n[Chorus]\nCity sighs a gentle tune\nUnderneath the glowing moon\nLamps ignite the cobbled ground\nMagic hums without a sound\n\n[Bridge]\nTraffic fades to embered glow\nWatch the nighttime's peaceful flow\nBuildings hum a steady breath\nLife's alive and at its rest\n\n[Chorus]\nCity sighs a gentle tune\nUnderneath the glowing moon\nLamps ignite the cobbled ground\nMagic hums without a sound",
+                "title": "City Lights Serenade"
+            },
+            {
+                "error_message": "",
+                "status": "complete",
+                "text": "[Verse]\nFootsteps fade on the quiet street\nMoonlight spills where shadows meet\nWindows glow like stars in flight\nWhispering secrets to the night\n\n[Verse 2]\nThe hum of life it softly dies\nNeon dreams beneath the skies\nSilent echoes bounce and play\nIn a city that sleeps halfway\n\n[Chorus]\nOh the peaceful night so sweet\nWhere the chaos takes a seat\nCity glows in borrowed light\nHolding still till morning bright\n\n[Verse 3]\nLamp posts guard the vacant roads\nCar horns rest their heavy load\nPavement cool beneath my feet\nHeartbeats follow silent beats\n\n[Bridge]\nEvery sound a lover’s sigh\nEvery star a watchful eye\nThe city breathes it’s still alive\nA quiet rhythm calm and shy\n\n[Chorus]\nOh the peaceful night so sweet\nWhere the chaos takes a seat\nCity glows in borrowed light\nHolding still till morning bright",
+                "title": "City Lights"
+            }
+        ],
+        "task_id": "1e0874dfb82f3645967fd2268bf0cb7f"
+    },
+    "msg": "All generated successfully."
+}
+{
+    "code": 200,
+    "data": {
+        "callbackType": "complete",
+        "data": [
+            {
+                "error_message": "",
+                "status": "complete",
+                "text": "[Verse]\nThe streets hum soft with a gentle sigh\nNeon whispers under velvet sky\nA sleepy rhythm where the echoes blend\nIn a city that dreams but won't pretend\n\n[Verse 2]\nWindows shining like secret moons\nTraffic hums its lullaby tunes\nShadows play games with the fading light\nIn this peaceful heart of the endless night\n\n[Chorus]\nOh city of quiet lights\nWhere silence holds the night so tight\nA million stories still unfold\nUnder stars and lamps of gold\n\n[Verse 3]\nThe concrete breathes in a measured pace\nA hidden calm in this vibrant space\nGraffiti murmurs its ancient tales\nAs moonlight melts on the winding trails\n\n[Bridge]\nThe skyline blushes in muted hues\nBuildings bask in the midnight blues\nA symphony plays in the urban haze\nStillness wraps the city in its gaze\n\n[Chorus]\nOh city of quiet lights\nWhere silence holds the night so tight\nA million stories still unfold\nUnder stars and lamps of gold",
+                "title": "City of Quiet Lights"
+            },
+            {
+                "error_message": "",
+                "status": "complete",
+                "text": "[Verse]\nNeon lights hum low and bright\nCasting colors on the quiet night\nCar horns whisper from far away\nThe city's resting\nYet it stays awake\n\n[Verse 2]\nFootsteps fade on the empty street\nMoonlight spills through the window's heat\nConcrete jungle wrapped in calm\nThe night’s soft silence\nA healing balm\n\n[Chorus]\nCity sleeps\nBut it breathes in slow\nA peaceful rhythm only dreamers know\nSkies aglow with stars' faint blaze\nA tranquil dance beneath their gaze\n\n[Verse 3]\nAir feels cool like a whispered tune\nStreetlamps sway under the lazy moon\nThe hum of life in a muted tone\nA place so vast\nYet I’m not alone\n\n[Bridge]\nAbove the noise\nThere's a gentle peace\nThe chaos paused\nThe worries cease\nA heartbeat shared with empty roads\nCarrying dreams where the midnight flows\n\n[Chorus]\nCity sleeps\nBut it breathes in slow\nA peaceful rhythm only dreamers know\nSkies aglow with stars' faint blaze\nA tranquil dance beneath their gaze",
+                "title": "City Lullaby"
+            }
+        ],
+        "task_id": "f91b9f98bf3bc335da244d73a4405e4a"
+    },
+    "msg": "All generated successfully."
+}
+{
+    "code": 200,
+    "data": {
+        "callbackType": "complete",
+        "data": [
+            {
+                "error_message": "",
+                "status": "complete",
+                "text": "[Verse]\nThe city's hum it softly purrs\nA lullaby in distant whirs\nThe neon bends in gentle light\nOh peaceful is this velvet night\n\n[Chorus]\nHush now busy streets below\nLet the whispers softly flow\nDream of stars above so high\nCity sleeps beneath the sky\n\n[Verse 2]\nThe paths are empty calm and wide\nStillness walks where chaos hides\nStreetlights blink like fireflies\nCasting glows on quiet ties\n\n[Bridge]\nNo car horns no rush in sight\nJust the heartbeat of the night\nConcrete breathes it feels alive\nIn this calm the dreams arrive\n\n[Chorus]\nHush now busy streets below\nLet the whispers softly flow\nDream of stars above so high\nCity sleeps beneath the sky\n\n[Verse 3]\nEchoes fade their tones at rest\nShadows linger as guests undressed\nA tender hymn in the urban maze\nSoft and low where silence lays",
+                "title": "City Lullaby"
+            },
+            {
+                "error_message": "",
+                "status": "complete",
+                "text": "[Verse]\nWhispers hum through concrete veins\nStreetlights dance in soft refrains\nA silver moon hangs so discreet\nThe city breathes in calm retreat\n\n[Verse 2]\nEchoes fade like a distant dream\nWindows glow as lanterns gleam\nCars crawl slow in rhythmic flow\nNighttime wears a tranquil show\n\n[Chorus]\nSilent city glow so kind\nWraps around the restless mind\nStars wink down while shadows play\nPeaceful night will lead the way\n\n[Verse 3]\nBrick and steel now speak in hush\nTraffic hums like a gentle brush\nNeon signs blink their slow waltz\nTime feels smooth without its faults\n\n[Bridge]\nBeneath the roar that daylight hides\nThe city whispers its softer sides\nA place where noise steps back to bow\nIn nighttime’s arms we linger now\n\n[Chorus]\nSilent city glow so kind\nWraps around the restless mind\nStars wink down while shadows play\nPeaceful night will lead the way",
+                "title": "Silent City Glow"
+            }
+        ],
+        "task_id": "d9b9f0efa3cf2473c513bbdde6c72d6f"
+    },
+    "msg": "All generated successfully."
+}
+{
+    "code": 200,
+    "data": {
+        "callbackType": "complete",
+        "data": [
+            {
+                "error_message": "",
+                "status": "complete",
+                "text": "[Verse]\nNeon lights hum a quiet tune\nCity sleeps under the silver moon\nFootsteps fade into the cool breeze\nWhispers hush in the shadowed trees\n\n[Chorus]\nOh the night holds stories untold\nLit by stars and streets of gold\nIn the calm the chaos hides\nA peaceful heart where silence abides\n\n[Verse 2]\nWindows glow with a gentle hue\nDreams take flight in skies of blue\nBuses pause their endless run\nCity rests ‘til the morning sun\n\n[Chorus]\nOh the night holds stories untold\nLit by stars and streets of gold\nIn the calm the chaos hides\nA peaceful heart where silence abides\n\n[Bridge]\nStreetlights flicker a fleeting sway\nEchoes dance in their quiet ballet\nA perfect stillness takes its place\nThe city's soul in a tranquil embrace\n\n[Chorus]\nOh the night holds stories untold\nLit by stars and streets of gold\nIn the calm the chaos hides\nA peaceful heart where silence abides",
+                "title": "Silent Whispers in the City"
+            },
+            {
+                "error_message": "",
+                "status": "complete",
+                "text": "[Verse]\nClouds drift like whispers through the sky\nStreetlights hum a gentle lullaby\nWindows flicker with sleepy gleams\nThe city's alive but lost in dreams\n\n[Verse 2]\nCars roll slow like a lazy stream\nShadows stretch under the moon’s gleam\nFootsteps echo on cobblestone streets\nA calm rhythm where the night heart beats\n\n[Chorus]\nOh peaceful city you glow so bright\nWrapped in magic under the quiet night\nHold me close in your serene embrace\nA tranquil world full of stillness and grace\n\n[Verse 3]\nNeon signs blink in a silent code\nBuildings stand in a calm overload\nEven the buzz has a softer sound\nIn this urban dream I’m spellbound\n\n[Bridge]\nSkyscrapers bow to the starry shade\nDreams of the day now gently fade\nThe pulse of chaos knows how to rest\nThis sleeping city is at its best\n\n[Chorus]\nOh peaceful city you glow so bright\nWrapped in magic under the quiet night\nHold me close in your serene embrace\nA tranquil world full of stillness and grace",
+                "title": "City Dreaming"
+            }
+        ],
+        "task_id": "3bfb76715fdc380b7a6095f0d4eacaa0"
+    },
+    "msg": "All generated successfully."
+}
+{
+    "code": 200,
+    "data": {
+        "audio_wav_url": "https://tempfile.aiquickdraw.com/s/b7031b6be1e64d618e0e2e2824d07914.wav",
+        "task_id": "d68a5ba59feeac65d01c8fc8d8a9a00d"
+    },
+    "msg": "All generated successfully."
+}

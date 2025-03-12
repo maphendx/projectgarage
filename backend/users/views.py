@@ -306,6 +306,7 @@ class GoogleAuthView(GenericAPIView):
     """
     # Використовуємо серіалізатор профілю користувача для відповіді
     response_serializer_class = UserProfileSerializer
+    serializer_class = GoogleAuthResponseSerializer
 
     def post(self, request, *args, **kwargs):
         token = request.data.get('token')

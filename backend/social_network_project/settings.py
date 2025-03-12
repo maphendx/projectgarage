@@ -27,7 +27,7 @@ DEBUG = True   # це не торогати (в режимі розробки) �
 
 APPEND_SLASH = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['01a2-188-163-113-175.ngrok-free.app']
 
 
 
@@ -43,6 +43,7 @@ INSTALLED_APPS = [       # коли створюєш нові додатки ї�
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
+    'django_extensions',
     'channels',
     'users',            # Користувачі 
     'posts',            # Пости
@@ -219,7 +220,7 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-GOOGLE_CLIENT_ID = "787039931575-u6m6gef67qnirlrn4icoonfedbgoigmi.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = "780829608981-d2sofcvrbiv0li3ovc792jd76llnak2r.apps.googleusercontent.com"
 
 # Налаштування для API нейромережі Hugging Face
 import os
