@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #1c1c1f;
+  --foreground: #171717;
+  --rt-color-white: #fff;
+  --rt-color-dark: #222;
+  --rt-color-success: #8dc572;
+  --rt-color-error: #be6464;
+  --rt-color-warning: #f0ad4e;
+  --rt-color-info: #337ab7;
+  --rt-opacity: 0.9;
+  --rt-transition-show-delay: 0.15s;
+  --rt-transition-closing-delay: 0.15s;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --header-height: 60px;
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
+
+
+/* Стиль для блокування прокрутки при відкритому модальному вікні */
+.modal-open {
+  overflow: hidden;
+  height: 100%;
+}
+
+/* Стиль для перевизначення z-index для портальних модальних вікон */
+body > .photo-modal-portal {
+  z-index: 9999;
+  position: relative;
+}
+
+/* Стилі для анімації переходів між зображеннями */
+.photo-modal-image-enter {
+  opacity: 0;
+}
+.photo-modal-image-enter-active {
+  opacity: 1;
+  transition: opacity 300ms;
+}
+.photo-modal-image-exit {
+  opacity: 1;
+}
+.photo-modal-image-exit-active {
+  opacity: 0;
+  transition: opacity 300ms;
+}
